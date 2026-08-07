@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+REPO_DIR="$(git rev-parse --show-toplevel)"
+exec "$REPO_DIR/scripts/hooks/commit-hook" --commit-msg "$1"

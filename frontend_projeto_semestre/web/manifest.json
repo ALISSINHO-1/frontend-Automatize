@@ -1,0 +1,34 @@
+{
+  "name": "Projeto Semestral",
+  "short_name": "Projeto Semestral",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F6F7FB",
+  "theme_color": "#3157D5",
+  "description": "Frontend web do Projeto Semestral desenvolvido com Flutter.",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/Icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

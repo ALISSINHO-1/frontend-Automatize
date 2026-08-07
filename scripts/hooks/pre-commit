@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+
+REPO_DIR="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -z "$REPO_DIR" ]; then
+  echo "[version-hook] ERROR: Git repository root not found." >&2
+  exit 1
+fi
+
+if [ ! -f "$REPO_DIR/tool/versioning.sh" ]; then
+  echo "[version-hook] ERROR: tool/versioning.sh not found." >&2
+  exit 1
+fi
+
+exit 0

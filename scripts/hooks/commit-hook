@@ -1,0 +1,132 @@
+#!/bin/sh
+set -eu
+
+REPO_DIR="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -z "$REPO_DIR" ]; then
+  echo "[version-hook] ERROR: Git repository root not found." >&2
+  exit 1
+fi
+
+VERSION_LIB="$REPO_DIR/tool/versioning.sh"
+if [ ! -f "$VERSION_LIB" ]; then
+  echo "[version-hook] ERROR: tool/versioning.sh not found." >&2
+  exit 1
+fi
+
+. "$VERSION_LIB"
+
+pending_file() {
+  git rev-parse --git-path version-hook.pending
+}
+
+prepare_commit() {
+  msg_file="$1"
+  first_line="$(sed -n '1p' "$msg_file")"
+
+  case "$first_line" in
+    v[0-9]*\ -\ *)
+      exit 0
+      ;;
+    Merge\ *|Revert\ *)
+      exit 0
+      ;;
+    FEAT:\ *) change_type=FEAT ;;
+    FIX:\ *) change_type=FIX ;;
+    CHORE:\ *) change_type=CHORE ;;
+    *)
+      echo "[version-hook] Commit rejected." >&2
+      echo "[version-hook] Use one of these formats:" >&2
+      echo "  FEAT: description" >&2
+      echo "  FIX: description" >&2
+      echo "  CHORE: description" >&2
+      exit 1
+      ;;
+  esac
+
+  pubspec="$(find_pubspec "$REPO_DIR" || true)"
+  if [ -z "$pubspec" ]; then
+    echo "[version-hook] ERROR: pubspec.yaml not found." >&2
+    exit 1
+  fi
+
+  current="$(read_flutter_version "$pubspec" || true)"
+  if [ -z "$current" ]; then
+    echo "[version-hook] ERROR: version field not found in $pubspec." >&2
+    exit 1
+  fi
+
+  next="$(next_version "$current" "$change_type" || true)"
+  if [ -z "$next" ]; then
+    echo "[version-hook] ERROR: invalid current version: $current" >&2
+    exit 1
+  fi
+
+  semver="${next%%+*}"
+  changelog="$REPO_DIR/CHANGELOG.md"
+  changelog_tmp="$REPO_DIR/.version-hook.changelog.tmp"
+  today="$(date +%Y-%m-%d)"
+
+  write_flutter_version "$pubspec" "$next"
+
+  {
+    printf '# v%s - %s\n' "$semver" "$today"
+    printf -- '- %s\n\n' "$first_line"
+    if [ -f "$changelog" ]; then
+      cat "$changelog"
+    fi
+  } > "$changelog_tmp"
+  mv "$changelog_tmp" "$changelog"
+
+  msg_tmp="${msg_file}.version-hook.tmp"
+  {
+    printf 'v%s - %s\n' "$semver" "$first_line"
+    sed -n '2,$p' "$msg_file"
+  } > "$msg_tmp"
+  mv "$msg_tmp" "$msg_file"
+
+  git add -- "$pubspec" "$changelog"
+  printf '%s\n' "$semver" > "$(pending_file)"
+
+  echo "[version-hook] Version prepared: v$semver"
+}
+
+finish_commit() {
+  if [ "${VERSION_HOOK_AMENDING:-0}" = "1" ]; then
+    exit 0
+  fi
+
+  pending="$(pending_file)"
+  if [ ! -f "$pending" ]; then
+    exit 0
+  fi
+
+  semver="$(sed -n '1p' "$pending")"
+  rm -f "$pending"
+
+  if [ -z "$semver" ]; then
+    exit 0
+  fi
+
+  if ! VERSION_HOOK_AMENDING=1 git commit --amend --no-edit --no-verify >/dev/null 2>&1; then
+    echo "[version-hook] ERROR: commit created, but automatic amend failed." >&2
+    echo "[version-hook] Version files remain staged. Review git status." >&2
+    exit 1
+  fi
+
+  git tag -f -a "v$semver" -m "Version v$semver" >/dev/null
+  echo "[version-hook] Commit finalized and tagged as v$semver"
+}
+
+case "${1:-}" in
+  --commit-msg)
+    [ "$#" -eq 2 ] || exit 2
+    prepare_commit "$2"
+    ;;
+  --post-commit)
+    finish_commit
+    ;;
+  *)
+    echo "Usage: commit-hook --commit-msg <message-file> | --post-commit" >&2
+    exit 2
+    ;;
+esac
