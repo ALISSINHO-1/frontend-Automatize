@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../shared/widgets/info_card.dart';
-
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -41,14 +40,6 @@ class HomePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       _StructureGrid(isWide: isWide),
-                      const SizedBox(height: 32),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/demand-details');
-                        },
-                        icon: const Icon(Icons.open_in_new),
-                        label: const Text('Abrir detalhes da demanda'),
-                      ),
                     ],
                   ),
                 ),

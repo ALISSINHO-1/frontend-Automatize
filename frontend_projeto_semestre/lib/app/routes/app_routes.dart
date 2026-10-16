@@ -9,6 +9,10 @@ abstract final class AppRoutes {
 
   static final Map<String, WidgetBuilder> routes = {
     home: (_) => const HomePage(),
-    demandDetails: (_) => const DemandDetailsPage(),
+    demandDetails: (context) {
+  final demandId = ModalRoute.of(context)!.settings.arguments as String;
+
+  return DemandDetailsPage(demandId: demandId);
+},
   };
 }

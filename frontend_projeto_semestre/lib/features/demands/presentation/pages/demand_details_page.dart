@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class DemandDetailsPage extends StatelessWidget {
-  const DemandDetailsPage({super.key});
+  const DemandDetailsPage({
+    super.key,
+    required this.demandId,
+  });
+
+  final String demandId;
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +291,8 @@ class _InformationItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Column(
+          Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -307,9 +313,10 @@ class _InformationItem extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
+           ],
           ),
-        ],
+         ),
+       ],
       ),
     );
   }
