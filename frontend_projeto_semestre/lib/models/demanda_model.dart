@@ -1,6 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:frontend_projeto_semestre/models/demanda_model.dart';
-
 
 class Demanda {
   final int id;

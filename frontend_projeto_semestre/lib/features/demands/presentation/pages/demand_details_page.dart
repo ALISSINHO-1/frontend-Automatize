@@ -1,7 +1,36 @@
 import 'package:flutter/material.dart';
-
+import '../../data/models/pedido_model.dart';
+import '../widgets/demand_history_timeline.dart';
 class DemandDetailsPage extends StatelessWidget {
-  const DemandDetailsPage({super.key});
+  const DemandDetailsPage({
+    super.key,
+    required this.demandId,
+    this.pedido,
+  });
+
+  final String demandId;
+  final PedidoModel? pedido;
+
+  String get nomeResponsavel {
+  final responsavelId = pedido?.responsavelId;
+
+  if (responsavelId == null || responsavelId.isEmpty) {
+    return 'Não atribuído';
+  }
+
+  return 'ID: $responsavelId';
+}
+
+  static String _formatarData(DateTime? data) {
+  if (data == null) return 'Não informado';
+
+  final dataLocal = data.toLocal();
+  final dia = dataLocal.day.toString().padLeft(2, '0');
+  final mes = dataLocal.month.toString().padLeft(2, '0');
+  final ano = dataLocal.year;
+
+  return '$dia/$mes/$ano';
+}
 
   @override
   Widget build(BuildContext context) {
@@ -53,14 +82,14 @@ class DemandDetailsPage extends StatelessWidget {
                       runSpacing: 12,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        const Text(
-                          'Integração do sistema de pagamentos',
-                          style: TextStyle(
-                            color: Color(0xFFDFE2EE),
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                      Text(
+                      pedido?.titulo ?? 'Detalhes indisponíveis',
+                      style: const TextStyle(
+                        color: Color(0xFFDFE2EE),
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -70,15 +99,15 @@ class DemandDetailsPage extends StatelessWidget {
                             color: const Color(0xFF4D8EFF).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            'EM DESENVOLVIMENTO',
-                            style: TextStyle(
-                              color: Color(0xFFADC6FF),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
+                          child: Text(
+                          pedido?.status ?? 'SEM DADOS',
+                          style: const TextStyle(
+                            color: Color(0xFFADC6FF),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
                           ),
+                        ),
                         ),
                       ],
                     ),
@@ -108,11 +137,9 @@ class DemandDetailsPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          const Text(
-                            'Implementação e integração do novo fluxo de '
-                            'pagamentos do sistema, incluindo validações e '
-                            'comunicação com os serviços necessários.',
-                            style: TextStyle(
+                          Text(
+                            pedido?.descricao ?? 'Descrição não disponível.',
+                            style: const TextStyle(
                               color: Color(0xFFC2C6D6),
                               fontSize: 15,
                               height: 1.6,
@@ -128,30 +155,30 @@ class DemandDetailsPage extends StatelessWidget {
                           const SizedBox(height: 24),
 
                           // Responsável e estado
-                          const Wrap(
-                            spacing: 80,
-                            runSpacing: 24,
-                            children: [
-                              _InformationItem(
-                                label: 'RESPONSÁVEL',
-                                value: 'Luis Felipe',
-                                icon: Icons.person_outline,
-                              ),
-                              _InformationItem(
-                                label: 'ESTADO',
-                                value: 'Desenvolvimento',
-                                icon: Icons.sync,
-                              ),
-                            ],
-                          ),
+                          Wrap(
+                          spacing: 80,
+                          runSpacing: 24,
+                          children: [
+                            _InformationItem(
+                              label: 'RESPONSÁVEL',
+                              value: nomeResponsavel,
+                              icon: Icons.person_outline,
+                            ),
+                            _InformationItem(
+                              label: 'ESTADO',
+                              value: pedido?.status ?? 'Não informado',
+                              icon: Icons.sync,
+                            ),
+                          ],
+                        ),
 
                           const SizedBox(height: 36),
 
                           // Progresso
-                          const Row(
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
+                              const Text(
                                 'Progresso',
                                 style: TextStyle(
                                   color: Color(0xFFDFE2EE),
@@ -160,8 +187,8 @@ class DemandDetailsPage extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '75%',
-                                style: TextStyle(
+                                '${(pedido?.percentualProgresso ?? 0).toStringAsFixed(0)}%',
+                                style: const TextStyle(
                                   color: Color(0xFFADC6FF),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -174,8 +201,8 @@ class DemandDetailsPage extends StatelessWidget {
 
                           ClipRRect(
                             borderRadius: BorderRadius.circular(20),
-                            child: const LinearProgressIndicator(
-                              value: 0.75,
+                            child: LinearProgressIndicator(
+                            value: ((pedido?.percentualProgresso ?? 0) / 100).clamp(0.0, 1.0),
                               minHeight: 10,
                               backgroundColor: Color(0xFF31353E),
                               valueColor: AlwaysStoppedAnimation<Color>(
@@ -193,27 +220,33 @@ class DemandDetailsPage extends StatelessWidget {
                           const SizedBox(height: 24),
 
                           // Datas
-                          const Wrap(
-                            spacing: 80,
-                            runSpacing: 24,
-                            children: [
-                              _InformationItem(
-                                label: 'CRIADA EM',
-                                value: '01/10/2026',
-                                icon: Icons.calendar_today_outlined,
-                              ),
-                              _InformationItem(
-                                label: 'ATUALIZADA EM',
-                                value: '06/10/2026',
-                                icon: Icons.update,
-                              ),
-                            ],
-                          ),
+                          Wrap(
+                          spacing: 80,
+                          runSpacing: 24,
+                          children: [
+                            _InformationItem(
+                              label: 'CRIADA EM',
+                              value: _formatarData(pedido?.createdAt),
+                              icon: Icons.calendar_today_outlined,
+                            ),
+                            _InformationItem(
+                              label: 'ATUALIZADA EM',
+                              value: _formatarData(pedido?.updatedAt),
+                              icon: Icons.update,
+                            ),
+                          ],
+                        ),
                         ],
                       ),
                     ),
 
                     const SizedBox(height: 24),
+
+                  const DemandHistoryTimeline(
+                    historico: [],
+                ),
+
+                  const SizedBox(height: 24),
 
                     // Aviso temporário
                     Container(
@@ -232,8 +265,9 @@ class DemandDetailsPage extends StatelessWidget {
                           SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Os dados exibidos nesta versão são temporários '
-                              'e serão substituídos pelos dados retornados pela API.',
+                              'As informações exibidas correspondem aos dados disponíveis '
+                                'para esta demanda. Dados adicionais serão apresentados '
+                                'quando disponibilizados pela API.',
                               style: TextStyle(
                                 color: Color(0xFFC2C6D6),
                                 height: 1.4,
@@ -286,7 +320,8 @@ class _InformationItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Column(
+          Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -307,9 +342,10 @@ class _InformationItem extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
+           ],
           ),
-        ],
+         ),
+       ],
       ),
     );
   }
