@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../../models/demanda_model.dart'; 
+import '../../../../shared/widgets/custom_loading.dart';
+import '../../../../shared/widgets/custom_error.dart';
 
 class DemandasScreen extends StatefulWidget {
   const DemandasScreen({super.key});
@@ -34,30 +36,24 @@ class _DemandasScreenState extends State<DemandasScreen> {
       ),
       body: FutureBuilder<List<Demanda>>(
         future: futureDemandas,
-        builder: (context, snapshot) {
-          // Estado de Carregamento
+       builder: (context, snapshot) {
+          // 1. Estado de Carregamento Padronizado
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const CustomLoading(message: 'A carregar demandas...');
           }
 
-          // Tratamento de Erro
+          // 2. Tratamento de Erro Padronizado (Rede ou HTTP)
           if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Erro ao carregar dados: ${snapshot.error}',
-                textAlign: TextAlign.center,
-              ),
+            // O botão de retry chama o _carregarDemandas para tentar de novo
+            return CustomError(
+              message: snapshot.error.toString(),
+              onRetry: _carregarDemandas,
             );
           }
 
           // Estado Vazio
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text(
-                'Nenhuma demanda encontrada.',
-                style: TextStyle(fontSize: 16),
-              ),
-            );
+            return const Center(child: Text('Nenhuma demanda encontrada.'));
           }
 
           // Estado com Dados (Listagem)
