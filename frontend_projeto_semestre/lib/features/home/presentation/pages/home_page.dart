@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../shared/widgets/info_card.dart';
+import 'demandas_screen.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -32,6 +33,28 @@ class HomePage extends StatelessWidget {
                     children: [
                       _HeroSection(isWide: isWide),
                       const SizedBox(height: 32),
+                      
+                      // Botão de Navegação
+                      Center(
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const DemandasScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.list_alt),
+                          label: const Text('Ver Lista de Demandas'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+
                       Text(
                         'Estrutura inicial',
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(

@@ -1,0 +1,12 @@
+# Arquivos temporários do Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Arquivos de execução
+*.log
+
+# Arquivos locais e sensíveis
+.env
+.env.*
+!.env.example
