@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../shared/widgets/info_card.dart';
 import 'demandas_screen.dart';
-
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
