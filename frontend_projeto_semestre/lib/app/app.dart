@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../features/home/presentation/pages/login_screen.dart';
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_theme.dart'; 
 
 class FaculdadeApp extends StatelessWidget {
   const FaculdadeApp({super.key});
