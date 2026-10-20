@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
+import '../features/home/presentation/pages/login_screen.dart';
 import '../core/theme/app_theme.dart';
-import 'routes/app_routes.dart';
 
 class FaculdadeApp extends StatelessWidget {
   const FaculdadeApp({super.key});
@@ -11,9 +10,9 @@ class FaculdadeApp extends StatelessWidget {
     return MaterialApp(
       title: 'Projeto Semestral',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      initialRoute: AppRoutes.home,
-      routes: AppRoutes.routes,
+      theme: AppTheme.light, 
+      
+      home: const LoginScreen(), 
     );
   }
 }
