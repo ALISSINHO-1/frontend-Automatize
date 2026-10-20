@@ -10,6 +10,8 @@ class PedidoModel {
   final String? responsavelId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? responsavelAceite;
+  final DateTime? dataAceite;
 
   const PedidoModel({
     required this.id,
@@ -22,6 +24,8 @@ class PedidoModel {
     this.responsavelId,
     this.createdAt,
     this.updatedAt,
+    this.responsavelAceite,
+    this.dataAceite,
   });
 
   factory PedidoModel.fromJson(Map<String, dynamic> json) {
@@ -37,6 +41,8 @@ class PedidoModel {
       responsavelId: json['responsavel_id']?.toString(),
       createdAt: _parseDate(json['created_at'] ?? json['data_criacao']),
       updatedAt: _parseDate(json['updated_at']),
+      responsavelAceite: json['responsavel_aceite']?.toString(),
+      dataAceite: _parseDate(json['data_aceite']),
     );
   }
 

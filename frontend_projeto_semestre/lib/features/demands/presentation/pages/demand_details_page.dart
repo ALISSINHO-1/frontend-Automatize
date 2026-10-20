@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../data/models/pedido_model.dart';
 import '../widgets/demand_history_timeline.dart';
+import '../widgets/demand_homologation_card.dart';
+import '../widgets/demand_acceptance_card.dart';
 class DemandDetailsPage extends StatelessWidget {
   const DemandDetailsPage({
     super.key,
@@ -240,13 +242,26 @@ class DemandDetailsPage extends StatelessWidget {
                       ),
                     ),
 
+                    const DemandHistoryTimeline(
+                      historico: [],
+                    ),
+
                     const SizedBox(height: 24),
 
-                  const DemandHistoryTimeline(
-                    historico: [],
-                ),
+                    if (pedido?.responsavelAceite?.trim().isNotEmpty == true &&
+                      pedido?.dataAceite != null) ...[
+                    DemandAcceptanceCard(
+                      responsavel: pedido!.responsavelAceite!,
+                      dataAceite: pedido!.dataAceite!,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
-                  const SizedBox(height: 24),
+                    DemandHomologationCard(
+                      status: pedido?.status ?? '',
+                    ),
+
+                    const SizedBox(height: 24),
 
                     // Aviso temporário
                     Container(
