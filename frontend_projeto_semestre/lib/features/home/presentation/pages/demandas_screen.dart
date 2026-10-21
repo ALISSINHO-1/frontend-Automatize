@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../../../models/demanda_model.dart'; 
 import '../../../../shared/widgets/custom_loading.dart';
 import '../../../../shared/widgets/custom_error.dart';
+import 'nova_demanda_screen.dart';
 
 class DemandasScreen extends StatefulWidget {
   const DemandasScreen({super.key});
@@ -17,7 +18,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
   final DemandaService _demandaService = DemandaService();
   
   @override
-  void initState() {
+  void initState() {  
     super.initState();
     _carregarDemandas();
   }
@@ -37,6 +38,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
       body: FutureBuilder<List<Demanda>>(
         future: futureDemandas,
        builder: (context, snapshot) {
+        
           // 1. Estado de Carregamento Padronizado
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const CustomLoading(message: 'A carregar demandas...');
@@ -77,10 +79,20 @@ class _DemandasScreenState extends State<DemandasScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _carregarDemandas,
-        tooltip: 'Atualizar',
-        child: const Icon(Icons.refresh),
-      ),
+  onPressed: () async {
+
+    // Navega para o formulário e espera o resultado
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NovaDemandaScreen()),
+    );
+    
+    if (resultado == true) {
+      _carregarDemandas(); 
+    }
+  },
+  child: const Icon(Icons.add),
+),
     );
   }
 }

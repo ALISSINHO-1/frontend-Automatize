@@ -19,42 +19,27 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  Future<void> _fazerLogin() async {
-
-    // 1. Valida se os campos estão preenchidos
+Future<void> _fazerLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
     
-      final url = Uri.parse('http://127.0.0.1:8000/auth/login'); 
-      
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        }),
-      );
+      await Future.delayed(const Duration(seconds: 1));
 
-      // 3. Verifica a resposta da API
-      if (response.statusCode == 200) {
-       
+      // Simulamos que qualquer email "admin" entra, os outros dão erro 401
+      if (_emailController.text == 'admin' && _passwordController.text == 'admin') {
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const HomePage()),
           );
         }
-      } else if (response.statusCode == 401) {
-
-        // 4. Tratamento do Erro 401
-        _mostrarErro('E-mail ou palavra-passe incorretos.');
       } else {
-        _mostrarErro('Erro no servidor. Tente novamente mais tarde.');
+        _mostrarErro('E-mail ou palavra-passe incorretos.');
       }
+   
     } catch (e) {
       _mostrarErro('Falha na ligação ao servidor.');
     } finally {
@@ -64,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _mostrarErro(String mensagem) {
+  void _mostrarErro(String mensagem) {                            
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensagem),
