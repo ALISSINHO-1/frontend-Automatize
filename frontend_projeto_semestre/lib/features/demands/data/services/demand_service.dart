@@ -6,7 +6,7 @@ import '../models/pedido_model.dart';
 
 class DemandService {
   const DemandService();
-
+ 
   
   Future<List<PedidoModel>> buscarDemandas() async {
     final resposta = await http.get(

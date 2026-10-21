@@ -85,7 +85,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const NovaDemandaScreen()),
-    );
+    ); 
     
     if (resultado == true) {
       _carregarDemandas(); 

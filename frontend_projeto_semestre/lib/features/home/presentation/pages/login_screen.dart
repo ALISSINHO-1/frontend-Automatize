@@ -28,7 +28,6 @@ Future<void> _fazerLogin() async {
     
       await Future.delayed(const Duration(seconds: 1));
 
-      // Simulamos que qualquer email "admin" entra, os outros dão erro 401
       if (_emailController.text == 'admin' && _passwordController.text == 'admin') {
         if (mounted) {
           Navigator.pushReplacement(
