@@ -1,5 +1,6 @@
 abstract final class ApiPaths {
   static const String health = '/health';
 
-  // Adicione aqui os endpoints do FastAPI conforme o backend for definido.
+  // Prefixo definido no roteador do backend.
+  static const String demandas = '/demandas';
 }
