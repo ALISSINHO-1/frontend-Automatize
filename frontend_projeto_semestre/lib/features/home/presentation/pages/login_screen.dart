@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http; 
 import '../../../home/presentation/pages/home_page.dart'; 
-import '../../../../core/config/app_config.dart'; 
+import '../../../../core/storage/local_storage_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,10 +24,16 @@ Future<void> _fazerLogin() async {
 
     try {
     
+      // ===== INÍCIO DA SIMULAÇÃO (MOCK) =====
       await Future.delayed(const Duration(seconds: 1));
 
+      // Simulamos que qualquer email "admin" entra, os outros dão erro 401
       if (_emailController.text == 'admin' && _passwordController.text == 'admin') {
+        
+        await LocalStorageService.saveToken('jwt_falso_de_teste_para_o_scrum_30');
+        
         if (mounted) {
+          // Navega para dentro do app
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const HomePage()),
@@ -38,6 +42,7 @@ Future<void> _fazerLogin() async {
       } else {
         _mostrarErro('E-mail ou palavra-passe incorretos.');
       }
+    
    
     } catch (e) {
       _mostrarErro('Falha na ligação ao servidor.');
