@@ -107,7 +107,7 @@ class MainLayout extends StatelessWidget {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'AUTOMATIZE',
+                        'AUTOMATIZE', 
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 19,

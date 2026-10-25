@@ -342,7 +342,7 @@ class _PainelScreenState extends State<PainelScreen> {
                                   ),
                                 ],
                               ),
-                            );
+                            ); 
                           },
                         ),
                 ),

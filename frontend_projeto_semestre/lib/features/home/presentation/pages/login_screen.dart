@@ -18,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
  
 Future<void> _fazerLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return; 
 
     setState(() => _isLoading = true);
 

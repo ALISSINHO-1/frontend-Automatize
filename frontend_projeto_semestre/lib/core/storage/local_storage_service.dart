@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalStorageService {
   static const String _tokenKey = 'auth_token';
-
+ 
   // 1. Guardar o Token (Após o login)
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();

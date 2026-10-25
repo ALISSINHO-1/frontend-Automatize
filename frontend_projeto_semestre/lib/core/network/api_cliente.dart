@@ -10,7 +10,7 @@ class AuthInterceptorClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-
+ 
     final response = await _inner.send(request);
 
     // 3. INTERCEPTAÇÃO DO ERRO 401 (Requisito do SCRUM-59)

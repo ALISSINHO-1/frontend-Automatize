@@ -5,7 +5,7 @@ class AuthInterceptorClient extends http.BaseClient {
   final http.Client _inner = http.Client();
   final BuildContext? context;
 
-  // Recebe o contexto (necessário para conseguir navegar para o Login)
+  // Recebe o contexto (necessário para conseguir navegar para o Login) 
   AuthInterceptorClient({this.context});
 
   @override

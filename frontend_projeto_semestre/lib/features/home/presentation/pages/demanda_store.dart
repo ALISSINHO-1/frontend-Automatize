@@ -87,7 +87,7 @@ class DemandaStore extends ChangeNotifier {
         titulo: titulo,
         descricao: descricao,
         estado: estado,
-        progresso: _progressoPorEstado(estado),
+        progresso: _progressoPorEstado(estado), 
       ),
     );
 
