@@ -11,8 +11,7 @@ class FaculdadeApp extends StatelessWidget {
     return MaterialApp(
       title: 'Projeto Semestral',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      initialRoute: AppRoutes.home,
+      theme: AppTheme.dark,      initialRoute: AppRoutes.home,
       routes: AppRoutes.routes,
     );
   }
