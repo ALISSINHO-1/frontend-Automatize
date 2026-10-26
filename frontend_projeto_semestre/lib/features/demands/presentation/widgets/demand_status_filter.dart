@@ -11,7 +11,7 @@ class DemandStatusFilter extends StatelessWidget {
   final ValueChanged<String?> onStatusChanged;
 
   static const List<String> estados = [
-    'PLANEJAMENTO',
+    'PLANEAMENTO',
     'EXECUCAO',
     'HOMOLOGACAO',
     'CONCLUIDO',
@@ -21,6 +21,7 @@ class DemandStatusFilter extends StatelessWidget {
     return status
         .trim()
         .toUpperCase()
+        .replaceAll('PLANEJAMENTO', 'PLANEAMENTO')
         .replaceAll('Ç', 'C')
         .replaceAll('Ã', 'A')
         .replaceAll('Í', 'I')
@@ -60,21 +61,15 @@ class DemandStatusFilter extends StatelessWidget {
           child: Text('Todos os estados'),
         ),
         DropdownMenuItem<String>(
-          value: 'PLANEJAMENTO',
+          value: 'PLANEAMENTO',
           child: Text('Planejamento'),
         ),
-        DropdownMenuItem<String>(
-          value: 'EXECUCAO',
-          child: Text('Execução'),
-        ),
+        DropdownMenuItem<String>(value: 'EXECUCAO', child: Text('Execução')),
         DropdownMenuItem<String>(
           value: 'HOMOLOGACAO',
           child: Text('Homologação'),
         ),
-        DropdownMenuItem<String>(
-          value: 'CONCLUIDO',
-          child: Text('Concluído'),
-        ),
+        DropdownMenuItem<String>(value: 'CONCLUIDO', child: Text('Concluído')),
       ],
       onChanged: (valor) {
         onStatusChanged(valor == 'TODOS' ? null : valor);
