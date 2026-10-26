@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../features/home/presentation/pages/login_screen.dart';
-import '../core/theme/app_theme.dart'; 
+import '../core/theme/app_theme.dart';
+
+final GlobalKey<NavigatorState> appNavigatorKey =
+    GlobalKey<NavigatorState>();
 
 class FaculdadeApp extends StatelessWidget {
   const FaculdadeApp({super.key});
@@ -10,9 +13,9 @@ class FaculdadeApp extends StatelessWidget {
     return MaterialApp(
       title: 'Projeto Semestral',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light, 
-      
-      home: const LoginScreen(), 
+      theme: AppTheme.light,
+      navigatorKey: appNavigatorKey,
+      home: const LoginScreen(),
     );
   }
 }

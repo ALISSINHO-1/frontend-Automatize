@@ -1,32 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../storage/local_storage_service.dart';
+import '../../features/home/presentation/pages/login_screen.dart';
 
 class AuthInterceptorClient extends http.BaseClient {
-  final http.Client _inner = http.Client();
-  final BuildContext? context;
+  final http.Client _inner;
+  final GlobalKey<NavigatorState> navigatorKey;
 
-  // Recebe o contexto (necessário para conseguir navegar para o Login) 
-  AuthInterceptorClient({this.context});
+  bool _redirecionando = false;
+
+  AuthInterceptorClient({
+    required this.navigatorKey,
+    http.Client? inner,
+  }) : _inner = inner ?? http.Client();
 
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+  Future<http.StreamedResponse> send(
+    http.BaseRequest request,
+  ) async {
+    // Recupera o token salvo após o login.
+    final token = await LocalStorageService.getToken();
+
+    // Adiciona o Bearer Token quando existir.
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
 
     final response = await _inner.send(request);
 
-    // 3. INTERCEPTAÇÃO DO ERRO 401 (Requisito do SCRUM-59)
+    // O token expirou ou não é válido.
     if (response.statusCode == 401) {
-      _handleUnauthorized();
+      await LocalStorageService.removeToken();
+
+      if (!_redirecionando) {
+        _redirecionando = true;
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final navigator = navigatorKey.currentState;
+
+          if (navigator != null && navigator.mounted) {
+            navigator.pushAndRemoveUntil(
+              MaterialPageRoute<void>(
+                builder: (_) => const LoginScreen(),
+              ),
+              (route) => false,
+            );
+          }
+
+          _redirecionando = false;
+        });
+      }
     }
 
     return response;
   }
 
-  void _handleUnauthorized() {
-    
-    if (context != null) {
-       // Usamos pushAndRemoveUntil para limpar a pilha de ecrãs e impedir 
-       // que o utilizador volte atrás para um ecrã bloqueado
-       Navigator.of(context!).pushNamedAndRemoveUntil('/login', (route) => false);
-    }
+  @override
+  void close() {
+    _inner.close();
+    super.close();
   }
 }

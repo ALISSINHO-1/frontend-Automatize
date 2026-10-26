@@ -13,7 +13,7 @@ class DemandListPage extends StatefulWidget {
 }
 
 class _DemandListPageState extends State<DemandListPage> {
-  final DemandService _service = const DemandService();
+  final DemandService _service =  DemandService();
 
   late Future<List<PedidoModel>> _futureDemandas;
   String? _estadoSelecionado;
