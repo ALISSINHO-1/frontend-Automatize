@@ -1,106 +1,21 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import '../../../../models/demanda_model.dart'; 
 
-class DemandasScreen extends StatefulWidget {
-  const DemandasScreen({super.key});
+import '../../../demands/presentation/pages/demand_list_page.dart';
+import '../../data/auth_service.dart';
 
-  @override
-  State<DemandasScreen> createState() => _DemandasScreenState();
-}
+/// Legacy entry point kept for existing callers; delegates to the authenticated
+/// demand list so every role uses the same Bearer-protected API flow.
+class DemandasScreen extends StatelessWidget {
+  const DemandasScreen({
+    super.key,
+    required this.session,
+    required this.onLogout,
+  });
 
-class _DemandasScreenState extends State<DemandasScreen> {
-  late Future<List<Demanda>> futureDemandas;
-  final DemandaService _demandaService = DemandaService();
-  
-  @override
-  void initState() {
-    super.initState();
-    _carregarDemandas();
-  }
-
-  void _carregarDemandas() {
-    setState(() {
-      futureDemandas = _demandaService.fetchDemandas();
-    });
-  }
+  final AuthSession session;
+  final VoidCallback onLogout;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Listagem de Demandas'),
-      ),
-      body: FutureBuilder<List<Demanda>>(
-        future: futureDemandas,
-        builder: (context, snapshot) {
-          // Estado de Carregamento
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // Tratamento de Erro
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Erro ao carregar dados: ${snapshot.error}',
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
-
-          // Estado Vazio
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text(
-                'Nenhuma demanda encontrada.',
-                style: TextStyle(fontSize: 16),
-              ),
-            );
-          }
-
-          // Estado com Dados (Listagem)
-          List<Demanda> demandas = snapshot.data!;
-          return ListView.builder(
-            itemCount: demandas.length,
-            itemBuilder: (context, index) {
-              final demanda = demandas[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    child: Text(demanda.id.toString()),
-                  ),
-                  title: Text(demanda.titulo),
-                  subtitle: Text(demanda.descricao),
-                ),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _carregarDemandas,
-        tooltip: 'Atualizar',
-        child: const Icon(Icons.refresh),
-      ),
-    );
-  }
-}
-
-class DemandaService {
- 
-  final String baseUrl = 'http://10.0.2.2:8000'; 
-
-  Future<List<Demanda>> fetchDemandas() async {
-    final response = await http.get(Uri.parse('$baseUrl/demandas'));
-
-    if (response.statusCode == 200) {
-      List<dynamic> jsonResponse = json.decode(response.body);
-      return jsonResponse.map((data) => Demanda.fromJson(data)).toList();
-    } else {
-      throw Exception('Falha ao carregar as demandas do servidor');
-    }
-  }
+  Widget build(BuildContext context) =>
+      DemandListPage(session: session, onLogout: onLogout);
 }

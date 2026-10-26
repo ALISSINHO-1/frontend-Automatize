@@ -4,11 +4,13 @@ class DemandHomologationCard extends StatelessWidget {
   const DemandHomologationCard({
     super.key,
     required this.status,
+    this.mostrarAcoes = false,
     this.onAprovar,
     this.onReprovar,
   });
 
   final String status;
+  final bool mostrarAcoes;
   final VoidCallback? onAprovar;
   final VoidCallback? onReprovar;
 
@@ -43,23 +45,28 @@ class DemandHomologationCard extends StatelessWidget {
               'Analise as informações antes de aprovar ou reprovar.',
               style: TextStyle(color: Color(0xFFC2C6D6)),
             ),
-            const SizedBox(height: 20),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                FilledButton.icon(
-                  onPressed: onAprovar,
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Aprovar'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: onReprovar,
-                  icon: const Icon(Icons.cancel_outlined),
-                  label: const Text('Reprovar'),
-                ),
-              ],
-            ),
+            if (mostrarAcoes) ...[
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  FilledButton.icon(
+                    onPressed: onAprovar,
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Aprovar'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onReprovar,
+                    icon: const Icon(Icons.cancel_outlined),
+                    label: const Text('Reprovar'),
+                  ),
+                ],
+              ),
+            ] else ...[
+              const SizedBox(height: 12),
+              const Text('Aguardando decisão do cliente responsável.'),
+            ],
           ],
         ),
       ),

@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../data/models/pedido_model.dart';
 import '../widgets/demand_status_filter.dart';
-import '../../data/mock/demand_mock_data.dart';
-import 'demand_details_page.dart';
+import '../../../../app/routes/app_routes.dart';
+import '../../data/services/demand_service.dart';
+import '../../../home/data/auth_service.dart';
 
 class DemandListPage extends StatefulWidget {
-  const DemandListPage({super.key});
+  const DemandListPage({
+    super.key,
+    required this.session,
+    required this.onLogout,
+    this.service,
+  });
+
+  final AuthSession session;
+  final VoidCallback onLogout;
+  final DemandService? service;
 
   @override
   State<DemandListPage> createState() => _DemandListPageState();
@@ -13,17 +23,32 @@ class DemandListPage extends StatefulWidget {
 
 class _DemandListPageState extends State<DemandListPage> {
   late Future<List<PedidoModel>> _futureDemandas;
+  late final DemandService _service;
+  late final bool _ownsService;
   String? _estadoSelecionado;
 
   @override
   void initState() {
     super.initState();
-    _futureDemandas = Future.value(DemandMockData.demandas);
+    _ownsService = widget.service == null;
+    _service =
+        widget.service ??
+        DemandService(
+          accessToken: widget.session.accessToken,
+          onUnauthorized: widget.onLogout,
+        );
+    _futureDemandas = _service.buscarTodasDemandas();
+  }
+
+  @override
+  void dispose() {
+    if (_ownsService) _service.dispose();
+    super.dispose();
   }
 
   void _atualizarDemandas() {
     setState(() {
-      _futureDemandas = Future.value(DemandMockData.demandas);
+      _futureDemandas = _service.buscarTodasDemandas();
     });
   }
 
@@ -40,6 +65,11 @@ class _DemandListPageState extends State<DemandListPage> {
             onPressed: _atualizarDemandas,
             tooltip: 'Atualizar demandas',
             icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            onPressed: widget.onLogout,
+            tooltip: 'Sair',
+            icon: const Icon(Icons.logout),
           ),
         ],
       ),
@@ -126,13 +156,9 @@ class _DemandListPageState extends State<DemandListPage> {
                             color: const Color(0xFF181C24),
                             child: ListTile(
                               onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => DemandDetailsPage(
-                                      demandId: pedido.id,
-                                      pedido: pedido,
-                                    ),
-                                  ),
+                                Navigator.of(context).pushNamed(
+                                  AppRoutes.demandDetails,
+                                  arguments: pedido,
                                 );
                               },
                               contentPadding: const EdgeInsets.all(16),

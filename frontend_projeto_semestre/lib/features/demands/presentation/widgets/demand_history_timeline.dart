@@ -14,7 +14,8 @@ class DemandHistoryTimeline extends StatelessWidget {
   final bool carregando;
   final String? erro;
 
-  String _formatarData(DateTime data) {
+  String _formatarData(DateTime? data) {
+    if (data == null) return 'Data não informada';
     final local = data.toLocal();
 
     String doisDigitos(int valor) => valor.toString().padLeft(2, '0');
@@ -29,7 +30,13 @@ class DemandHistoryTimeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final eventos = [...historico]
-      ..sort((a, b) => a.dataHora.compareTo(b.dataHora));
+      ..sort((a, b) {
+        final left = a.dataHora;
+        final right = b.dataHora;
+        if (left == null) return right == null ? 0 : -1;
+        if (right == null) return 1;
+        return left.compareTo(right);
+      });
 
     return Container(
       width: double.infinity,
@@ -107,8 +114,10 @@ class DemandHistoryTimeline extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${evento.estadoAnterior ?? "Início"}'
-                            ' → ${evento.novoEstado}',
+                            evento.acao == null
+                                ? '${evento.estadoAnterior ?? "Início"}'
+                                      ' → ${evento.novoEstado}'
+                                : 'Ação: ${evento.acao}',
                             style: const TextStyle(
                               color: Color(0xFFDFE2EE),
                               fontSize: 15,
@@ -131,6 +140,17 @@ class DemandHistoryTimeline extends StatelessWidget {
                               fontSize: 12,
                             ),
                           ),
+                          if (evento.detalhes != null &&
+                              evento.detalhes!.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              evento.detalhes.toString(),
+                              style: const TextStyle(
+                                color: Color(0xFFC2C6D6),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
