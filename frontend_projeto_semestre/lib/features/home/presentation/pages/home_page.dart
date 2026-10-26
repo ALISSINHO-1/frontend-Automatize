@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
+import '../../data/auth_service.dart';
 import '../../../demands/presentation/widgets/demand_status_dashboard.dart';
 import '../../../demands/data/models/pedido_model.dart';
 import '../../../demands/data/mock/demand_mock_data.dart';
@@ -44,10 +45,21 @@ class HomePage extends StatelessWidget {
           'AUTOMATIZE',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 20),
+        actions: [
+          const Padding(
+            padding: EdgeInsets.only(right: 8),
             child: Center(child: Text('Painel administrativo')),
+          ),
+          IconButton(
+            tooltip: 'Sair',
+            onPressed: () {
+              AuthService.logout();
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRoutes.home,
+                (_) => false,
+              );
+            },
+            icon: const Icon(Icons.logout),
           ),
         ],
       ),
