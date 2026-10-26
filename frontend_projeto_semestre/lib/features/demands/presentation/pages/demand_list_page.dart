@@ -1,9 +1,8 @@
-
 import 'package:flutter/material.dart';
-
 import '../../data/models/pedido_model.dart';
-import '../../data/services/demand_service.dart';
 import '../widgets/demand_status_filter.dart';
+import '../../data/mock/demand_mock_data.dart';
+import 'demand_details_page.dart';
 
 class DemandListPage extends StatefulWidget {
   const DemandListPage({super.key});
@@ -13,20 +12,18 @@ class DemandListPage extends StatefulWidget {
 }
 
 class _DemandListPageState extends State<DemandListPage> {
-  final DemandService _service = const DemandService();
-
   late Future<List<PedidoModel>> _futureDemandas;
   String? _estadoSelecionado;
 
   @override
   void initState() {
     super.initState();
-    _futureDemandas = _service.buscarDemandas();
+    _futureDemandas = Future.value(DemandMockData.demandas);
   }
 
   void _atualizarDemandas() {
     setState(() {
-      _futureDemandas = _service.buscarDemandas();
+      _futureDemandas = Future.value(DemandMockData.demandas);
     });
   }
 
@@ -84,11 +81,8 @@ class _DemandListPageState extends State<DemandListPage> {
                   child: FutureBuilder<List<PedidoModel>>(
                     future: _futureDemandas,
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       if (snapshot.hasError) {
@@ -97,9 +91,7 @@ class _DemandListPageState extends State<DemandListPage> {
                             'Não foi possível carregar as demandas.\n'
                             '${snapshot.error}',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFFF9C9C),
-                            ),
+                            style: const TextStyle(color: Color(0xFFFF9C9C)),
                           ),
                         );
                       }
@@ -119,23 +111,30 @@ class _DemandListPageState extends State<DemandListPage> {
                                 ? 'Nenhuma demanda cadastrada.'
                                 : 'Nenhuma demanda encontrada para este estado.',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFC2C6D6),
-                            ),
+                            style: const TextStyle(color: Color(0xFFC2C6D6)),
                           ),
                         );
                       }
 
                       return ListView.separated(
                         itemCount: filtradas.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: 12),
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final pedido = filtradas[index];
 
                           return Card(
                             color: const Color(0xFF181C24),
                             child: ListTile(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => DemandDetailsPage(
+                                      demandId: pedido.id,
+                                      pedido: pedido,
+                                    ),
+                                  ),
+                                );
+                              },
                               contentPadding: const EdgeInsets.all(16),
                               title: Text(
                                 pedido.titulo,

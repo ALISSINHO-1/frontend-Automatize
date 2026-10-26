@@ -1,20 +1,37 @@
-
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../demands/presentation/widgets/demand_status_dashboard.dart';
+import '../../../demands/data/models/pedido_model.dart';
+import '../../../demands/data/mock/demand_mock_data.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   // Dados fictícios para demonstração visual.
   // A integração com a API será feita posteriormente.
-  static const Map<String, int> _contagensExemplo = {
-    'PLANEJAMENTO': 8,
-    'EXECUCAO': 5,
-    'HOMOLOGACAO': 3,
-    'CONCLUIDO': 12,
-  };
+  static Map<String, int> calcularContagens(List<PedidoModel> demandas) {
+    final contagens = {
+      'PLANEJAMENTO': 0,
+      'EXECUCAO': 0,
+      'HOMOLOGACAO': 0,
+      'CONCLUIDO': 0,
+    };
+
+    final idsProcessados = <String>{};
+
+    for (final demanda in demandas) {
+      if (!idsProcessados.add(demanda.id)) continue;
+
+      final status = demanda.status.trim().toUpperCase();
+
+      if (contagens.containsKey(status)) {
+        contagens[status] = contagens[status]! + 1;
+      }
+    }
+
+    return contagens;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +47,14 @@ class HomePage extends StatelessWidget {
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 20),
-            child: Center(
-              child: Text('Painel administrativo'),
-            ),
+            child: Center(child: Text('Painel administrativo')),
           ),
         ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final horizontalPadding =
-                constraints.maxWidth >= 900 ? 48.0 : 20.0;
+            final horizontalPadding = constraints.maxWidth >= 900 ? 48.0 : 20.0;
 
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
@@ -72,8 +86,8 @@ class HomePage extends StatelessWidget {
                       const SizedBox(height: 32),
 
                       // Indicadores visuais
-                      const DemandStatusDashboard(
-                        contagens: _contagensExemplo,
+                      DemandStatusDashboard(
+                        contagens: calcularContagens(DemandMockData.demandas),
                       ),
 
                       const SizedBox(height: 12),
@@ -95,13 +109,11 @@ class HomePage extends StatelessWidget {
                           child: LayoutBuilder(
                             builder: (context, cardConstraints) {
                               final conteudo = Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'Gerenciamento de demandas',
-                                    style: theme.textTheme.titleLarge
-                                        ?.copyWith(
+                                    style: theme.textTheme.titleLarge?.copyWith(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -110,8 +122,7 @@ class HomePage extends StatelessWidget {
                                     'Consulte as demandas cadastradas, '
                                     'acompanhe seus estados e visualize '
                                     'os detalhes de cada solicitação.',
-                                    style: theme.textTheme.bodyMedium
-                                        ?.copyWith(
+                                    style: theme.textTheme.bodyMedium?.copyWith(
                                       color: colors.onSurfaceVariant,
                                     ),
                                   ),
@@ -131,8 +142,7 @@ class HomePage extends StatelessWidget {
 
                               if (cardConstraints.maxWidth < 650) {
                                 return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     conteudo,
                                     const SizedBox(height: 20),
