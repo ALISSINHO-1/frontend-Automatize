@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../../../../core/config/app_config.dart';
+import '../../../core/config/app_config.dart';
 
 class AuthService {
   AuthService({http.Client? client}) : _client = client ?? http.Client();
