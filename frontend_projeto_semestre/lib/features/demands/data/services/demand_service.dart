@@ -1,12 +1,9 @@
-
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
-
-import '../../../../app/app.dart';
-import '../../../../core/config/app_config.dart';
-import '../../../../core/network/api_paths.dart';
-import '../../../../core/network/auth_interceptor.dart';
+import '/app/app.dart';
+import '/core/config/app_config.dart';
+import '/core/network/api_paths.dart';
+import '/core/network/auth_interceptor.dart';
 import '../models/pedido_model.dart';
 
 class DemandService {
@@ -85,8 +82,7 @@ class DemandService {
       );
     }
 
-    if (resposta.statusCode != 200 &&
-        resposta.statusCode != 201) {
+    if (resposta.statusCode != 201) {
       throw Exception(
         'Falha ao criar demanda (HTTP ${resposta.statusCode}): '
         '${utf8.decode(resposta.bodyBytes)}',
