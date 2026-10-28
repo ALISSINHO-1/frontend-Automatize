@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../app/routes/app_routes.dart';
+import '../../core/storage/local_storage_service.dart';
 
 /// Paleta visual compartilhada pelas telas do Automatize.
 class AutomatizeColors {
@@ -31,7 +33,7 @@ class MainLayout extends StatelessWidget {
     this.onLogout,
   });
 
-  // Mantém compatibilidade com telas que usam os nomes antigos.
+  // Aliases mantidos para não quebrar as telas existentes.
   static const Color sidebarColor = AutomatizeColors.sidebar;
   static const Color activeColor = AutomatizeColors.primary;
 
@@ -42,9 +44,7 @@ class MainLayout extends StatelessWidget {
         backgroundColor: AutomatizeColors.panel,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(
-            color: AutomatizeColors.border,
-          ),
+          side: const BorderSide(color: AutomatizeColors.border),
         ),
         icon: const Icon(
           Icons.logout_rounded,
@@ -60,19 +60,14 @@ class MainLayout extends StatelessWidget {
         ),
         content: const Text(
           'Você precisará entrar novamente para acessar suas demandas.',
-          style: TextStyle(
-            color: AutomatizeColors.muted,
-            height: 1.5,
-          ),
+          style: TextStyle(color: AutomatizeColors.muted, height: 1.5),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
         actions: [
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: AutomatizeColors.text,
-              side: const BorderSide(
-                color: AutomatizeColors.border,
-              ),
+              side: const BorderSide(color: AutomatizeColors.border),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -89,49 +84,39 @@ class MainLayout extends StatelessWidget {
               ),
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            icon: const Icon(
-              Icons.logout_rounded,
-              size: 17,
-            ),
+            icon: const Icon(Icons.logout_rounded, size: 17),
             label: const Text('Sair'),
           ),
         ],
       ),
     );
-
     if (confirmou != true || !context.mounted) return;
+
+    // Encerra a sessão antes de iniciar a navegação.
+    await LocalStorageService.removeToken();
+    if (!context.mounted) return;
 
     if (onLogout != null) {
       onLogout!();
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'A navegação para o login precisa ser conectada no app principal.',
-        ),
-      ),
-    );
+    // Mantém o logout funcional mesmo sem um callback na tela.
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
-  void _selecionarDestino(
-    BuildContext context,
-    int index,
-    String label,
-  ) {
+  void _selecionarDestino(BuildContext context, int index, String label) {
     if (selectedIndex == index) return;
-
     if (onDestinationSelected != null) {
       onDestinationSelected!(index);
       return;
     }
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          'A navegação para "$label" ainda não foi conectada.',
-        ),
+        content: Text('A navegação para "$label" ainda não foi conectada.'),
       ),
     );
   }
@@ -142,7 +127,6 @@ class MainLayout extends StatelessWidget {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 900;
         final sidebarWidth = compact ? 78.0 : 252.0;
-
         return Row(
           children: [
             Container(
@@ -150,10 +134,7 @@ class MainLayout extends StatelessWidget {
               decoration: const BoxDecoration(
                 color: AutomatizeColors.sidebar,
                 border: Border(
-                  right: BorderSide(
-                    color: AutomatizeColors.border,
-                    width: 0.7,
-                  ),
+                  right: BorderSide(color: AutomatizeColors.border, width: 0.7),
                 ),
               ),
               child: SafeArea(
@@ -170,9 +151,7 @@ class MainLayout extends StatelessWidget {
                               children: [
                                 _BrandIcon(),
                                 SizedBox(width: 11),
-                                Expanded(
-                                  child: _BrandName(),
-                                ),
+                                Expanded(child: _BrandName()),
                               ],
                             ),
                     ),
@@ -219,14 +198,10 @@ class MainLayout extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AutomatizeColors.panel,
                           borderRadius: BorderRadius.circular(15),
-                          border: Border.all(
-                            color: AutomatizeColors.border,
-                          ),
+                          border: Border.all(color: AutomatizeColors.border),
                         ),
                         child: compact
-                            ? const Center(
-                                child: _UserAvatar(),
-                              )
+                            ? const Center(child: _UserAvatar())
                             : const Row(
                                 children: [
                                   _UserAvatar(),
@@ -237,7 +212,7 @@ class MainLayout extends StatelessWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Mariana Costa',
+                                          'Minha conta',
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
@@ -293,9 +268,7 @@ class MainLayout extends StatelessWidget {
                 ),
               ),
             ),
-            Expanded(
-              child: child,
-            ),
+            Expanded(child: child),
           ],
         );
       },
@@ -314,12 +287,8 @@ class MainLayout extends StatelessWidget {
     final foreground = isLogout
         ? const Color(0xFFFF8994)
         : AutomatizeColors.muted;
-
     final item = Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 9 : 13,
-        vertical: 4,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 13, vertical: 4),
       child: Material(
         color: selected
             ? AutomatizeColors.primary.withValues(alpha: 0.18)
@@ -365,9 +334,7 @@ class MainLayout extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: selected
-                            ? AutomatizeColors.text
-                            : foreground,
+                        color: selected ? AutomatizeColors.text : foreground,
                         fontSize: 12,
                         fontWeight: selected
                             ? FontWeight.w800
@@ -391,11 +358,7 @@ class MainLayout extends StatelessWidget {
         ),
       ),
     );
-
-    return Tooltip(
-      message: compact ? label : '',
-      child: item,
-    );
+    return Tooltip(message: compact ? label : '', child: item);
   }
 }
 
@@ -409,10 +372,7 @@ class _BrandIcon extends StatelessWidget {
       height: 38,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            AutomatizeColors.cyan,
-            AutomatizeColors.primary,
-          ],
+          colors: [AutomatizeColors.cyan, AutomatizeColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -478,15 +438,12 @@ class _UserAvatar extends StatelessWidget {
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF249BFF),
-                Color(0xFF655DFF),
-              ],
+              colors: [Color(0xFF249BFF), Color(0xFF655DFF)],
             ),
           ),
           alignment: Alignment.center,
           child: const Text(
-            'MC',
+            'CL',
             style: TextStyle(
               color: Colors.white,
               fontSize: 11,
@@ -503,10 +460,7 @@ class _UserAvatar extends StatelessWidget {
             decoration: BoxDecoration(
               color: AutomatizeColors.success,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: AutomatizeColors.panel,
-                width: 2,
-              ),
+              border: Border.all(color: AutomatizeColors.panel, width: 2),
             ),
           ),
         ),

@@ -1,4 +1,3 @@
-
 class HistoricoEstadoModel {
   final String? estadoAnterior;
   final String novoEstado;

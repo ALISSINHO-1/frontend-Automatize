@@ -7,52 +7,69 @@ class AuthInterceptorClient extends http.BaseClient {
   final http.Client _inner;
   final GlobalKey<NavigatorState> navigatorKey;
 
-  bool _redirecionando = false;
+  static bool _redirecionamentoAgendado = false;
 
-  AuthInterceptorClient({
-    required this.navigatorKey,
-    http.Client? inner,
-  }) : _inner = inner ?? http.Client();
+  AuthInterceptorClient({required this.navigatorKey, http.Client? inner})
+    : _inner = inner ?? http.Client();
 
   @override
-  Future<http.StreamedResponse> send(
-    http.BaseRequest request,
-  ) async {
-    // Recupera o token salvo após o login.
-    final token = await LocalStorageService.getToken();
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final isLogin = request.url.path.endsWith('/auth/login');
 
-    // Adiciona o Bearer Token quando existir.
-    if (token != null && token.isNotEmpty) {
-      request.headers['Authorization'] = 'Bearer $token';
+    String? token;
+
+    if (isLogin) {
+      request.headers.remove('Authorization');
+    } else {
+      token = await LocalStorageService.getToken();
+
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
     }
 
     final response = await _inner.send(request);
 
-    // O token expirou ou não é válido.
-    if (response.statusCode == 401) {
-      await LocalStorageService.removeToken();
+    if (!isLogin && response.statusCode == 401) {
+      final precisaRedirecionar = LocalStorageService.invalidarSeAtual(token);
 
-      if (!_redirecionando) {
-        _redirecionando = true;
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final navigator = navigatorKey.currentState;
-
-          if (navigator != null && navigator.mounted) {
-            navigator.pushAndRemoveUntil(
-              MaterialPageRoute<void>(
-                builder: (_) => const LoginScreen(),
-              ),
-              (route) => false,
-            );
-          }
-
-          _redirecionando = false;
-        });
+      if (precisaRedirecionar) {
+        _redirecionarParaLogin();
       }
     }
 
     return response;
+  }
+
+  void _redirecionarParaLogin() {
+    if (_redirecionamentoAgendado) {
+      return;
+    }
+
+    _redirecionamentoAgendado = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final navigator = navigatorKey.currentState;
+
+        if (navigator == null || !navigator.mounted) {
+          return;
+        }
+
+        // Limpa o histórico de navegação.
+        navigator.pushAndRemoveUntil(
+          MaterialPageRoute<void>(
+            settings: const RouteSettings(name: '/login'),
+            builder: (_) => const LoginScreen(),
+          ),
+          (route) => false,
+        );
+      } finally {
+        _redirecionamentoAgendado = false;
+      }
+    });
+
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   @override

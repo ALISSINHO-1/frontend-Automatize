@@ -8,8 +8,7 @@ class DemandListPage extends StatefulWidget {
   const DemandListPage({super.key});
 
   @override
-  State<DemandListPage> createState() =>
-      _DemandListPageState();
+  State<DemandListPage> createState() => _DemandListPageState();
 }
 
 class _DemandListPageState extends State<DemandListPage> {
@@ -82,9 +81,7 @@ class _DemandListPageState extends State<DemandListPage> {
 
                 const Text(
                   'Filtre os projetos por etapa de desenvolvimento.',
-                  style: TextStyle(
-                    color: Color(0xFFC2C6D6),
-                  ),
+                  style: TextStyle(color: Color(0xFFC2C6D6)),
                 ),
 
                 const SizedBox(height: 24),
@@ -106,11 +103,8 @@ class _DemandListPageState extends State<DemandListPage> {
 
                     builder: (context, snapshot) {
                       // Carregamento.
-                      if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       if (snapshot.hasError) {
@@ -129,9 +123,7 @@ class _DemandListPageState extends State<DemandListPage> {
                               const Text(
                                 'Não foi possível carregar as demandas.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Color(0xFFFF9C9C),
-                                ),
+                                style: TextStyle(color: Color(0xFFFF9C9C)),
                               ),
 
                               const SizedBox(height: 8),
@@ -149,20 +141,16 @@ class _DemandListPageState extends State<DemandListPage> {
                               FilledButton.icon(
                                 onPressed: _atualizarDemandas,
                                 icon: const Icon(Icons.refresh),
-                                label: const Text(
-                                  'Tentar novamente',
-                                ),
+                                label: const Text('Tentar novamente'),
                               ),
                             ],
                           ),
                         );
                       }
 
-                      final demandas =
-                          snapshot.data ?? <PedidoModel>[];
+                      final demandas = snapshot.data ?? <PedidoModel>[];
 
-                      final filtradas =
-                          DemandStatusFilter.filtrar(
+                      final filtradas = DemandStatusFilter.filtrar(
                         demandas,
                         _estadoSelecionado,
                         (pedido) => pedido.status,
@@ -175,9 +163,7 @@ class _DemandListPageState extends State<DemandListPage> {
                                 ? 'Nenhuma demanda cadastrada.'
                                 : 'Nenhuma demanda encontrada para este estado.',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFC2C6D6),
-                            ),
+                            style: const TextStyle(color: Color(0xFFC2C6D6)),
                           ),
                         );
                       }
@@ -185,8 +171,7 @@ class _DemandListPageState extends State<DemandListPage> {
                       return ListView.separated(
                         itemCount: filtradas.length,
 
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: 12),
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
 
                         itemBuilder: (context, index) {
                           final pedido = filtradas[index];
@@ -198,9 +183,7 @@ class _DemandListPageState extends State<DemandListPage> {
                               onTap: () async {
                                 await Navigator.of(context).push(
                                   MaterialPageRoute<void>(
-                                    builder: (_) =>
-                                        DemandDetailsPage(
-
+                                    builder: (_) => DemandDetailsPage(
                                       demandId: pedido.id,
                                       pedido: pedido,
                                     ),
@@ -212,8 +195,7 @@ class _DemandListPageState extends State<DemandListPage> {
                                 }
                               },
 
-                              contentPadding:
-                                  const EdgeInsets.all(16),
+                              contentPadding: const EdgeInsets.all(16),
 
                               title: Text(
                                 pedido.titulo,
@@ -224,8 +206,7 @@ class _DemandListPageState extends State<DemandListPage> {
                               ),
 
                               subtitle: Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.only(top: 8),
 
                                 child: Text(
                                   '${pedido.descricao}\n'

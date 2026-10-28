@@ -1,23 +1,41 @@
-import 'package:shared_preferences/shared_preferences.dart';
-
 class LocalStorageService {
-  static const String _tokenKey = 'auth_token';
- 
-  // 1. Guardar o Token (Após o login)
+  // JWT mantido somente durante a sessão atual da página.
+  static String? _token;
+
+  // Evita processar repetidamente a mesma expiração.
+  static bool _sessaoInvalidada = false;
+
+  // Salva o token após o login bem-sucedido.
   static Future<void> saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
+    if (token.trim().isEmpty) {
+      throw ArgumentError('Não é possível salvar um token vazio.');
+    }
+
+    _token = token.trim();
+    _sessaoInvalidada = false;
   }
 
-  // 2. Ler o Token (Para injetar nas chamadas da API)
+  // Recupera o token da sessão atual.
   static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    return _token;
   }
 
-  // 3. Apagar o Token (Ao fazer logout ou quando der erro 401)
+  // Remove o token no logout.
   static Future<void> removeToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
+    _token = null;
+    _sessaoInvalidada = true;
+  }
+
+  // Invalida a sessão somente se a resposta 401
+  // pertencer à sessão que fez a requisição.
+  static bool invalidarSeAtual(String? tokenUtilizado) {
+    if (_sessaoInvalidada || _token != tokenUtilizado) {
+      return false;
+    }
+
+    _token = null;
+    _sessaoInvalidada = true;
+
+    return true;
   }
 }

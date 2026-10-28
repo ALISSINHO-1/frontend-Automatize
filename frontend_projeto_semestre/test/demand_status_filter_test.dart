@@ -4,21 +4,20 @@ import 'package:frontend_projeto_semestre/features/demands/presentation/widgets/
 
 void main() {
   test('Filtra demandas pelos quatro estados', () {
-    final demandas = [
-      'PLANEJAMENTO',
-      'EXECUCAO',
-      'HOMOLOGACAO',
-      'CONCLUIDO',
-    ].asMap().entries.map((item) {
-      return PedidoModel(
-        id: '${item.key + 1}',
-        titulo: 'Demanda ${item.key + 1}',
-        descricao: '',
-        status: item.value,
-        percentualProgresso: 0,
-        clienteId: 'cliente-teste',
-      );
-    }).toList();
+    final demandas = ['PLANEJAMENTO', 'EXECUCAO', 'HOMOLOGACAO', 'CONCLUIDO']
+        .asMap()
+        .entries
+        .map((item) {
+          return PedidoModel(
+            id: '${item.key + 1}',
+            titulo: 'Demanda ${item.key + 1}',
+            descricao: '',
+            status: item.value,
+            percentualProgresso: 0,
+            clienteId: 'cliente-teste',
+          );
+        })
+        .toList();
 
     for (final estado in DemandStatusFilter.estados) {
       final resultado = DemandStatusFilter.filtrar(

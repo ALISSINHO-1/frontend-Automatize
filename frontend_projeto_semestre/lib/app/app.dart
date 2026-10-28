@@ -3,8 +3,7 @@ import '../core/theme/app_theme.dart';
 import '../features/home/presentation/pages/login_screen.dart';
 import 'routes/app_routes.dart';
 
-final GlobalKey<NavigatorState> appNavigatorKey =
-    GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 class FaculdadeApp extends StatelessWidget {
   const FaculdadeApp({super.key});

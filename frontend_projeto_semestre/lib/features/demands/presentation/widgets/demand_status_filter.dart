@@ -63,18 +63,12 @@ class DemandStatusFilter extends StatelessWidget {
           value: 'PLANEJAMENTO',
           child: Text('Planejamento'),
         ),
-        DropdownMenuItem<String>(
-          value: 'EXECUCAO',
-          child: Text('Execução'),
-        ),
+        DropdownMenuItem<String>(value: 'EXECUCAO', child: Text('Execução')),
         DropdownMenuItem<String>(
           value: 'HOMOLOGACAO',
           child: Text('Homologação'),
         ),
-        DropdownMenuItem<String>(
-          value: 'CONCLUIDO',
-          child: Text('Concluído'),
-        ),
+        DropdownMenuItem<String>(value: 'CONCLUIDO', child: Text('Concluído')),
       ],
       onChanged: (valor) {
         onStatusChanged(valor == 'TODOS' ? null : valor);

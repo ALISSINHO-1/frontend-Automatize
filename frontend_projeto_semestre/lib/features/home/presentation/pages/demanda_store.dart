@@ -1,13 +1,18 @@
 
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/storage/local_storage_service.dart';
+import '../../../demands/data/models/pedido_model.dart';
+import '../../../demands/data/services/demand_service.dart';
+
 class DemandaItem {
-  final int id;
+  final String id;
   final String codigo;
   final String titulo;
   final String descricao;
   final String estado;
-  final int progresso;
+  final double progresso;
+  final DateTime? createdAt;
 
   const DemandaItem({
     required this.id,
@@ -16,7 +21,21 @@ class DemandaItem {
     required this.descricao,
     required this.estado,
     required this.progresso,
+    this.createdAt,
   });
+
+  // Converte o modelo da API para o modelo da interface.
+  factory DemandaItem.fromPedido(PedidoModel pedido) {
+    return DemandaItem(
+      id: pedido.id,
+      codigo: pedido.codigoIdentificador ?? pedido.id,
+      titulo: pedido.titulo,
+      descricao: pedido.descricao,
+      estado: pedido.status,
+      progresso: pedido.percentualProgresso,
+      createdAt: pedido.createdAt,
+    );
+  }
 }
 
 class DemandaStore extends ChangeNotifier {
@@ -24,111 +43,86 @@ class DemandaStore extends ChangeNotifier {
 
   static final DemandaStore instance = DemandaStore._();
 
-  final List<DemandaItem> _demandas = [
-    const DemandaItem(
-      id: 1,
-      codigo: 'AUT-001',
-      titulo: 'Manutenção de notebook',
-      descricao: 'Verificar desempenho, teclado e sistema.',
-      estado: 'Planejamento',
-      progresso: 15,
-    ),
-    const DemandaItem(
-      id: 2,
-      codigo: 'AUT-002',
-      titulo: 'Configuração de rede',
-      descricao: 'Verificar conexão e configuração da rede.',
-      estado: 'Homologação',
-      progresso: 85,
-    ),
-    const DemandaItem(
-      id: 3,
-      codigo: 'AUT-003',
-      titulo: 'Instalação de sistema',
-      descricao: 'Realizar instalação e validar funcionamento.',
-      estado: 'Concluído',
-      progresso: 100,
-    ),
-  ];
+  final DemandService _service = DemandService();
+
+  List<DemandaItem> _demandas = [];
+  bool _carregando = false;
+  bool _carregado = false;
+  String? _erro;
+  String? _tokenDaLista;
 
   List<DemandaItem> get demandas =>
       List.unmodifiable(_demandas);
 
-  int _progressoPorEstado(String estado) {
-    switch (estado) {
-      case 'Planejamento':
-        return 15;
-      case 'Homologação':
-        return 85;
-      case 'Concluído':
-        return 100;
-      default:
-        return 0;
+  bool get carregando => _carregando;
+  bool get carregado => _carregado;
+  String? get erro => _erro;
+
+  // Carrega demandas reais por meio do serviço.
+  Future<void> carregarDemandas() async {
+    if (_carregando) return;
+
+    _carregando = true;
+    _erro = null;
+    notifyListeners();
+
+    final token = await LocalStorageService.getToken();
+
+    if (token == null || token.isEmpty) {
+      limpar();
+
+      _erro = 'Faça login para consultar suas demandas.';
+      notifyListeners();
+      return;
     }
-  }
 
-  void adicionar({
-    required String titulo,
-    required String descricao,
-    required String estado,
-  }) {
-    final proximoId = _demandas.fold<int>(
-          0,
-          (maior, demanda) =>
-              demanda.id > maior ? demanda.id : maior,
-        ) +
-        1;
+    // Não reaproveita dados de outra sessão.
+    if (token != _tokenDaLista) {
+      _demandas = [];
+      _carregado = false;
+      _tokenDaLista = token;
+    }
 
-    _demandas.insert(
-      0,
-      DemandaItem(
-        id: proximoId,
-        codigo: 'AUT-${proximoId.toString().padLeft(3, '0')}',
-        titulo: titulo,
-        descricao: descricao,
-        estado: estado,
-        progresso: _progressoPorEstado(estado), 
-      ),
-    );
+    try {
+      final registros = await _service.buscarDemandas();
 
-    notifyListeners();
-  }
+      if (await LocalStorageService.getToken() != token) {
+        limpar();
+        return;
+      }
 
-  void atualizar({
-    required int id,
-    required String titulo,
-    required String descricao,
-    required String estado,
-  }) {
-    final indice = _demandas.indexWhere(
-      (demanda) => demanda.id == id,
-    );
+      _demandas = registros
+          .map(DemandaItem.fromPedido)
+          .toList();
 
-    if (indice == -1) return;
-
-    final atual = _demandas[indice];
-
-    _demandas[indice] = DemandaItem(
-      id: atual.id,
-      codigo: atual.codigo,
-      titulo: titulo,
-      descricao: descricao,
-      estado: estado,
-      progresso: _progressoPorEstado(estado),
-    );
-
-    notifyListeners();
-  }
-
-  void remover(int id) {
-    final quantidadeAnterior = _demandas.length;
-
-    _demandas.removeWhere(
-      (demanda) => demanda.id == id,
-    );
-
-    if (_demandas.length != quantidadeAnterior) {
+      _carregado = true;
+    } catch (erro) {
+      _demandas = [];
+      _carregado = false;
+      _erro = erro.toString();
+    } finally {
+      _carregando = false;
       notifyListeners();
     }
+  }
+
+  // Só atualiza a listagem após o cadastro confirmado.
+  Future<void> adicionar({
+    required String titulo,
+    required String descricao,
+  }) async {
+    await _service.criarDemanda(titulo, descricao);
+    await carregarDemandas();
+  }
+
+  // Limpa as informações da sessão.
+  void limpar() {
+    _demandas = [];
+    _tokenDaLista = null;
+    _carregando = false;
+    _carregado = false;
+    _erro = null;
+
+    notifyListeners();
   }
 }

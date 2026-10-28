@@ -15,11 +15,9 @@ class HomePage extends StatelessWidget {
   static const roxo = Color(0xFFB784FF);
 
   void _abrirDemandas(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const DemandasScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const DemandasScreen()));
   }
 
   @override
@@ -30,11 +28,7 @@ class HomePage extends StatelessWidget {
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF07172A),
-              Color(0xFF0A1C31),
-              Color(0xFF102943),
-            ],
+            colors: [Color(0xFF07172A), Color(0xFF0A1C31), Color(0xFF102943)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -51,9 +45,7 @@ class HomePage extends StatelessWidget {
                 ),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: 1200,
-                    ),
+                    constraints: const BoxConstraints(maxWidth: 1200),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -87,9 +79,7 @@ class HomePage extends StatelessWidget {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [ciano, azul],
-            ),
+            gradient: const LinearGradient(colors: [ciano, azul]),
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(
@@ -115,27 +105,17 @@ class HomePage extends StatelessWidget {
               SizedBox(height: 4),
               Text(
                 'Gestão de demandas',
-                style: TextStyle(
-                  color: secundario,
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: secundario, fontSize: 11),
               ),
             ],
           ),
         ),
         if (largo) ...[
-          const Icon(
-            Icons.verified_user_outlined,
-            color: verde,
-            size: 18,
-          ),
+          const Icon(Icons.verified_user_outlined, color: verde, size: 18),
           const SizedBox(width: 8),
           const Text(
             'Portal do cliente',
-            style: TextStyle(
-              color: secundario,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: secundario, fontSize: 12),
           ),
           const SizedBox(width: 20),
         ],
@@ -144,24 +124,15 @@ class HomePage extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: texto,
             side: const BorderSide(color: borda),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 13,
-              vertical: 15,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 15),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          icon: const Icon(
-            Icons.assignment_outlined,
-            size: 18,
-          ),
+          icon: const Icon(Icons.assignment_outlined, size: 18),
           label: Text(
             largo ? 'Minhas demandas' : 'Demandas',
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
           ),
         ),
       ],
@@ -175,25 +146,16 @@ class HomePage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: azul.withValues(alpha: 0.13),
             borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: azul.withValues(alpha: 0.35),
-            ),
+            border: Border.all(color: azul.withValues(alpha: 0.35)),
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.bolt_rounded,
-                color: ciano,
-                size: 16,
-              ),
+              Icon(Icons.bolt_rounded, color: ciano, size: 16),
               SizedBox(width: 7),
               Text(
                 'GESTÃO MAIS SIMPLES',
@@ -223,11 +185,7 @@ class HomePage extends StatelessWidget {
           'Acompanhe o andamento das atividades, consulte '
           'informações e visualize cada etapa do seu projeto '
           'em um único lugar.',
-          style: TextStyle(
-            color: secundario,
-            fontSize: 14,
-            height: 1.8,
-          ),
+          style: TextStyle(color: secundario, fontSize: 14, height: 1.8),
         ),
         const SizedBox(height: 28),
         Wrap(
@@ -247,16 +205,10 @@ class HomePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              icon: const Icon(
-                Icons.arrow_forward_rounded,
-                size: 18,
-              ),
+              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
               label: const Text(
                 'Ver lista de demandas',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
               ),
             ),
             OutlinedButton.icon(
@@ -272,10 +224,7 @@ class HomePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              icon: const Icon(
-                Icons.info_outline_rounded,
-                size: 18,
-              ),
+              icon: const Icon(Icons.info_outline_rounded, size: 18),
               label: const Text(
                 'Conheça a plataforma',
                 style: TextStyle(fontSize: 12),
@@ -289,11 +238,7 @@ class HomePage extends StatelessWidget {
     if (!largo) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          apresentacao,
-          const SizedBox(height: 32),
-          _cartaoEtapas(),
-        ],
+        children: [apresentacao, const SizedBox(height: 32), _cartaoEtapas()],
       );
     }
 
@@ -308,10 +253,7 @@ class HomePage extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 15),
-        const Expanded(
-          flex: 9,
-          child: _CartaoEtapas(),
-        ),
+        const Expanded(flex: 9, child: _CartaoEtapas()),
       ],
     );
   }
@@ -338,11 +280,7 @@ class HomePage extends StatelessWidget {
         SizedBox(height: 8),
         Text(
           'Recursos para facilitar o acompanhamento do projeto.',
-          style: TextStyle(
-            color: secundario,
-            fontSize: 12,
-            height: 1.5,
-          ),
+          style: TextStyle(color: secundario, fontSize: 12, height: 1.5),
         ),
       ],
     );
@@ -357,8 +295,8 @@ class HomePage extends StatelessWidget {
         final larguraCartao = largura >= 1000
             ? (largura - 32) / 3
             : largura >= 650
-                ? (largura - 16) / 2
-                : largura;
+            ? (largura - 16) / 2
+            : largura;
 
         return Wrap(
           spacing: 16,
@@ -431,11 +369,7 @@ class HomePage extends StatelessWidget {
             'do projeto, visualizar seus estados e acompanhar o '
             'progresso das atividades. As informações exibidas '
             'dependem dos dados disponibilizados pelo sistema.',
-            style: TextStyle(
-              color: secundario,
-              fontSize: 13,
-              height: 1.7,
-            ),
+            style: TextStyle(color: secundario, fontSize: 13, height: 1.7),
           ),
           actions: [
             TextButton(
@@ -447,9 +381,7 @@ class HomePage extends StatelessWidget {
                 Navigator.of(dialogContext).pop();
                 _abrirDemandas(context);
               },
-              style: FilledButton.styleFrom(
-                backgroundColor: azul,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: azul),
               child: const Text('Ver demandas'),
             ),
           ],
@@ -465,11 +397,7 @@ class HomePage extends StatelessWidget {
       padding: EdgeInsets.only(top: 22),
       child: Row(
         children: [
-          Icon(
-            Icons.auto_awesome_rounded,
-            color: ciano,
-            size: 17,
-          ),
+          Icon(Icons.auto_awesome_rounded, color: ciano, size: 17),
           SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -508,10 +436,7 @@ class _CartaoEtapas extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF153657),
-            Color(0xFF102743),
-          ],
+          colors: [Color(0xFF153657), Color(0xFF102743)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -523,11 +448,7 @@ class _CartaoEtapas extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.account_tree_outlined,
-                color: ciano,
-                size: 26,
-              ),
+              Icon(Icons.account_tree_outlined, color: ciano, size: 26),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -544,10 +465,7 @@ class _CartaoEtapas extends StatelessWidget {
                     SizedBox(height: 5),
                     Text(
                       'Etapas do projeto',
-                      style: TextStyle(
-                        color: secundario,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: secundario, fontSize: 11),
                     ),
                   ],
                 ),
@@ -588,11 +506,7 @@ class _CartaoEtapas extends StatelessWidget {
             ),
             child: const Row(
               children: [
-                Icon(
-                  Icons.visibility_outlined,
-                  color: verde,
-                  size: 20,
-                ),
+                Icon(Icons.visibility_outlined, color: verde, size: 20),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -614,11 +528,7 @@ class _CartaoEtapas extends StatelessWidget {
 
   Widget _conector(Color cor) {
     return Padding(
-      padding: const EdgeInsets.only(
-        left: 21,
-        top: 5,
-        bottom: 5,
-      ),
+      padding: const EdgeInsets.only(left: 21, top: 5, bottom: 5),
       child: Container(
         width: 2,
         height: 19,
@@ -655,15 +565,9 @@ class _Etapa extends StatelessWidget {
           decoration: BoxDecoration(
             color: cor.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: cor.withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: cor.withValues(alpha: 0.3)),
           ),
-          child: Icon(
-            icone,
-            color: cor,
-            size: 21,
-          ),
+          child: Icon(icone, color: cor, size: 21),
         ),
         const SizedBox(width: 13),
         Expanded(
@@ -690,11 +594,7 @@ class _Etapa extends StatelessWidget {
             ],
           ),
         ),
-        Icon(
-          Icons.arrow_forward_ios_rounded,
-          color: cor,
-          size: 13,
-        ),
+        Icon(Icons.arrow_forward_ios_rounded, color: cor, size: 13),
       ],
     );
   }
@@ -739,11 +639,7 @@ class _CartaoFuncionalidade extends StatelessWidget {
                   color: cor.withValues(alpha: 0.13),
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: Icon(
-                  icone,
-                  color: cor,
-                  size: 23,
-                ),
+                child: Icon(icone, color: cor, size: 23),
               ),
               Text(
                 numero,

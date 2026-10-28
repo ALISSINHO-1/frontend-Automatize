@@ -5,8 +5,7 @@ class NovaDemandaScreen extends StatefulWidget {
   const NovaDemandaScreen({super.key});
 
   @override
-  State<NovaDemandaScreen> createState() =>
-      _NovaDemandaScreenState();
+  State<NovaDemandaScreen> createState() => _NovaDemandaScreenState();
 }
 
 class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
@@ -30,16 +29,19 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
   Future<void> _guardarDemanda() async {
     if (_isLoading) return;
 
-    if (!_formKey.currentState!.validate()) return;
+    final formularioValido = _formKey.currentState?.validate() ?? false;
+
+    if (!formularioValido) return;
+
+    FocusScope.of(context).unfocus();
+
+    final titulo = _tituloController.text.trim();
+    final descricao = _descricaoController.text.trim();
 
     setState(() => _isLoading = true);
 
     try {
-    
-      await _demandService.criarDemanda(
-        _tituloController.text.trim(),
-        _descricaoController.text.trim(),
-      );
+      await _demandService.criarDemanda(titulo, descricao);
 
       if (!mounted) return;
 
@@ -51,14 +53,12 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
       );
 
       Navigator.of(context).pop(true);
-    } catch (e) {
+    } catch (erro) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Não foi possível cadastrar a demanda: $e',
-          ),
+          content: Text('Não foi possível cadastrar a demanda: $erro'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 5),
         ),
@@ -96,20 +96,18 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
                       prefixIcon: Icon(Icons.title),
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'O título é obrigatório.';
                       }
 
                       return null;
                     },
                   ),
-
                   const SizedBox(height: 20),
-
                   TextFormField(
                     controller: _descricaoController,
                     enabled: !_isLoading,
+                    keyboardType: TextInputType.multiline,
                     maxLines: 4,
                     decoration: const InputDecoration(
                       labelText: 'Descrição',
@@ -120,14 +118,11 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 32),
-
                   SizedBox(
                     height: 50,
                     child: FilledButton.icon(
-                      onPressed:
-                          _isLoading ? null : _guardarDemanda,
+                      onPressed: _isLoading ? null : _guardarDemanda,
                       icon: _isLoading
                           ? const SizedBox(
                               width: 20,
@@ -139,11 +134,8 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
                             )
                           : const Icon(Icons.save),
                       label: Text(
-                        _isLoading
-                            ? 'A guardar...'
-                            : 'Guardar Demanda',
-                        style:
-                            const TextStyle(fontSize: 16),
+                        _isLoading ? 'Salvando...' : 'Salvar Demanda',
+                        style: const TextStyle(fontSize: 16),
                       ),
                     ),
                   ),
