@@ -243,7 +243,7 @@ class DemandDetailsPage extends StatelessWidget {
                     Align(
                     alignment: Alignment.centerLeft,
                     child: FilledButton.icon(
-                      onPressed: () {
+                      onPressed: pedido == null ? null : () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => DemandAttachmentsPage(

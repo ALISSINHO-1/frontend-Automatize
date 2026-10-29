@@ -54,6 +54,7 @@ class _DemandAttachmentsPageState extends State<DemandAttachmentsPage> {
         }
       }
 
+      if (!mounted) return;
       setState(() {
         _arquivos.addAll(aceitos);
         _erro = rejeitados.isEmpty ? null : rejeitados.join('\n');
