@@ -3,7 +3,7 @@ import 'demand_attachments_page.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/pedido_model.dart';
 import '../widgets/demand_history_timeline.dart';
-
+import '../../../home/presentation/widgets/admin_layout.dart';
 import '../../data/models/historico_estado_model.dart';
 
 class DemandDetailsPage extends StatelessWidget {
@@ -37,8 +37,9 @@ class DemandDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F131C),
-      body: SafeArea(
-        child: SingleChildScrollView(
+    body: SafeArea(
+    child: AdminLayout(
+      child: SingleChildScrollView(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1200),
@@ -333,11 +334,12 @@ class DemandDetailsPage extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-        ),
+           ),
       ),
-    );
-  }
+    ),
+    ),
+  );
+}
 }
 
 class _InformationItem extends StatelessWidget {

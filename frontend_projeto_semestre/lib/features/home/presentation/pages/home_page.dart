@@ -4,6 +4,8 @@ import '../../../../app/routes/app_routes.dart';
 import '../../../demands/presentation/widgets/demand_status_dashboard.dart';
 import '../../../demands/data/models/pedido_model.dart';
 import '../../../demands/data/mock/demand_mock_data.dart';
+import '../widgets/admin_sidebar.dart';
+import '../widgets/admin_layout.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -39,24 +41,18 @@ class HomePage extends StatelessWidget {
     final colors = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'AUTOMATIZE',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 20),
-            child: Center(child: Text('Painel administrativo')),
-          ),
-        ],
-      ),
+    drawer: MediaQuery.sizeOf(context).width < 900
+      ? const AdminSidebar()
+      : null,
+    appBar: null,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth >= 900 ? 48.0 : 20.0;
+  child: LayoutBuilder(
+    builder: (context, constraints) {
+      final isDesktop = constraints.maxWidth >= 900;
+      final horizontalPadding = isDesktop ? 48.0 : 20.0;
 
-            return SingleChildScrollView(
+      return AdminLayout(
+      child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 horizontalPadding,
                 32,
@@ -162,14 +158,15 @@ class HomePage extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ],
+                      ],
                   ),
                 ),
               ),
-            );
-          },
-        ),
+               ),
+          );
+        },
       ),
+    ),
     );
   }
 }

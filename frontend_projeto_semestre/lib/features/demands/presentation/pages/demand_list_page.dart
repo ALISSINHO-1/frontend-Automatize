@@ -3,6 +3,7 @@ import '../../data/models/pedido_model.dart';
 import '../widgets/demand_status_filter.dart';
 import '../../data/mock/demand_mock_data.dart';
 import 'demand_details_page.dart';
+import '../../../home/presentation/widgets/admin_layout.dart';
 
 class DemandListPage extends StatefulWidget {
   const DemandListPage({super.key});
@@ -30,27 +31,38 @@ class _DemandListPageState extends State<DemandListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F131C),
-      appBar: AppBar(
-        title: const Text('Minhas demandas'),
-        backgroundColor: const Color(0xFF181C24),
-        foregroundColor: const Color(0xFFDFE2EE),
-        actions: [
-          IconButton(
-            onPressed: _atualizarDemandas,
-            tooltip: 'Atualizar demandas',
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
+  backgroundColor: const Color(0xFF0F131C),
+      body: AdminLayout(
+      child: Center(
+      child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Minhas demandas',
+                        style: TextStyle(
+                          color: Color(0xFFDFE2EE),
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _atualizarDemandas,
+                      tooltip: 'Atualizar demandas',
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
                 const Text(
                   'Acompanhe suas demandas',
                   style: TextStyle(
@@ -163,8 +175,9 @@ class _DemandListPageState extends State<DemandListPage> {
               ],
             ),
           ),
-        ),
+          ),
       ),
-    );
+    ),
+  );
   }
 }
