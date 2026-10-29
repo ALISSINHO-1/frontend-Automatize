@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class DemandStatusDashboard extends StatelessWidget {
   final Map<String, int> contagens;
 
-  const DemandStatusDashboard({
-    super.key,
-    required this.contagens,
-  });
+  const DemandStatusDashboard({super.key, required this.contagens});
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +19,19 @@ class DemandStatusDashboard extends StatelessWidget {
       children: [
         Text(
           'Painel administrativo',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
             final largura = constraints.maxWidth;
-            final colunas = largura >= 900 ? 4 : largura >= 500 ? 2 : 1;
+            final colunas = largura >= 900
+                ? 4
+                : largura >= 500
+                ? 2
+                : 1;
             final larguraCard = (largura - (colunas - 1) * 16) / colunas;
 
             return Wrap(
@@ -49,9 +50,7 @@ class DemandStatusDashboard extends StatelessWidget {
                           const SizedBox(height: 16),
                           Text(
                             '${contagens[indicador.$2] ?? 0}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineMedium
+                            style: Theme.of(context).textTheme.headlineMedium
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),

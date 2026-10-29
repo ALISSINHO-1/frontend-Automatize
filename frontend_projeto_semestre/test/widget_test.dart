@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_projeto_semestre/app/app.dart';
+import 'package:frontend_projeto_semestre/features/home/presentation/pages/login_screen.dart';
 
 void main() {
-  testWidgets('exibe o painel administrativo do AUTOMATIZE', (tester) async {
+  testWidgets('A aplicação inicia exibindo a tela de login', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const FaculdadeApp());
 
-    expect(find.text('AUTOMATIZE'), findsOneWidget);
-    expect(find.text('Visão geral das demandas'), findsOneWidget);
-    expect(find.text('Painel administrativo'), findsWidgets);
-    expect(find.text('Planejamento'), findsOneWidget);
-    expect(find.text('Execução'), findsOneWidget);
-    expect(find.text('Homologação'), findsOneWidget);
-    expect(find.text('Concluído'), findsOneWidget);
-    expect(find.byType(FilledButton), findsOneWidget);
+    await tester.pump();
+
+    // Verifica se a aplicação iniciou.
+    expect(find.byType(MaterialApp), findsOneWidget);
+
+    // Verifica se a tela de login está presente.
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    // Verifica os campos do formulário de login.
+    expect(find.byType(TextFormField), findsWidgets);
   });
 }

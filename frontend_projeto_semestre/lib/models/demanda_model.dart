@@ -1,14 +1,9 @@
-
 class Demanda {
   final int id;
   final String titulo;
   final String descricao;
 
-  Demanda({
-    required this.id,
-    required this.titulo,
-    required this.descricao,
-  });
+  Demanda({required this.id, required this.titulo, required this.descricao});
 
   factory Demanda.fromJson(Map<String, dynamic> json) {
     return Demanda(

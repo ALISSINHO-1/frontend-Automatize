@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
-
   static ThemeData get dark {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF637BFF),
@@ -24,9 +23,7 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF181C24),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

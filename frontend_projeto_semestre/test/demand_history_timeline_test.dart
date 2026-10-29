@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -59,9 +58,7 @@ void main() {
     expect(find.text('17/10/2026 às 10:00'), findsOneWidget);
     expect(find.text('18/10/2026 às 15:30'), findsOneWidget);
 
-    final primeiraTransicao = tester.getTopLeft(
-      find.text('Início → ABERTA'),
-    );
+    final primeiraTransicao = tester.getTopLeft(find.text('Início → ABERTA'));
     final segundaTransicao = tester.getTopLeft(
       find.text('EXECUCAO → HOMOLOGACAO'),
     );
@@ -71,25 +68,14 @@ void main() {
 
   testWidgets('Exibe erro quando informado', (tester) async {
     await tester.pumpWidget(
-      criarTela(
-        historico: [],
-        erro: 'Não foi possível carregar o histórico.',
-      ),
+      criarTela(historico: [], erro: 'Não foi possível carregar o histórico.'),
     );
 
-    expect(
-      find.text('Não foi possível carregar o histórico.'),
-      findsOneWidget,
-    );
+    expect(find.text('Não foi possível carregar o histórico.'), findsOneWidget);
   });
 
   testWidgets('Exibe carregamento quando solicitado', (tester) async {
-    await tester.pumpWidget(
-      criarTela(
-        historico: [],
-        carregando: true,
-      ),
-    );
+    await tester.pumpWidget(criarTela(historico: [], carregando: true));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });

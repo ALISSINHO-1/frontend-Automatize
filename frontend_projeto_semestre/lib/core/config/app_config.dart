@@ -18,8 +18,8 @@ abstract final class AppConfig {
     final normalizedPath = path.isEmpty
         ? ''
         : path.startsWith('/')
-            ? path
-            : '/$path';
+        ? path
+        : '/$path';
 
     return Uri.parse('$normalizedBase$normalizedPath');
   }
