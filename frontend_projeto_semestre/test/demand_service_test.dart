@@ -27,6 +27,49 @@ void main() {
     expect(pedido.percentualProgresso, 32.5);
   });
 
+  test('aceita o Decimal serializado como texto pelo Pydantic', () {
+    final pedido = PedidoModel.fromJson({
+      ...respostaValida,
+      'percentual_progresso': '37.50',
+    });
+    expect(pedido.percentualProgresso, 37.5);
+  });
+
+  test('rejeita percentuais inválidos sem inventar progresso', () {
+    for (final valor in ['NaN', 'Infinity', 'invalido', -1, 101, null]) {
+      expect(
+        () => PedidoModel.fromJson({
+          ...respostaValida,
+          'percentual_progresso': valor,
+        }),
+        throwsFormatException,
+      );
+    }
+  });
+
+  test('busca todas as páginas autorizadas pela API', () async {
+    final offsets = <String?>[];
+    final cliente = MockClient((requisicao) async {
+      offsets.add(requisicao.url.queryParameters['offset']);
+      expect(requisicao.url.queryParameters['limit'], '100');
+      final offset = int.parse(requisicao.url.queryParameters['offset']!);
+      return http.Response(
+        jsonEncode(
+          List.generate(
+            offset == 0 ? 100 : 1,
+            (index) => {...respostaValida, 'id': 'demanda-${offset + index}'},
+          ),
+        ),
+        200,
+        headers: {'content-type': 'application/json; charset=utf-8'},
+      );
+    });
+    addTearDown(cliente.close);
+    final resultado = await DemandService(client: cliente).buscarDemandas();
+    expect(resultado, hasLength(101));
+    expect(offsets, ['0', '100']);
+  });
+
   test('não inventa percentual quando a API omite o campo', () {
     final semPercentual = {...respostaValida}..remove('percentual_progresso');
 

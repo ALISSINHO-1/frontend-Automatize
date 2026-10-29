@@ -38,12 +38,13 @@ class _PainelScreenState extends State<PainelScreen> {
   }
 
   String _normalizarStatus(String estado) {
-    return estado
+    final normalizado = estado
         .trim()
         .toUpperCase()
         .replaceAll('Ç', 'C')
         .replaceAll('Ã', 'A')
         .replaceAll('Í', 'I');
+    return normalizado == 'PLANEAMENTO' ? 'PLANEJAMENTO' : normalizado;
   }
 
   Color _corStatus(String estado) {

@@ -89,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'email': _emailController.text.trim(),
-              'password': _senhaController.text,
+              'senha': _senhaController.text,
             }),
           )
           .timeout(const Duration(seconds: 15));
@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         final token = data is Map<String, dynamic>
-            ? (data['access_token'] ?? data['token'])
+            ? data['access_token']
             : null;
 
         if (token is! String || token.trim().isEmpty) {
@@ -110,9 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
 
         // Remove o login e as demais telas do histórico de navegação.
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
       } else if (response.statusCode == 400 || response.statusCode == 401) {
         _mostrarErro('E-mail ou senha incorretos.');
       } else if (response.statusCode == 403) {

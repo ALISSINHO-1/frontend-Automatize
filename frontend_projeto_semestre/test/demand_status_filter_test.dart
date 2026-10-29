@@ -3,6 +3,16 @@ import 'package:frontend_projeto_semestre/features/demands/data/models/pedido_mo
 import 'package:frontend_projeto_semestre/features/demands/presentation/widgets/demand_status_filter.dart';
 
 void main() {
+  test('reconhece PLANEAMENTO retornado pela API', () {
+    expect(
+      DemandStatusFilter.filtrar(
+        ['PLANEAMENTO', 'EXECUCAO'],
+        'PLANEJAMENTO',
+        (status) => status,
+      ),
+      ['PLANEAMENTO'],
+    );
+  });
   test('Filtra demandas pelos quatro estados', () {
     final demandas = ['PLANEJAMENTO', 'EXECUCAO', 'HOMOLOGACAO', 'CONCLUIDO']
         .asMap()
