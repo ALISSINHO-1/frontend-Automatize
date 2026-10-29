@@ -1,9 +1,8 @@
-
 import 'package:flutter/material.dart';
-
 import '../../data/models/pedido_model.dart';
 import '../../data/services/demand_service.dart';
 import '../widgets/demand_status_filter.dart';
+import 'demand_details_page.dart';
 
 class DemandListPage extends StatefulWidget {
   const DemandListPage({super.key});
@@ -13,14 +12,17 @@ class DemandListPage extends StatefulWidget {
 }
 
 class _DemandListPageState extends State<DemandListPage> {
-  final DemandService _service = const DemandService();
+  // Serviço real de comunicação com a API.
+  final DemandService _service = DemandService();
 
   late Future<List<PedidoModel>> _futureDemandas;
+
   String? _estadoSelecionado;
 
   @override
   void initState() {
     super.initState();
+
     _futureDemandas = _service.buscarDemandas();
   }
 
@@ -31,13 +33,21 @@ class _DemandListPageState extends State<DemandListPage> {
   }
 
   @override
+  void dispose() {
+    _service.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F131C),
+
       appBar: AppBar(
         title: const Text('Minhas demandas'),
         backgroundColor: const Color(0xFF181C24),
         foregroundColor: const Color(0xFFDFE2EE),
+
         actions: [
           IconButton(
             onPressed: _atualizarDemandas,
@@ -46,13 +56,17 @@ class _DemandListPageState extends State<DemandListPage> {
           ),
         ],
       ),
+
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
+
           child: Padding(
             padding: const EdgeInsets.all(24),
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+
               children: [
                 const Text(
                   'Acompanhe suas demandas',
@@ -62,11 +76,14 @@ class _DemandListPageState extends State<DemandListPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+
                 const SizedBox(height: 8),
+
                 const Text(
                   'Filtre os projetos por etapa de desenvolvimento.',
                   style: TextStyle(color: Color(0xFFC2C6D6)),
                 ),
+
                 const SizedBox(height: 24),
 
                 DemandStatusFilter(
@@ -83,28 +100,55 @@ class _DemandListPageState extends State<DemandListPage> {
                 Expanded(
                   child: FutureBuilder<List<PedidoModel>>(
                     future: _futureDemandas,
+
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
+                      // Carregamento.
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       if (snapshot.hasError) {
                         return Center(
-                          child: Text(
-                            'Não foi possível carregar as demandas.\n'
-                            '${snapshot.error}',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFFF9C9C),
-                            ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 42,
+                                color: Color(0xFFFF9C9C),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              const Text(
+                                'Não foi possível carregar as demandas.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Color(0xFFFF9C9C)),
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              Text(
+                                '${snapshot.error}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFFC2C6D6),
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              FilledButton.icon(
+                                onPressed: _atualizarDemandas,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Tentar novamente'),
+                              ),
+                            ],
                           ),
                         );
                       }
 
-                      final demandas = snapshot.data ?? [];
+                      final demandas = snapshot.data ?? <PedidoModel>[];
 
                       final filtradas = DemandStatusFilter.filtrar(
                         demandas,
@@ -119,24 +163,40 @@ class _DemandListPageState extends State<DemandListPage> {
                                 ? 'Nenhuma demanda cadastrada.'
                                 : 'Nenhuma demanda encontrada para este estado.',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFC2C6D6),
-                            ),
+                            style: const TextStyle(color: Color(0xFFC2C6D6)),
                           ),
                         );
                       }
 
                       return ListView.separated(
                         itemCount: filtradas.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: 12),
+
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+
                         itemBuilder: (context, index) {
                           final pedido = filtradas[index];
 
                           return Card(
                             color: const Color(0xFF181C24),
+
                             child: ListTile(
+                              onTap: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => DemandDetailsPage(
+                                      demandId: pedido.id,
+                                      pedido: pedido,
+                                    ),
+                                  ),
+                                );
+
+                                if (mounted) {
+                                  _atualizarDemandas();
+                                }
+                              },
+
                               contentPadding: const EdgeInsets.all(16),
+
                               title: Text(
                                 pedido.titulo,
                                 style: const TextStyle(
@@ -144,11 +204,14 @@ class _DemandListPageState extends State<DemandListPage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+
                               subtitle: Padding(
                                 padding: const EdgeInsets.only(top: 8),
+
                                 child: Text(
                                   '${pedido.descricao}\n'
-                                  'Estado: ${pedido.status}',
+                                  'Estado: ${pedido.status}\n'
+                                  'Progresso: ${pedido.percentualProgresso}%',
                                   style: const TextStyle(
                                     color: Color(0xFFC2C6D6),
                                   ),

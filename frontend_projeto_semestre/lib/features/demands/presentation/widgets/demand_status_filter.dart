@@ -18,13 +18,14 @@ class DemandStatusFilter extends StatelessWidget {
   ];
 
   static String normalizarStatus(String status) {
-    return status
+    final normalizado = status
         .trim()
         .toUpperCase()
         .replaceAll('Ç', 'C')
         .replaceAll('Ã', 'A')
         .replaceAll('Í', 'I')
         .replaceAll('É', 'E');
+    return normalizado == 'PLANEAMENTO' ? 'PLANEJAMENTO' : normalizado;
   }
 
   static List<T> filtrar<T>(
@@ -63,18 +64,12 @@ class DemandStatusFilter extends StatelessWidget {
           value: 'PLANEJAMENTO',
           child: Text('Planejamento'),
         ),
-        DropdownMenuItem<String>(
-          value: 'EXECUCAO',
-          child: Text('Execução'),
-        ),
+        DropdownMenuItem<String>(value: 'EXECUCAO', child: Text('Execução')),
         DropdownMenuItem<String>(
           value: 'HOMOLOGACAO',
           child: Text('Homologação'),
         ),
-        DropdownMenuItem<String>(
-          value: 'CONCLUIDO',
-          child: Text('Concluído'),
-        ),
+        DropdownMenuItem<String>(value: 'CONCLUIDO', child: Text('Concluído')),
       ],
       onChanged: (valor) {
         onStatusChanged(valor == 'TODOS' ? null : valor);

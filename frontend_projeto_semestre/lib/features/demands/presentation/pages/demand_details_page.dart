@@ -1,36 +1,37 @@
+import 'demand_homologation_page.dart';
+import 'demand_attachments_page.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/pedido_model.dart';
 import '../widgets/demand_history_timeline.dart';
+
+import '../../data/models/historico_estado_model.dart';
+
 class DemandDetailsPage extends StatelessWidget {
-  const DemandDetailsPage({
-    super.key,
-    required this.demandId,
-    this.pedido,
-  });
+  const DemandDetailsPage({super.key, required this.demandId, this.pedido});
 
   final String demandId;
   final PedidoModel? pedido;
 
   String get nomeResponsavel {
-  final responsavelId = pedido?.responsavelId;
+    final responsavelId = pedido?.responsavelId;
 
-  if (responsavelId == null || responsavelId.isEmpty) {
-    return 'Não atribuído';
+    if (responsavelId == null || responsavelId.isEmpty) {
+      return 'Não atribuído';
+    }
+
+    return 'ID: $responsavelId';
   }
 
-  return 'ID: $responsavelId';
-}
-
   static String _formatarData(DateTime? data) {
-  if (data == null) return 'Não informado';
+    if (data == null) return 'Não informado';
 
-  final dataLocal = data.toLocal();
-  final dia = dataLocal.day.toString().padLeft(2, '0');
-  final mes = dataLocal.month.toString().padLeft(2, '0');
-  final ano = dataLocal.year;
+    final dataLocal = data.toLocal();
+    final dia = dataLocal.day.toString().padLeft(2, '0');
+    final mes = dataLocal.month.toString().padLeft(2, '0');
+    final ano = dataLocal.year;
 
-  return '$dia/$mes/$ano';
-}
+    return '$dia/$mes/$ano';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,32 +83,34 @@ class DemandDetailsPage extends StatelessWidget {
                       runSpacing: 12,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                      Text(
-                      pedido?.titulo ?? 'Detalhes indisponíveis',
-                      style: const TextStyle(
-                        color: Color(0xFFDFE2EE),
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                        Text(
+                          pedido?.titulo ?? 'Detalhes indisponíveis',
+                          style: const TextStyle(
+                            color: Color(0xFFDFE2EE),
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF4D8EFF).withValues(alpha: 0.15),
+                            color: const Color(
+                              0xFF4D8EFF,
+                            ).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                          pedido?.status ?? 'SEM DADOS',
-                          style: const TextStyle(
-                            color: Color(0xFFADC6FF),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
+                            pedido?.status ?? 'SEM DADOS',
+                            style: const TextStyle(
+                              color: Color(0xFFADC6FF),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
                           ),
-                        ),
                         ),
                       ],
                     ),
@@ -121,9 +124,7 @@ class DemandDetailsPage extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFF181C24),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFF424754),
-                        ),
+                        border: Border.all(color: const Color(0xFF424754)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,29 +149,27 @@ class DemandDetailsPage extends StatelessWidget {
 
                           const SizedBox(height: 32),
 
-                          const Divider(
-                            color: Color(0xFF424754),
-                          ),
+                          const Divider(color: Color(0xFF424754)),
 
                           const SizedBox(height: 24),
 
                           // Responsável e estado
                           Wrap(
-                          spacing: 80,
-                          runSpacing: 24,
-                          children: [
-                            _InformationItem(
-                              label: 'RESPONSÁVEL',
-                              value: nomeResponsavel,
-                              icon: Icons.person_outline,
-                            ),
-                            _InformationItem(
-                              label: 'ESTADO',
-                              value: pedido?.status ?? 'Não informado',
-                              icon: Icons.sync,
-                            ),
-                          ],
-                        ),
+                            spacing: 80,
+                            runSpacing: 24,
+                            children: [
+                              _InformationItem(
+                                label: 'RESPONSÁVEL',
+                                value: nomeResponsavel,
+                                icon: Icons.person_outline,
+                              ),
+                              _InformationItem(
+                                label: 'ESTADO',
+                                value: pedido?.status ?? 'Não informado',
+                                icon: Icons.sync,
+                              ),
+                            ],
+                          ),
 
                           const SizedBox(height: 36),
 
@@ -202,7 +201,8 @@ class DemandDetailsPage extends StatelessWidget {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: LinearProgressIndicator(
-                            value: ((pedido?.percentualProgresso ?? 0) / 100).clamp(0.0, 1.0),
+                              value: ((pedido?.percentualProgresso ?? 0) / 100)
+                                  .clamp(0.0, 1.0),
                               minHeight: 10,
                               backgroundColor: Color(0xFF31353E),
                               valueColor: AlwaysStoppedAnimation<Color>(
@@ -213,40 +213,95 @@ class DemandDetailsPage extends StatelessWidget {
 
                           const SizedBox(height: 36),
 
-                          const Divider(
-                            color: Color(0xFF424754),
-                          ),
+                          const Divider(color: Color(0xFF424754)),
 
                           const SizedBox(height: 24),
 
                           // Datas
                           Wrap(
-                          spacing: 80,
-                          runSpacing: 24,
-                          children: [
-                            _InformationItem(
-                              label: 'CRIADA EM',
-                              value: _formatarData(pedido?.createdAt),
-                              icon: Icons.calendar_today_outlined,
-                            ),
-                            _InformationItem(
-                              label: 'ATUALIZADA EM',
-                              value: _formatarData(pedido?.updatedAt),
-                              icon: Icons.update,
-                            ),
-                          ],
-                        ),
+                            spacing: 80,
+                            runSpacing: 24,
+                            children: [
+                              _InformationItem(
+                                label: 'CRIADA EM',
+                                value: _formatarData(pedido?.createdAt),
+                                icon: Icons.calendar_today_outlined,
+                              ),
+                              _InformationItem(
+                                label: 'ATUALIZADA EM',
+                                value: _formatarData(pedido?.updatedAt),
+                                icon: Icons.update,
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
 
                     const SizedBox(height: 24),
 
-                  const DemandHistoryTimeline(
-                    historico: [],
-                ),
+                    Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.icon(
+                      onPressed: pedido == null ? null : () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => DemandAttachmentsPage(
+                              pedido: pedido!,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.attach_file),
+                      label: const Text('Abrir anexos'),
+                    ),
+                  ),
 
                   const SizedBox(height: 24),
+
+                    DemandHistoryTimeline(
+                      historico: [
+                        HistoricoEstadoModel(
+                          estadoAnterior: null,
+                          novoEstado: 'ABERTO',
+                          usuarioResponsavel: 'Lucas Silva',
+                          dataHora: DateTime(2026, 10, 15, 9, 30),
+                        ),
+                        HistoricoEstadoModel(
+                          estadoAnterior: 'ABERTO',
+                          novoEstado: 'EXECUCAO',
+                          usuarioResponsavel: 'Lucas Silva',
+                          dataHora: DateTime(2026, 10, 17, 14, 15),
+                        ),
+                        HistoricoEstadoModel(
+                          estadoAnterior: 'EXECUCAO',
+                          novoEstado: 'HOMOLOGACAO',
+                          usuarioResponsavel: 'Lucas Silva',
+                          dataHora: DateTime(2026, 10, 20, 10, 45),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    if (pedido?.status.toUpperCase() == 'HOMOLOGACAO')
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DemandHomologationPage(pedido: pedido!),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.fact_check_outlined),
+                          label: const Text('Abrir homologação'),
+                        ),
+                      ),
+
+                    const SizedBox(height: 24),
 
                     // Aviso temporário
                     Container(
@@ -258,16 +313,13 @@ class DemandDetailsPage extends StatelessWidget {
                       ),
                       child: const Row(
                         children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: Color(0xFF4CD7F6),
-                          ),
+                          Icon(Icons.info_outline, color: Color(0xFF4CD7F6)),
                           SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'As informações exibidas correspondem aos dados disponíveis '
-                                'para esta demanda. Dados adicionais serão apresentados '
-                                'quando disponibilizados pela API.',
+                              'para esta demanda. Dados adicionais serão apresentados '
+                              'quando disponibilizados pela API.',
                               style: TextStyle(
                                 color: Color(0xFFC2C6D6),
                                 height: 1.4,
@@ -313,39 +365,35 @@ class _InformationItem extends StatelessWidget {
               color: const Color(0xFF4D8EFF).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              icon,
-              color: const Color(0xFFADC6FF),
-              size: 21,
-            ),
+            child: Icon(icon, color: const Color(0xFFADC6FF), size: 21),
           ),
           const SizedBox(width: 12),
           Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Color(0xFF8C909F),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.8,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Color(0xFF8C909F),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Color(0xFFDFE2EE),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: 5),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Color(0xFFDFE2EE),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-           ],
+              ],
+            ),
           ),
-         ),
-       ],
+        ],
       ),
     );
   }
