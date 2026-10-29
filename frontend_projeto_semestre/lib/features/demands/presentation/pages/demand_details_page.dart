@@ -1,7 +1,9 @@
+import 'demand_homologation_page.dart';
+import 'demand_attachments_page.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/pedido_model.dart';
 import '../widgets/demand_history_timeline.dart';
-import '../widgets/demand_homologation_card.dart';
+
 import '../../data/models/historico_estado_model.dart';
 
 class DemandDetailsPage extends StatelessWidget {
@@ -238,6 +240,25 @@ class DemandDetailsPage extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
+                    Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.icon(
+                      onPressed: pedido == null ? null : () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => DemandAttachmentsPage(
+                              pedido: pedido!,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.attach_file),
+                      label: const Text('Abrir anexos'),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
                     DemandHistoryTimeline(
                       historico: [
                         HistoricoEstadoModel(
@@ -263,76 +284,22 @@ class DemandDetailsPage extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    DemandHomologationCard(
-                      status: pedido?.status ?? '',
-                      onAprovar: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Demanda aprovada com sucesso! (Demonstração)',
-                            ),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      },
-                      onReprovar: () async {
-                        final observacao = await showDialog<String>(
-                          context: context,
-                          builder: (dialogContext) {
-                            String texto = '';
-
-                            return StatefulBuilder(
-                              builder: (context, setDialogState) {
-                                return AlertDialog(
-                                  title: const Text('Solicitar ajustes'),
-                                  content: TextField(
-                                    maxLines: 4,
-                                    maxLength: 500,
-                                    onChanged: (valor) {
-                                      setDialogState(() {
-                                        texto = valor;
-                                      });
-                                    },
-                                    decoration: const InputDecoration(
-                                      hintText:
-                                          'Descreva os ajustes necessários...',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(dialogContext),
-                                      child: const Text('Cancelar'),
-                                    ),
-                                    FilledButton(
-                                      onPressed: texto.trim().isEmpty
-                                          ? null
-                                          : () => Navigator.pop(
-                                              dialogContext,
-                                              texto.trim(),
-                                            ),
-                                      child: const Text('Enviar solicitação'),
-                                    ),
-                                  ],
-                                );
-                              },
+                    if (pedido?.status.toUpperCase() == 'HOMOLOGACAO')
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DemandHomologationPage(pedido: pedido!),
+                              ),
                             );
                           },
-                        );
-
-                        if (!context.mounted || observacao == null) return;
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Ajustes solicitados! (Demonstração)',
-                            ),
-                            backgroundColor: Colors.orange,
-                          ),
-                        );
-                      },
-                    ),
+                          icon: const Icon(Icons.fact_check_outlined),
+                          label: const Text('Abrir homologação'),
+                        ),
+                      ),
 
                     const SizedBox(height: 24),
 
