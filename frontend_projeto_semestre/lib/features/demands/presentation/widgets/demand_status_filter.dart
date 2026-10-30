@@ -18,13 +18,14 @@ class DemandStatusFilter extends StatelessWidget {
   ];
 
   static String normalizarStatus(String status) {
-    return status
+    final normalizado = status
         .trim()
         .toUpperCase()
         .replaceAll('Ç', 'C')
         .replaceAll('Ã', 'A')
         .replaceAll('Í', 'I')
         .replaceAll('É', 'E');
+    return normalizado == 'PLANEAMENTO' ? 'PLANEJAMENTO' : normalizado;
   }
 
   static List<T> filtrar<T>(

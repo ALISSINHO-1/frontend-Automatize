@@ -47,24 +47,27 @@ class PedidoModel {
     );
   }
 
-  static double? _parsePercentual(dynamic valor) {
+  static double? _parsePercentual(Object? valor) {
     if (valor == null) {
       return null;
     }
 
-    if (valor is num && valor.isFinite) {
-      return valor.toDouble();
+    double? percentual;
+
+    if (valor is num) {
+      percentual = valor.toDouble();
+    } else if (valor is String) {
+      percentual = double.tryParse(valor.trim());
     }
 
-    if (valor is String) {
-      final percentual = double.tryParse(valor.trim());
-
-      if (percentual != null && percentual.isFinite) {
-        return percentual;
-      }
+    if (percentual == null ||
+        !percentual.isFinite ||
+        percentual < 0 ||
+        percentual > 100) {
+      throw const FormatException('Percentual de progresso inválido na API.');
     }
 
-    throw const FormatException('Percentual de progresso inválido na API.');
+    return percentual;
   }
 
   static String _textoObrigatorio(Map<String, dynamic> json, String campo) {
@@ -77,7 +80,7 @@ class PedidoModel {
     return valor;
   }
 
-  static String? _textoOpcional(dynamic valor) {
+  static String? _textoOpcional(Object? valor) {
     if (valor == null) {
       return null;
     }
@@ -89,7 +92,7 @@ class PedidoModel {
     throw const FormatException('Campo de texto opcional inválido na API.');
   }
 
-  static DateTime? _parseDate(dynamic valor) {
+  static DateTime? _parseDate(Object? valor) {
     if (valor == null) {
       return null;
     }

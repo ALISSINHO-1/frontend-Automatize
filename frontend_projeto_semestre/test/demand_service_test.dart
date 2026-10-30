@@ -11,7 +11,7 @@ void main() {
   const uuid = '16d64439-6e8a-4815-ae8e-8e2ba99f0f60';
   const outroUuid = 'b6f28d13-7f4e-4a21-b05e-d0c4e7f08c92';
 
-  // Reproduz o contrato da FastAPI: decimal como String ou null.
+  // A FastAPI serializa Decimal como String e também pode retornar null.
   final respostaValida = <String, dynamic>{
     'id': uuid,
     'codigo_identificador': 'AUT-100',
@@ -41,17 +41,15 @@ void main() {
 
       expect(pedido.id, uuid);
       expect(pedido.progressoInformado, isFalse);
-      // Valor de apresentação usado pelo modelo atual; não é progresso real.
+      // Zero é apenas o fallback da interface, não um progresso confirmado.
       expect(pedido.percentualProgresso, 0.0);
     });
 
     test('mantém compatibilidade com percentual numérico', () {
-      final respostaNumerica = {
+      final pedido = PedidoModel.fromJson({
         ...respostaValida,
         'percentual_progresso': 32.5,
-      };
-
-      final pedido = PedidoModel.fromJson(respostaNumerica);
+      });
 
       expect(pedido.percentualProgresso, 32.5);
       expect(pedido.progressoInformado, isTrue);
@@ -66,16 +64,17 @@ void main() {
       );
     });
 
-    test('rejeita percentual de progresso inválido', () {
-      final respostaInvalida = {
-        ...respostaValida,
-        'percentual_progresso': 'valor-invalido',
-      };
-
-      expect(
-        () => PedidoModel.fromJson(respostaInvalida),
-        throwsA(isA<FormatException>()),
-      );
+    test('rejeita percentuais inválidos e fora do intervalo de 0 a 100', () {
+      for (final valor in ['NaN', 'Infinity', 'invalido', -1, 101]) {
+        expect(
+          () => PedidoModel.fromJson({
+            ...respostaValida,
+            'percentual_progresso': valor,
+          }),
+          throwsA(isA<FormatException>()),
+          reason: 'Valor inválido não foi rejeitado: $valor',
+        );
+      }
     });
   });
 
@@ -106,6 +105,42 @@ void main() {
         expect(resultado.first.progressoInformado, isTrue);
         expect(resultado.last.id, outroUuid);
         expect(resultado.last.progressoInformado, isFalse);
+      } finally {
+        cliente.close();
+      }
+    });
+
+    test('busca todas as páginas autorizadas pela API', () async {
+      final offsets = <String?>[];
+
+      final cliente = MockClient((requisicao) async {
+        expect(requisicao.method, 'GET');
+        expect(requisicao.url.path, '/demandas');
+        expect(requisicao.url.queryParameters['limit'], '100');
+
+        final offsetTexto = requisicao.url.queryParameters['offset'];
+        offsets.add(offsetTexto);
+        final offset = int.parse(offsetTexto!);
+
+        return http.Response(
+          jsonEncode(
+            List.generate(
+              offset == 0 ? 100 : 1,
+              (index) => {...respostaValida, 'id': 'demanda-${offset + index}'},
+            ),
+          ),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+
+      final servico = DemandService(client: cliente);
+
+      try {
+        final resultado = await servico.buscarDemandas();
+
+        expect(resultado, hasLength(101));
+        expect(offsets, ['0', '100']);
       } finally {
         cliente.close();
       }

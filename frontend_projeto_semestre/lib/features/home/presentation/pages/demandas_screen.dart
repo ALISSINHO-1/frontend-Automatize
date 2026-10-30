@@ -46,7 +46,11 @@ class _DemandasScreenState extends State<DemandasScreen> {
 
   DemandaItem _converterPedido(PedidoModel pedido) {
     final estado = switch (pedido.status.toLowerCase()) {
-      'planejamento' || 'pending' || 'pendente' => 'Planejamento',
+      'planeamento' ||
+      'planejamento' ||
+      'pending' ||
+      'pendente' => 'Planejamento',
+      'execucao' || 'execução' => 'Execução',
       'homologacao' || 'homologação' => 'Homologação',
       'concluido' || 'concluído' || 'completed' => 'Concluído',
       _ => pedido.status,
@@ -73,6 +77,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
   String _filtroStatus = 'Todos os estados';
   static const List<String> _estados = [
     'Planejamento',
+    'Execução',
     'Homologação',
     'Concluído',
   ];
@@ -117,6 +122,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
       case 'concluido':
         return AutomatizeColors.success;
       case 'em andamento':
+      case 'execução':
         return const Color(0xFF63A8FF);
       case 'bloqueado':
         return AutomatizeColors.danger;

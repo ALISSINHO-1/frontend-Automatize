@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -14,10 +13,7 @@ class DemandServiceException implements Exception {
   final String mensagem;
   final int? statusCode;
 
-  const DemandServiceException(
-    this.mensagem, {
-    this.statusCode,
-  });
+  const DemandServiceException(this.mensagem, {this.statusCode});
 
   @override
   String toString() => mensagem;
@@ -25,11 +21,8 @@ class DemandServiceException implements Exception {
 
 class DemandService {
   DemandService({http.Client? client})
-      : _client = client ??
-            AuthInterceptorClient(
-              navigatorKey: appNavigatorKey,
-            ),
-        _ownsClient = client == null;
+    : _client = client ?? AuthInterceptorClient(navigatorKey: appNavigatorKey),
+      _ownsClient = client == null;
 
   static const _timeout = Duration(seconds: 15);
 
@@ -38,27 +31,32 @@ class DemandService {
 
   // Consulta as demandas cadastradas na API.
   Future<List<PedidoModel>> buscarDemandas() async {
+    const tamanhoPagina = 100;
+    final demandas = <PedidoModel>[];
+    while (true) {
+      final pagina = await _buscarPagina(demandas.length, tamanhoPagina);
+      demandas.addAll(pagina);
+      if (pagina.length < tamanhoPagina) return demandas;
+    }
+  }
+
+  Future<List<PedidoModel>> _buscarPagina(int offset, int limit) async {
     final resposta = await _executar(
       () => _client.get(
-        AppConfig.apiUri(ApiPaths.demandas),
+        AppConfig.apiUri(ApiPaths.demandas)
+            .replace(queryParameters: {'offset': '$offset', 'limit': '$limit'}),
         headers: {'Accept': 'application/json'},
       ),
     );
 
-    _verificarStatus(
-      resposta,
-      esperado: 200,
-      operacao: 'carregar demandas',
-    );
+    _verificarStatus(resposta, esperado: 200, operacao: 'carregar demandas');
 
     final dynamic dados;
 
     try {
       dados = jsonDecode(utf8.decode(resposta.bodyBytes));
     } on FormatException {
-      throw const DemandServiceException(
-        'A API retornou um JSON inválido.',
-      );
+      throw const DemandServiceException('A API retornou um JSON inválido.');
     }
 
     if (dados is! List) {
@@ -70,9 +68,7 @@ class DemandService {
     try {
       return dados.map((item) {
         if (item is! Map<String, dynamic>) {
-          throw const FormatException(
-            'Uma demanda está em formato inválido.',
-          );
+          throw const FormatException('Uma demanda está em formato inválido.');
         }
 
         return PedidoModel.fromJson(item);
@@ -85,10 +81,7 @@ class DemandService {
   }
 
   // Cadastra uma nova demanda na API.
-  Future<void> criarDemanda(
-    String titulo,
-    String descricao,
-  ) async {
+  Future<void> criarDemanda(String titulo, String descricao) async {
     final resposta = await _executar(
       () => _client.post(
         AppConfig.apiUri(ApiPaths.demandas),
@@ -96,18 +89,11 @@ class DemandService {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'titulo': titulo,
-          'descricao': descricao,
-        }),
+        body: jsonEncode({'titulo': titulo, 'descricao': descricao}),
       ),
     );
 
-    _verificarStatus(
-      resposta,
-      esperado: 201,
-      operacao: 'criar demanda',
-    );
+    _verificarStatus(resposta, esperado: 201, operacao: 'criar demanda');
   }
 
   // Trata falhas de comunicação e timeout.
@@ -141,25 +127,22 @@ class DemandService {
       401 => 'Sua sessão expirou. Faça login novamente.',
       403 => 'Você não tem permissão para realizar esta operação.',
       404 => 'O recurso solicitado não foi encontrado.',
-      422 => detalhe == null
-          ? 'Os dados enviados não foram aceitos pela API.'
-          : 'Dados inválidos: $detalhe',
-      _ => 'Não foi possível $operacao '
-          '(HTTP ${resposta.statusCode}).',
+      422 =>
+        detalhe == null
+            ? 'Os dados enviados não foram aceitos pela API.'
+            : 'Dados inválidos: $detalhe',
+      _ =>
+        'Não foi possível $operacao '
+            '(HTTP ${resposta.statusCode}).',
     };
 
-    throw DemandServiceException(
-      mensagem,
-      statusCode: resposta.statusCode,
-    );
+    throw DemandServiceException(mensagem, statusCode: resposta.statusCode);
   }
 
   // Extrai mensagens de validação da FastAPI.
   static String? _detalheFastApi(http.Response resposta) {
     try {
-      final dados = jsonDecode(
-        utf8.decode(resposta.bodyBytes),
-      );
+      final dados = jsonDecode(utf8.decode(resposta.bodyBytes));
 
       if (dados is! Map<String, dynamic>) {
         return null;

@@ -63,10 +63,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => _carregando = true);
+
     final client = widget.client ?? http.Client();
 
     try {
-      // Evita que uma autenticação inválida reutilize a sessão anterior.
+      // Evita reutilizar uma sessão anterior.
       await LocalStorageService.removeToken();
 
       final resposta = await client
@@ -103,8 +104,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _tratarResposta(http.Response resposta) async {
     if (resposta.statusCode == 200) {
       final dados = jsonDecode(utf8.decode(resposta.bodyBytes));
+
+      // Contrato da FastAPI: apenas access_token.
       final token = dados is Map<String, dynamic>
-          ? (dados['access_token'] ?? dados['token'])
+          ? dados['access_token']
           : null;
 
       if (token is! String || token.trim().isEmpty) {
@@ -112,12 +115,16 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
+      // Armazena o JWT em memória.
       await LocalStorageService.saveToken(token);
+
       if (!mounted) return;
 
+      // Remove as telas anteriores do histórico.
       Navigator.of(
         context,
       ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+
       return;
     }
 
@@ -197,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Apresentação do Automatize
+  // Painel de apresentação
 
   Widget _painelApresentacao({bool compacto = false}) {
     return Container(
@@ -214,9 +221,13 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _marca(),
+
           SizedBox(height: compacto ? 28 : 65),
+
           _selo(),
+
           const SizedBox(height: 23),
+
           Text(
             'Seu trabalho,\nmais organizado.',
             style: TextStyle(
@@ -227,7 +238,9 @@ class _LoginScreenState extends State<LoginScreen> {
               letterSpacing: -1.1,
             ),
           ),
+
           const SizedBox(height: 17),
+
           const Text(
             'Acompanhe suas demandas, consulte o andamento '
             'das atividades e mantenha tudo em um só lugar.',
@@ -237,21 +250,28 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 1.7,
             ),
           ),
+
           const SizedBox(height: 28),
+
           _beneficio(
             Icons.track_changes_rounded,
             'Acompanhamento de progresso',
           ),
+
           const SizedBox(height: 15),
+
           _beneficio(
             Icons.fact_check_outlined,
             'Status das demandas sempre visíveis',
           ),
+
           const SizedBox(height: 15),
+
           _beneficio(
             Icons.dashboard_customize_outlined,
             'Informações organizadas em um só lugar',
           ),
+
           if (!compacto) ...[
             const SizedBox(height: 36),
             const Divider(color: _borda),
@@ -270,6 +290,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+  // Marca do Automatize
 
   Widget _marca() {
     return Row(
@@ -294,7 +316,9 @@ class _LoginScreenState extends State<LoginScreen> {
             size: 25,
           ),
         ),
+
         const SizedBox(width: 12),
+
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -317,6 +341,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ],
     );
   }
+
+  // Selo informativo
 
   Widget _selo() {
     return Container(
@@ -345,6 +371,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Item de benefício
+
   Widget _beneficio(IconData icone, String texto) {
     return Row(
       children: [
@@ -357,7 +385,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: Icon(icone, color: _ciano, size: 17),
         ),
+
         const SizedBox(width: 12),
+
         Expanded(
           child: Text(
             texto,
@@ -383,19 +413,29 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _cabecalhoFormulario(),
+
             const SizedBox(height: 30),
+
             _campoEmail(),
+
             const SizedBox(height: 21),
+
             _campoSenha(),
+
             const SizedBox(height: 28),
+
             _botaoEntrar(),
+
             const SizedBox(height: 24),
+
             _avisoAcesso(),
           ],
         ),
       ),
     );
   }
+
+  // Cabeçalho do formulário
 
   Widget _cabecalhoFormulario() {
     return Column(
@@ -413,7 +453,9 @@ class _LoginScreenState extends State<LoginScreen> {
             size: 25,
           ),
         ),
+
         const SizedBox(height: 25),
+
         const Text(
           'Bem-vindo de volta!',
           style: TextStyle(
@@ -423,7 +465,9 @@ class _LoginScreenState extends State<LoginScreen> {
             letterSpacing: -0.6,
           ),
         ),
+
         const SizedBox(height: 9),
+
         const Text(
           'Entre com seus dados para acessar a plataforma.',
           style: TextStyle(color: _textoSecundario, fontSize: 12, height: 1.6),
@@ -431,6 +475,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ],
     );
   }
+
+  // Campo de e-mail
 
   Widget _campoEmail() {
     return Column(
@@ -444,7 +490,9 @@ class _LoginScreenState extends State<LoginScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+
         const SizedBox(height: 9),
+
         TextFormField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
@@ -456,16 +504,23 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           validator: (valor) {
             final email = valor?.trim() ?? '';
-            if (email.isEmpty) return 'Informe seu e-mail.';
+
+            if (email.isEmpty) {
+              return 'Informe seu e-mail.';
+            }
+
             if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
               return 'Digite um e-mail válido.';
             }
+
             return null;
           },
         ),
       ],
     );
   }
+
+  // Campo de senha
 
   Widget _campoSenha() {
     return Column(
@@ -479,7 +534,9 @@ class _LoginScreenState extends State<LoginScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+
         const SizedBox(height: 9),
+
         TextFormField(
           controller: _senhaController,
           obscureText: _ocultarSenha,
@@ -492,7 +549,9 @@ class _LoginScreenState extends State<LoginScreen> {
             sufixo: IconButton(
               tooltip: _ocultarSenha ? 'Mostrar senha' : 'Ocultar senha',
               onPressed: () {
-                setState(() => _ocultarSenha = !_ocultarSenha);
+                setState(() {
+                  _ocultarSenha = !_ocultarSenha;
+                });
               },
               icon: Icon(
                 _ocultarSenha
@@ -504,13 +563,18 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           validator: (valor) {
-            if (valor == null || valor.isEmpty) return 'Informe sua senha.';
+            if (valor == null || valor.isEmpty) {
+              return 'Informe sua senha.';
+            }
+
             return null;
           },
         ),
       ],
     );
   }
+
+  // Botão de login
 
   Widget _botaoEntrar() {
     return SizedBox(
@@ -550,6 +614,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Aviso de acesso
+
   Widget _avisoAcesso() {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -566,6 +632,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ],
     );
   }
+
+  // Estilo dos campos
 
   InputDecoration _decoracao({
     required String hint,
