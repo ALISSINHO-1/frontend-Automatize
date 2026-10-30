@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 import '../storage/local_storage_service.dart';
 import '../../features/home/presentation/pages/login_screen.dart';
 
@@ -9,15 +11,20 @@ class AuthInterceptorClient extends http.BaseClient {
 
   static bool _redirecionamentoAgendado = false;
 
-  AuthInterceptorClient({required this.navigatorKey, http.Client? inner})
-    : _inner = inner ?? http.Client();
+  AuthInterceptorClient({
+    required this.navigatorKey,
+    http.Client? inner,
+  }) : _inner = inner ?? http.Client();
 
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+  Future<http.StreamedResponse> send(
+    http.BaseRequest request,
+  ) async {
     final isLogin = request.url.path.endsWith('/auth/login');
 
     String? token;
 
+    // A rota de login é pública e não recebe Bearer Token.
     if (isLogin) {
       request.headers.remove('Authorization');
     } else {
@@ -30,8 +37,10 @@ class AuthInterceptorClient extends http.BaseClient {
 
     final response = await _inner.send(request);
 
+    // Uma resposta 401 em rota protegida indica sessão inválida.
     if (!isLogin && response.statusCode == 401) {
-      final precisaRedirecionar = LocalStorageService.invalidarSeAtual(token);
+      final precisaRedirecionar =
+          LocalStorageService.invalidarSeAtual(token);
 
       if (precisaRedirecionar) {
         _redirecionarParaLogin();
@@ -42,6 +51,7 @@ class AuthInterceptorClient extends http.BaseClient {
   }
 
   void _redirecionarParaLogin() {
+    // Evita agendar redirecionamentos simultâneos.
     if (_redirecionamentoAgendado) {
       return;
     }
@@ -56,7 +66,7 @@ class AuthInterceptorClient extends http.BaseClient {
           return;
         }
 
-        // Limpa o histórico de navegação.
+        // Remove as telas anteriores do histórico de navegação.
         navigator.pushAndRemoveUntil(
           MaterialPageRoute<void>(
             settings: const RouteSettings(name: '/login'),
