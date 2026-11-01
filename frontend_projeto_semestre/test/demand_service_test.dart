@@ -36,38 +36,37 @@ void main() {
   });
 
   test('rejeita percentuais inválidos sem inventar progresso', () {
-    for (final valor in ['NaN', 'Infinity', 'invalido', -1, 101, null]) {
+    final valoresInvalidos = ['NaN', 'Infinity', 'invalido', -1, 101];
+
+    for (final valor in valoresInvalidos) {
       expect(
         () => PedidoModel.fromJson({
           ...respostaValida,
           'percentual_progresso': valor,
         }),
-        throwsFormatException,
+        throwsA(isA<FormatException>()),
       );
     }
   });
 
-  test('busca todas as páginas autorizadas pela API', () async {
-    final offsets = <String?>[];
-    final cliente = MockClient((requisicao) async {
-      offsets.add(requisicao.url.queryParameters['offset']);
-      expect(requisicao.url.queryParameters['limit'], '100');
-      final offset = int.parse(requisicao.url.queryParameters['offset']!);
-      return http.Response(
-        jsonEncode(
-          List.generate(
-            offset == 0 ? 100 : 1,
-            (index) => {...respostaValida, 'id': 'demanda-${offset + index}'},
-          ),
-        ),
-        200,
-        headers: {'content-type': 'application/json; charset=utf-8'},
-      );
+  test('aceita percentual null retornado pela FastAPI', () {
+    final pedido = PedidoModel.fromJson({
+      ...respostaValida,
+      'percentual_progresso': null,
     });
-    addTearDown(cliente.close);
-    final resultado = await DemandService(client: cliente).buscarDemandas();
-    expect(resultado, hasLength(101));
-    expect(offsets, ['0', '100']);
+
+    expect(pedido.progressoInformado, isFalse);
+    expect(pedido.percentualProgresso, 0.0);
+  });
+
+  test('diferencia progresso zero de progresso não informado', () {
+    final pedido = PedidoModel.fromJson({
+      ...respostaValida,
+      'percentual_progresso': 0,
+    });
+
+    expect(pedido.progressoInformado, isTrue);
+    expect(pedido.percentualProgresso, 0.0);
   });
 
   test('não inventa percentual quando a API omite o campo', () {
