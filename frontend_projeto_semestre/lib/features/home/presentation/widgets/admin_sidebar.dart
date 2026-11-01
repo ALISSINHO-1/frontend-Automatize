@@ -1,169 +1,216 @@
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/redesign_colors.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../../app/app.dart';
 
 class AdminSidebar extends StatelessWidget {
   const AdminSidebar({super.key});
 
+  static const double _itemHeight = 48;
+  static const double _itemSpacing = 10;
+
   @override
-Widget build(BuildContext context) {
-  final rotaAtual = ModalRoute.of(context)?.settings.name;
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: adminNavigationController,
+      builder: (context, child) {
+        final rotaAtual = adminNavigationController.currentRoute;
 
-  final emDemandas = rotaAtual == AppRoutes.demandList ||
-      rotaAtual == AppRoutes.demandDetails;
+        final emDemandas = rotaAtual == AppRoutes.demandList ||
+            rotaAtual == AppRoutes.demandDetails;
 
-  return Container(
-      width: 250,
-      color: RedesignColors.sidebar,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 28,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
+        final selectedIndex = emDemandas ? 1 : 0;
+
+        return Container(
+          width: 250,
+          color: RedesignColors.sidebar,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 28,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.auto_awesome,
-                color: RedesignColors.purple,
-                size: 28,
+              const Row(
+                children: [
+                  Icon(
+                    Icons.auto_awesome,
+                    color: RedesignColors.purple,
+                    size: 28,
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'AUTOMATIZE',
+                    style: TextStyle(
+                      color: RedesignColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 12),
-              Text(
-                'AUTOMATIZE',
-                style: TextStyle(
-                  color: RedesignColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 48),
+              const SizedBox(height: 48),
 
-          _menuItem(
-          context,
-          Icons.dashboard_rounded,
-            'Visão geral',
-            selected: !emDemandas,
-          ),
-          _menuItem(
-            context,
-            Icons.assignment_outlined,
-            'Demandas',
-            selected: emDemandas,
-          ),
-          _menuItem(
-            context,
-            Icons.history_rounded,
-            'Histórico',
-          ),
-          _menuItem(
-            context,
-            Icons.folder_outlined,
-            'Anexos',
-          ),
-
-          const Spacer(),
-
-          const Divider(color: RedesignColors.border),
-
-          const SizedBox(height: 16),
-
-          const Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: RedesignColors.purple,
-                child: Icon(
-                  Icons.person_outline,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // Menu com indicador roxo deslizante.
+              SizedBox(
+                height: (_itemHeight + _itemSpacing) * 4,
+                child: Stack(
                   children: [
-                    Text(
-                      'Administrador',
-                      style: TextStyle(
-                        color: RedesignColors.textPrimary,
-                        fontWeight: FontWeight.bold,
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOutCubic,
+                      top: selectedIndex * (_itemHeight + _itemSpacing),
+                      left: 0,
+                      right: 0,
+                      height: _itemHeight,
+                      child: IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: RedesignColors.purple
+                                .withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                     ),
-                    Text(
-                      'Ambiente demonstrativo',
-                      style: TextStyle(
-                        color: RedesignColors.textSecondary,
-                        fontSize: 11,
-                      ),
+
+                    Column(
+                      children: [
+                        _menuItem(
+                          Icons.dashboard_rounded,
+                          'Visão geral',
+                          selected: !emDemandas,
+                        ),
+                        _menuItem(
+                          Icons.assignment_outlined,
+                          'Demandas',
+                          selected: emDemandas,
+                        ),
+                        _menuItem(
+                          Icons.history_rounded,
+                          'Histórico',
+                        ),
+                        _menuItem(
+                          Icons.folder_outlined,
+                          'Anexos',
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
+
+              const Spacer(),
+
+              const Divider(color: RedesignColors.border),
+              const SizedBox(height: 16),
+
+              const Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: RedesignColors.purple,
+                    child: Icon(
+                      Icons.person_outline,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Administrador',
+                          style: TextStyle(
+                            color: RedesignColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Ambiente demonstrativo',
+                          style: TextStyle(
+                            color: RedesignColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-      Widget _menuItem(
-      BuildContext context,
-      IconData icon,
-      String title, {
-      bool selected = false,
-    }) {
-    return SidebarMenuItem(
-  child: AnimatedContainer(
-    duration: const Duration(milliseconds: 220),
-  curve: Curves.easeInOutCubic,
-  margin: const EdgeInsets.only(bottom: 10),
-  decoration: BoxDecoration(
-    color: selected
-        ? RedesignColors.purple.withValues(alpha: 0.16)
-        : Colors.transparent,
-    borderRadius: BorderRadius.circular(12),
-  ),
-      child: ListTile(
-      onTap: () {
-  if (title == 'Visão geral') {
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.home,
-      (route) => false,
-    );
-  } else if (title == 'Demandas') {
-    Navigator.pushNamed(
-      context,
-      AppRoutes.demandList,
-    );
-  }
-},
-      dense: true,
-        leading: Icon(
-          icon,
-          color: selected
-              ? RedesignColors.purple
-              : RedesignColors.textSecondary,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: selected
-                ? RedesignColors.textPrimary
-                : RedesignColors.textSecondary,
-            fontWeight:
-                selected ? FontWeight.bold : FontWeight.normal,
+  Widget _menuItem(
+    IconData icon,
+    String title, {
+    bool selected = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: _itemSpacing),
+      child: SidebarMenuItem(
+        child: SizedBox(
+          height: _itemHeight,
+          child: ListTile(
+            onTap: () {
+              final navigator = adminNavigatorKey.currentState;
+
+              if (navigator == null) return;
+
+              if (title == 'Visão geral') {
+                if (adminNavigationController.currentRoute ==
+                    AppRoutes.home) {
+                  return;
+                }
+
+                navigator.pushNamedAndRemoveUntil(
+                  AppRoutes.home,
+                  (route) => false,
+                );
+              } else if (title == 'Demandas') {
+              if (adminNavigationController.currentRoute ==
+                  AppRoutes.demandList) {
+                return;
+              }
+
+              adminNavigationController.setRoute(AppRoutes.demandList);
+
+              navigator.pushNamed(AppRoutes.demandList);
+              }
+            },
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+            ),
+            leading: Icon(
+              icon,
+              color: selected
+                  ? RedesignColors.purple
+                  : RedesignColors.textSecondary,
+            ),
+            title: Text(
+              title,
+              style: TextStyle(
+                color: selected
+                    ? RedesignColors.textPrimary
+                    : RedesignColors.textSecondary,
+                fontWeight:
+                    selected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
           ),
         ),
-            ),
-    ),
-  );
-}
+      ),
+    );
+  }
 }
 
 class SidebarMenuItem extends StatefulWidget {

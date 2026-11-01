@@ -1,36 +1,120 @@
+
 import 'package:flutter/material.dart';
 
-abstract final class AppTheme {
+import 'redesign_colors.dart';
 
+abstract final class AppTheme {
   static ThemeData get dark {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF637BFF),
+      seedColor: RedesignColors.purple,
       brightness: Brightness.dark,
-      surface: const Color(0xFF171B26),
+      surface: RedesignColors.card,
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFF0F131C),
-      cardColor: const Color(0xFF181C24),
+
+      // Identidade visual principal
+      scaffoldBackgroundColor: RedesignColors.background,
+      cardColor: RedesignColors.card,
+
+      // Tipografia global
+      textTheme: const TextTheme(
+        headlineMedium: TextStyle(
+          color: RedesignColors.textPrimary,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+        ),
+        titleLarge: TextStyle(
+          color: RedesignColors.textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+        bodyLarge: TextStyle(
+          color: RedesignColors.textSecondary,
+          fontSize: 16,
+        ),
+        bodyMedium: TextStyle(
+          color: RedesignColors.textSecondary,
+          fontSize: 14,
+        ),
+      ),
+
+      // Barra superior
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF181C24),
-        foregroundColor: Color(0xFFDFE2EE),
+        backgroundColor: RedesignColors.background,
+        foregroundColor: RedesignColors.textPrimary,
         centerTitle: false,
         elevation: 0,
       ),
+
+      // Cards
+      cardTheme: CardThemeData(
+        color: RedesignColors.card,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(
+            color: RedesignColors.border,
+          ),
+        ),
+      ),
+
+      // Campos de entrada
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF181C24),
+        fillColor: RedesignColors.card,
+        hintStyle: const TextStyle(
+          color: RedesignColors.textSecondary,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: RedesignColors.border,
+          ),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: RedesignColors.border,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: RedesignColors.purple,
+            width: 1.5,
+          ),
+        ),
+      ),
+
+      // Botões principais
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: RedesignColors.purple,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+
+      // Divisores
+      dividerTheme: const DividerThemeData(
+        color: RedesignColors.border,
+        thickness: 1,
       ),
     );
   }
 
+  // Tema claro mantido para compatibilidade futura.
   static ThemeData get light {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF3157D5),

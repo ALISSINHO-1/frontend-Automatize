@@ -1,11 +1,12 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
+import '../../../../core/theme/redesign_colors.dart';
 import '../../../demands/presentation/widgets/demand_status_dashboard.dart';
 import '../../../demands/data/models/pedido_model.dart';
 import '../../../demands/data/mock/demand_mock_data.dart';
 import '../widgets/admin_sidebar.dart';
-import '../widgets/admin_layout.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -38,21 +39,19 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     return Scaffold(
-    drawer: MediaQuery.sizeOf(context).width < 900
-      ? const AdminSidebar()
-      : null,
-    appBar: null,
+      backgroundColor: RedesignColors.background,
+      drawer: MediaQuery.sizeOf(context).width < 900
+          ? const Drawer(child: AdminSidebar())
+          : null,
       body: SafeArea(
-  child: LayoutBuilder(
-    builder: (context, constraints) {
-      final isDesktop = constraints.maxWidth >= 900;
-      final horizontalPadding = isDesktop ? 48.0 : 20.0;
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= 900;
+            final horizontalPadding = isDesktop ? 48.0 : 20.0;
 
-      return AdminLayout(
-      child: SingleChildScrollView(
+            return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 horizontalPadding,
                 32,
@@ -65,108 +64,267 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Cabeçalho do dashboard
+                      // Cabeçalho do dashboard.
                       Text(
                         'Visão geral das demandas',
                         style: theme.textTheme.headlineMedium?.copyWith(
+                          color: RedesignColors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
                       const SizedBox(height: 12),
-                      Text(
+
+                      const Text(
                         'Acompanhe o andamento das demandas em cada etapa.',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: colors.onSurfaceVariant,
+                        style: TextStyle(
+                          color: RedesignColors.textSecondary,
+                          fontSize: 15,
                         ),
                       ),
+
                       const SizedBox(height: 32),
 
-                      // Indicadores visuais
+                      // Indicadores de status.
                       DemandStatusDashboard(
-                        contagens: calcularContagens(DemandMockData.demandas),
+                        contagens: calcularContagens(
+                          DemandMockData.demandas,
+                        ),
                       ),
 
                       const SizedBox(height: 12),
 
-                      // Identificação dos dados simulados
-                      Text(
+                      const Text(
                         'Dados de demonstração. Integração com a API pendente.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
+                        style: TextStyle(
+                          color: RedesignColors.textSecondary,
+                          fontSize: 12,
                         ),
                       ),
 
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 28),
 
-                      // Acesso à listagem de demandas
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: LayoutBuilder(
-                            builder: (context, cardConstraints) {
-                              final conteudo = Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Gerenciamento de demandas',
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Consulte as demandas cadastradas, '
-                                    'acompanhe seus estados e visualize '
-                                    'os detalhes de cada solicitação.',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: colors.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              );
-
-                              final botao = FilledButton.icon(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.demandList,
-                                  );
-                                },
-                                icon: const Icon(Icons.list_alt),
-                                label: const Text('Ver demandas'),
-                              );
-
-                              if (cardConstraints.maxWidth < 650) {
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    conteudo,
-                                    const SizedBox(height: 20),
-                                    botao,
-                                  ],
-                                );
-                              }
-
-                              return Row(
-                                children: [
-                                  Expanded(child: conteudo),
-                                  const SizedBox(width: 24),
-                                  botao,
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      ],
+                      // Card de gerenciamento.
+                      const _GerenciamentoDemandasCard(),
+                    ],
                   ),
                 ),
               ),
-               ),
-          );
-        },
+            );
+          },
+        ),
       ),
-    ),
+    );
+  }
+}
+
+class _GerenciamentoDemandasCard extends StatefulWidget {
+  const _GerenciamentoDemandasCard();
+
+  @override
+  State<_GerenciamentoDemandasCard> createState() =>
+      _GerenciamentoDemandasCardState();
+}
+
+class _GerenciamentoDemandasCardState
+    extends State<_GerenciamentoDemandasCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: RedesignColors.card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: RedesignColors.purple.withValues(
+              alpha: _hovered ? 0.65 : 0.24,
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: RedesignColors.purple.withValues(
+                alpha: _hovered ? 0.12 : 0.03,
+              ),
+              blurRadius: _hovered ? 26 : 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compacto = constraints.maxWidth < 650;
+
+              final conteudo = Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: RedesignColors.purple.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.dashboard_customize_outlined,
+                      color: RedesignColors.purple,
+                      size: 27,
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Gerenciamento de demandas',
+                          style: TextStyle(
+                            color: RedesignColors.textPrimary,
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Consulte as demandas cadastradas, '
+                          'acompanhe seus estados e visualize '
+                          'os detalhes de cada solicitação.',
+                          style: TextStyle(
+                            color: RedesignColors.textSecondary,
+                            fontSize: 13,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+
+              final botao = _BotaoVerDemandas(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.demandList,
+                  );
+                },
+              );
+
+              if (compacto) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    conteudo,
+                    const SizedBox(height: 20),
+                    botao,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: conteudo),
+                  const SizedBox(width: 24),
+                  botao,
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BotaoVerDemandas extends StatefulWidget {
+  final VoidCallback onPressed;
+
+  const _BotaoVerDemandas({
+    required this.onPressed,
+  });
+
+  @override
+  State<_BotaoVerDemandas> createState() => _BotaoVerDemandasState();
+}
+
+class _BotaoVerDemandasState extends State<_BotaoVerDemandas> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedScale(
+        scale: _hovered ? 1.035 : 1,
+        duration: const Duration(milliseconds: 200),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onPressed,
+            borderRadius: BorderRadius.circular(12),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    RedesignColors.purple,
+                    Color(0xFF4938F5),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: RedesignColors.purple.withValues(
+                      alpha: _hovered ? 0.35 : 0.15,
+                    ),
+                    blurRadius: _hovered ? 22 : 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.list_alt_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Ver demandas',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
