@@ -7,10 +7,17 @@ import '../admin_style.dart';
 /// Auditoria da demanda (SCRUM-79): evidências numa seção própria e o
 /// registro de ações em linha do tempo, como no preview.
 class DemandAuditPanel extends StatefulWidget {
-  const DemandAuditPanel({super.key, required this.carregar});
+  const DemandAuditPanel({
+    super.key,
+    required this.carregar,
+    this.nomes = const {},
+  });
 
   /// Normalmente `AdminDemandService.listarAuditoria` já com o id da demanda.
   final Future<List<AuditoriaModel>> Function() carregar;
+
+  /// id -> nome dos usuários, para mostrar o autor de cada ação.
+  final Map<String, String> nomes;
 
   @override
   State<DemandAuditPanel> createState() => _DemandAuditPanelState();
@@ -113,6 +120,7 @@ class _DemandAuditPanelState extends State<DemandAuditPanel> {
                 for (var i = 0; i < registros.length; i++)
                   _EventoLinhaDoTempo(
                     registros[i],
+                    autor: widget.nomes[registros[i].usuarioId],
                     ultimo: i == registros.length - 1,
                   ),
             ],
@@ -194,9 +202,14 @@ class _Evidencia extends StatelessWidget {
 }
 
 class _EventoLinhaDoTempo extends StatelessWidget {
-  const _EventoLinhaDoTempo(this.registro, {required this.ultimo});
+  const _EventoLinhaDoTempo(
+    this.registro, {
+    required this.autor,
+    required this.ultimo,
+  });
 
   final AuditoriaModel registro;
+  final String? autor;
   final bool ultimo;
 
   @override
@@ -249,14 +262,25 @@ class _EventoLinhaDoTempo extends StatelessWidget {
                   [
                     if (registro.createdAt != null)
                       formatarDataHora(registro.createdAt!),
-                    // Só há UUID do autor; nomes dependem de rota de usuários no backend.
-                    'por ${registro.usuarioId ?? 'sistema'}',
+                    // Sem o nome (usuário fora da lista), cai no UUID do autor.
+                    'por ${autor ?? registro.usuarioId ?? 'sistema'}',
                   ].join(' · '),
                   style: const TextStyle(
                     color: AutomatizeColors.muted,
                     fontSize: 12,
                   ),
                 ),
+                if (registro.observacao != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '"${registro.observacao}"',
+                    style: const TextStyle(
+                      color: AutomatizeColors.text,
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

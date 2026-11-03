@@ -5,10 +5,12 @@ import '../../../demands/data/models/pedido_model.dart';
 import '../../../demands/data/services/demand_service.dart';
 import '../../../home/presentation/pages/demandas_screen.dart';
 import '../../../home/presentation/pages/painel_screen.dart';
+import '../../data/models/usuario_model.dart';
 import '../../data/services/admin_demand_service.dart';
 import '../admin_style.dart';
 import '../widgets/admin_demand_dialogs.dart';
 import 'admin_demand_details_page.dart';
+import 'admin_users_page.dart';
 
 /// Painel administrativo: contagem por estado (SCRUM-63) e gestão das
 /// demandas (SCRUM-77). O filtro por estado serve para acompanhar a fila de
@@ -28,6 +30,8 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
   late final AdminDemandService _admin =
       widget.adminService ?? AdminDemandService();
   late Future<List<PedidoModel>> _demandas = _service.buscarDemandas();
+  // id -> nome, para mostrar o técnico pelo nome em vez do UUID.
+  Map<String, String> _nomes = const {};
   String? _estado;
   bool _ocupado = false;
 
@@ -39,13 +43,45 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _carregarNomes();
+  }
+
+  @override
   void dispose() {
     if (widget.service == null) _service.dispose();
     if (widget.adminService == null) _admin.dispose();
     super.dispose();
   }
 
-  void _recarregar() => setState(() => _demandas = _service.buscarDemandas());
+  void _recarregar() {
+    setState(() => _demandas = _service.buscarDemandas());
+    _carregarNomes();
+  }
+
+  Future<void> _carregarNomes() async {
+    try {
+      final usuarios = await _admin.listarUsuarios();
+      if (!mounted) return;
+      setState(() => _nomes = {for (final u in usuarios) u.id: u.nome});
+    } catch (_) {
+      // Sem a lista, a tela continua funcionando e mostra o início do UUID.
+    }
+  }
+
+  /// Busca na hora os usuários ativos do perfil para os seletores dos diálogos.
+  Future<List<UsuarioModel>?> _ativos(String perfil) async {
+    setState(() => _ocupado = true);
+    try {
+      return await _admin.listarUsuarios(perfil: perfil, ativo: true);
+    } catch (erro) {
+      if (mounted) _mensagem('$erro');
+      return null;
+    } finally {
+      if (mounted) setState(() => _ocupado = false);
+    }
+  }
 
   Future<void> _executar(Future<void> Function() acao, String sucesso) async {
     setState(() => _ocupado = true);
@@ -66,7 +102,9 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
   ).showSnackBar(SnackBar(content: Text(texto)));
 
   Future<void> _cadastrar() async {
-    final dados = await DemandFormDialog.show(context);
+    final clientes = await _ativos('CLIENTE');
+    if (clientes == null || !mounted) return;
+    final dados = await DemandFormDialog.show(context, clientes: clientes);
     if (dados == null || !mounted) return;
     await _executar(
       () => _admin.criarDemanda(
@@ -96,15 +134,32 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
   }
 
   Future<void> _atribuir(PedidoModel pedido) async {
-    final responsavel = await AssignTechnicianDialog.show(
+    final tecnicos = await _ativos('TECNICO');
+    if (tecnicos == null || !mounted) return;
+    final escolha = await AssignTechnicianDialog.show(
       context,
+      tecnicos: tecnicos,
       responsavelAtual: pedido.responsavelId,
     );
-    if (responsavel == null || !mounted) return;
+    if (escolha == null || !mounted) return;
     await _executar(
-      () => _admin.atribuirResponsavel(pedido.id, responsavel),
-      'Técnico atribuído.',
+      () => _admin.atribuirResponsavel(
+        pedido.id,
+        escolha.responsavelId,
+        motivo: escolha.motivo,
+      ),
+      pedido.responsavelId == null ? 'Técnico atribuído.' : 'Técnico trocado.',
     );
+  }
+
+  Future<void> _abrirUsuarios() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AdminUsersPage(adminService: widget.adminService),
+      ),
+    );
+    // Nomes, perfis ou status podem ter mudado.
+    if (mounted) _recarregar();
   }
 
   Future<void> _excluir(PedidoModel pedido) async {
@@ -202,6 +257,20 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
             onPressed: _recarregar,
             color: AutomatizeColors.muted,
             icon: const Icon(Icons.refresh_rounded),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AutomatizeColors.text,
+              side: const BorderSide(color: AdminStyle.cardBorda),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: _ocupado ? null : _abrirUsuarios,
+            icon: const Icon(Icons.group_rounded),
+            label: const Text('Usuários'),
           ),
           const SizedBox(width: 8),
           FilledButton.icon(
@@ -321,6 +390,7 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
             for (final pedido in visiveis) ...[
               _ItemDemanda(
                 pedido: pedido,
+                nomeTecnico: _nomes[pedido.responsavelId],
                 ocupado: _ocupado,
                 onAbrir: () => _abrir(pedido),
                 onEditar: () => _editar(pedido),
@@ -445,6 +515,7 @@ class _CardEstado extends StatelessWidget {
 class _ItemDemanda extends StatelessWidget {
   const _ItemDemanda({
     required this.pedido,
+    required this.nomeTecnico,
     required this.ocupado,
     required this.onAbrir,
     required this.onEditar,
@@ -453,6 +524,7 @@ class _ItemDemanda extends StatelessWidget {
   });
 
   final PedidoModel pedido;
+  final String? nomeTecnico;
   final bool ocupado;
   final VoidCallback onAbrir;
   final VoidCallback onEditar;
@@ -513,10 +585,9 @@ class _ItemDemanda extends StatelessWidget {
                         ),
                         _Meta(
                           Icons.engineering_rounded,
-                          // A API ainda não lista usuários: só há o UUID do técnico.
                           pedido.responsavelId == null
                               ? 'Técnico: não atribuído'
-                              : 'Técnico: ${pedido.responsavelId!.substring(0, 8)}…',
+                              : 'Técnico: ${nomeTecnico ?? '${pedido.responsavelId!.substring(0, 8)}…'}',
                         ),
                         _Meta(
                           Icons.event_rounded,
@@ -549,7 +620,7 @@ class _ItemDemanda extends StatelessWidget {
                     PopupMenuItem(value: 'editar', child: Text('Editar')),
                     PopupMenuItem(
                       value: 'atribuir',
-                      child: Text('Atribuir técnico'),
+                      child: Text('Atribuir/trocar técnico'),
                     ),
                     PopupMenuItem(value: 'excluir', child: Text('Excluir')),
                   ],

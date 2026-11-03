@@ -12,6 +12,15 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 const _cliente = '33333333-3333-4333-8333-333333333333';
+const _tecnico = '44444444-4444-4444-8444-444444444444';
+const _outroTecnico = '55555555-5555-4555-8555-555555555555';
+
+// O mock devolve todos; o filtro por perfil/ativo é do backend.
+final _usuarios = [
+  {'id': _cliente, 'nome': 'Carla Cliente', 'email': 'carla@x.dev', 'perfil': 'CLIENTE', 'ativo': true},
+  {'id': _tecnico, 'nome': 'Tiago Técnico', 'email': 'tiago@x.dev', 'perfil': 'TECNICO', 'ativo': true},
+  {'id': _outroTecnico, 'nome': 'Rita Técnica', 'email': 'rita@x.dev', 'perfil': 'TECNICO', 'ativo': true},
+];
 
 Map<String, Object?> _demanda(String id, String titulo, String status) => {
   'id': id,
@@ -84,7 +93,7 @@ void main() {
     expect(find.text('Nenhuma demanda encontrada.'), findsOneWidget);
   });
 
-  testWidgets('conta por estado, filtra pelo card e cadastra com cliente', (tester) async {
+  testWidgets('conta por estado, filtra pelo card e cadastra escolhendo o cliente', (tester) async {
     _perfil('ADMIN');
     final demandas = [
       _demanda('1', 'Portal interno', 'PLANEAMENTO'),
@@ -92,6 +101,7 @@ void main() {
       _demanda('3', 'Painel financeiro', 'CONCLUIDO'),
     ];
     Map<String, dynamic>? corpoCriacao;
+    final consultasUsuarios = <String>[];
 
     await abrir(
       tester,
@@ -99,6 +109,10 @@ void main() {
         service: DemandService(client: MockClient((_) async => _json(demandas))),
         adminService: AdminDemandService(
           client: MockClient((request) async {
+            if (request.url.path == '/usuarios') {
+              consultasUsuarios.add(request.url.query);
+              return _json(_usuarios);
+            }
             corpoCriacao = jsonDecode(request.body) as Map<String, dynamic>;
             demandas.add(_demanda('4', corpoCriacao!['titulo'] as String, 'PLANEAMENTO'));
             return _json({'id': '4'}, 201);
@@ -118,10 +132,19 @@ void main() {
 
     await tester.tap(find.text('Nova demanda'));
     await tester.pumpAndSettle();
+    expect(consultasUsuarios.last, contains('perfil=CLIENTE'));
+    expect(consultasUsuarios.last, contains('ativo=true'));
     final campos = find.byType(TextFormField);
     await tester.enterText(campos.at(0), 'Migração de e-mail');
     await tester.enterText(campos.at(1), 'Migrar caixas de e-mail');
-    await tester.enterText(campos.at(2), _cliente);
+    await tester.tap(find.text('Cadastrar'));
+    await tester.pump();
+    expect(find.text('Selecione o cliente.'), findsOneWidget);
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Carla Cliente · carla@x.dev').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Cadastrar'));
     await tester.pumpAndSettle();
 
@@ -131,5 +154,51 @@ void main() {
       'cliente_id': _cliente,
     });
     expect(find.text('Migração de e-mail'), findsOneWidget);
+  });
+
+  testWidgets('mostra o técnico pelo nome e a troca exige motivo', (tester) async {
+    _perfil('ADMIN');
+    final demanda = _demanda('1', 'Portal interno', 'EXECUCAO')..['responsavel_id'] = _tecnico;
+    Map<String, dynamic>? corpoAtribuicao;
+
+    await abrir(
+      tester,
+      AdminPanelPage(
+        service: DemandService(client: MockClient((_) async => _json([demanda]))),
+        adminService: AdminDemandService(
+          client: MockClient((request) async {
+            if (request.url.path == '/usuarios') return _json(_usuarios);
+            corpoAtribuicao = jsonDecode(request.body) as Map<String, dynamic>;
+            return _json(demanda);
+          }),
+        ),
+      ),
+    );
+
+    expect(find.text('Técnico: Tiago Técnico'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Ações da demanda'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Atribuir/trocar técnico'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Trocar técnico'), findsOneWidget);
+    expect(find.text('Responsável atual: Tiago Técnico'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    // O técnico atual não é oferecido de novo (o backend responderia 409).
+    expect(find.text('Tiago Técnico · tiago@x.dev'), findsNothing);
+    await tester.tap(find.text('Rita Técnica · rita@x.dev').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Trocar'));
+    await tester.pump();
+    expect(find.textContaining('Descreva o motivo'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField), 'Tiago entrou de férias');
+    await tester.tap(find.text('Trocar'));
+    await tester.pumpAndSettle();
+
+    expect(corpoAtribuicao, {'responsavel_id': _outroTecnico, 'motivo': 'Tiago entrou de férias'});
   });
 }

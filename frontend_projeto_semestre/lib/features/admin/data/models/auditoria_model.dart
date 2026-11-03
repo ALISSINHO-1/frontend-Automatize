@@ -25,6 +25,8 @@ class AuditoriaModel {
     'CONCLUSAO_ETAPA': 'Etapa concluída',
     'ATRIBUICAO_RESPONSAVEL': 'Técnico atribuído',
     'ENVIO_EVIDENCIA': 'Evidência enviada',
+    'REGISTRO_OCORRENCIA': 'Ocorrência registrada',
+    'RESOLUCAO_OCORRENCIA': 'Ocorrência resolvida',
   };
 
   factory AuditoriaModel.fromJson(Map<String, dynamic> json) {
@@ -47,7 +49,25 @@ class AuditoriaModel {
   }
 
   /// Ações novas no backend ainda aparecem, só que com o código cru.
-  String get rotulo => _rotulos[acao] ?? acao.replaceAll('_', ' ');
+  String get rotulo {
+    // O backend usa a mesma ação para atribuir e trocar; o anterior distingue.
+    if (acao == 'ATRIBUICAO_RESPONSAVEL' &&
+        detalhes['responsavel_anterior'] != null) {
+      return 'Técnico trocado';
+    }
+    return _rotulos[acao] ?? acao.replaceAll('_', ' ');
+  }
+
+  /// Texto livre que explica a ação (motivo da troca, rejeição, ocorrência ou correção).
+  String? get observacao {
+    final texto = switch (acao) {
+      'RESOLUCAO_OCORRENCIA' => detalhes['descricao_resolucao'],
+      'REGISTRO_OCORRENCIA' => detalhes['descricao'],
+      _ => detalhes['motivo'],
+    };
+    final valor = texto?.toString().trim() ?? '';
+    return valor.isEmpty ? null : valor;
+  }
 
   bool get isEvidencia => acao == 'ENVIO_EVIDENCIA';
 

@@ -11,6 +11,7 @@ import '../../../demands/data/models/pedido_model.dart';
 import '../models/anexo_model.dart';
 import '../models/auditoria_model.dart';
 import '../models/usuario_atual_model.dart';
+import '../models/usuario_model.dart';
 
 class AdminApiException implements Exception {
   const AdminApiException(this.statusCode, this.message);
@@ -90,12 +91,94 @@ class AdminDemandService {
     await _json('DELETE', '${ApiPaths.demandas}/$id');
   }
 
-  Future<void> atribuirResponsavel(String id, String responsavelId) async {
+  /// Na troca de um técnico já atribuído o backend exige [motivo] (SCRUM-97).
+  Future<void> atribuirResponsavel(
+    String id,
+    String responsavelId, {
+    String? motivo,
+  }) async {
     await _json(
       'PUT',
       '${ApiPaths.demandas}/$id/responsavel',
-      body: {'responsavel_id': responsavelId.trim()},
+      body: {
+        'responsavel_id': responsavelId.trim(),
+        if (motivo != null && motivo.trim().isNotEmpty) 'motivo': motivo.trim(),
+      },
     );
+  }
+
+  // --- Usuários e perfis (SCRUM-99/100): rotas exclusivas do ADMIN ---
+
+  /// O backend pagina em no máximo 100 por chamada; para a escala do projeto
+  /// uma página basta (seletores e tela de usuários).
+  Future<List<UsuarioModel>> listarUsuarios({
+    String? perfil,
+    bool? ativo,
+  }) async {
+    final query = Uri(
+      queryParameters: {
+        'limit': '100',
+        'perfil': ?perfil,
+        if (ativo != null) 'ativo': '$ativo',
+      },
+    ).query;
+    final data = await _json('GET', '${ApiPaths.usuarios}?$query');
+    if (data is! List) {
+      throw const FormatException('A API não retornou a lista de usuários.');
+    }
+    return data.map((item) {
+      if (item is! Map<String, dynamic>) {
+        throw const FormatException('A API retornou um usuário inválido.');
+      }
+      return UsuarioModel.fromJson(item);
+    }).toList();
+  }
+
+  Future<UsuarioModel> criarUsuario({
+    required String nome,
+    required String email,
+    required String senha,
+    required String perfil,
+  }) async {
+    return _usuario(
+      await _json(
+        'POST',
+        ApiPaths.usuarios,
+        body: {
+          'nome': nome.trim(),
+          'email': email.trim(),
+          'senha': senha,
+          'perfil': perfil,
+        },
+      ),
+    );
+  }
+
+  Future<UsuarioModel> alterarPerfil(String id, String perfil) async {
+    return _usuario(
+      await _json(
+        'PATCH',
+        '${ApiPaths.usuarios}/$id/perfil',
+        body: {'perfil': perfil},
+      ),
+    );
+  }
+
+  Future<UsuarioModel> alterarAtivo(String id, {required bool ativo}) async {
+    return _usuario(
+      await _json(
+        'PATCH',
+        '${ApiPaths.usuarios}/$id/ativo',
+        body: {'ativo': ativo},
+      ),
+    );
+  }
+
+  UsuarioModel _usuario(dynamic data) {
+    if (data is! Map<String, dynamic>) {
+      throw const FormatException('A API não retornou o usuário.');
+    }
+    return UsuarioModel.fromJson(data);
   }
 
   Future<List<AuditoriaModel>> listarAuditoria(String id) async {
@@ -208,8 +291,8 @@ class AdminDemandService {
     return switch (response.statusCode) {
       401 => 'Sua sessão expirou. Entre novamente.',
       403 => 'Você não tem permissão para esta operação.',
-      404 => 'A demanda não foi encontrada.',
-      409 => 'A demanda está em um estado que não permite esta operação.',
+      404 => 'O registro não foi encontrado.',
+      409 => 'O estado atual não permite esta operação.',
       422 => 'A API recusou os dados enviados. Confira os campos.',
       _ => 'Falha na API: HTTP ${response.statusCode}.',
     };

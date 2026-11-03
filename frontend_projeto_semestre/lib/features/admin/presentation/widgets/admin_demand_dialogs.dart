@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 
-final _uuidRegex = RegExp(
-  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-);
+import '../../data/models/usuario_model.dart';
 
-String? _validarUuid(String? valor, {bool obrigatorio = true}) {
-  final texto = valor?.trim() ?? '';
-  if (texto.isEmpty) return obrigatorio ? 'Informe o identificador.' : null;
-  return _uuidRegex.hasMatch(texto) ? null : 'Identificador inválido (UUID).';
-}
+/// Mínimo exigido pelo backend para o motivo de uma reatribuição (SCRUM-97).
+const tamanhoMinimoMotivo = 10;
 
 class DemandFormResult {
   final String titulo;
@@ -22,16 +17,20 @@ class DemandFormResult {
   });
 }
 
-/// Cadastro (sem [inicial]) ou edição de título/descrição de uma demanda.
+/// Cadastro (sem [tituloInicial]) ou edição de título/descrição de uma demanda.
 class DemandFormDialog extends StatefulWidget {
   const DemandFormDialog({
     super.key,
     this.tituloInicial,
     this.descricaoInicial,
+    this.clientes = const [],
   });
 
   final String? tituloInicial;
   final String? descricaoInicial;
+
+  /// Clientes ativos para escolher no cadastro (ignorado na edição).
+  final List<UsuarioModel> clientes;
 
   bool get _edicao => tituloInicial != null;
 
@@ -39,12 +38,14 @@ class DemandFormDialog extends StatefulWidget {
     BuildContext context, {
     String? tituloInicial,
     String? descricaoInicial,
+    List<UsuarioModel> clientes = const [],
   }) {
     return showDialog<DemandFormResult>(
       context: context,
       builder: (_) => DemandFormDialog(
         tituloInicial: tituloInicial,
         descricaoInicial: descricaoInicial,
+        clientes: clientes,
       ),
     );
   }
@@ -57,13 +58,12 @@ class _DemandFormDialogState extends State<DemandFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late final _titulo = TextEditingController(text: widget.tituloInicial);
   late final _descricao = TextEditingController(text: widget.descricaoInicial);
-  final _cliente = TextEditingController();
+  String? _clienteId;
 
   @override
   void dispose() {
     _titulo.dispose();
     _descricao.dispose();
-    _cliente.dispose();
     super.dispose();
   }
 
@@ -73,7 +73,7 @@ class _DemandFormDialogState extends State<DemandFormDialog> {
       DemandFormResult(
         titulo: _titulo.text.trim(),
         descricao: _descricao.text.trim(),
-        clienteId: _cliente.text.trim().isEmpty ? null : _cliente.text.trim(),
+        clienteId: _clienteId,
       ),
     );
   }
@@ -110,13 +110,12 @@ class _DemandFormDialogState extends State<DemandFormDialog> {
               // Para ADMIN ele é obrigatório: a API recusa com "Informe o cliente da demanda".
               if (!widget._edicao) ...[
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _cliente,
-                  decoration: const InputDecoration(
-                    labelText: 'ID do cliente',
-                    helperText: 'UUID de um usuário com perfil CLIENTE ativo.',
-                  ),
-                  validator: _validarUuid,
+                SeletorUsuario(
+                  rotulo: 'Cliente',
+                  usuarios: widget.clientes,
+                  vazio: 'Nenhum cliente ativo. Cadastre um em "Usuários".',
+                  onChanged: (id) => _clienteId = id,
+                  validator: (id) => id == null ? 'Selecione o cliente.' : null,
                 ),
               ],
             ],
@@ -129,7 +128,10 @@ class _DemandFormDialogState extends State<DemandFormDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: _salvar,
+          // Sem cliente ativo o cadastro falharia na API: nem habilita.
+          onPressed: !widget._edicao && widget.clientes.isEmpty
+              ? null
+              : _salvar,
           child: Text(widget._edicao ? 'Salvar' : 'Cadastrar'),
         ),
       ],
@@ -137,20 +139,38 @@ class _DemandFormDialogState extends State<DemandFormDialog> {
   }
 }
 
-/// A API ainda não lista usuários, então o técnico é informado pelo UUID.
-class AssignTechnicianDialog extends StatefulWidget {
-  const AssignTechnicianDialog({super.key, this.responsavelAtual});
+class AtribuicaoResult {
+  final String responsavelId;
+  final String? motivo;
 
+  const AtribuicaoResult({required this.responsavelId, this.motivo});
+}
+
+/// Escolha do técnico entre os técnicos ativos (SCRUM-100). Na troca de um
+/// técnico já atribuído o motivo é obrigatório, como no backend (SCRUM-97).
+class AssignTechnicianDialog extends StatefulWidget {
+  const AssignTechnicianDialog({
+    super.key,
+    required this.tecnicos,
+    this.responsavelAtual,
+  });
+
+  final List<UsuarioModel> tecnicos;
   final String? responsavelAtual;
 
-  static Future<String?> show(
+  bool get _troca => responsavelAtual != null;
+
+  static Future<AtribuicaoResult?> show(
     BuildContext context, {
+    required List<UsuarioModel> tecnicos,
     String? responsavelAtual,
   }) {
-    return showDialog<String>(
+    return showDialog<AtribuicaoResult>(
       context: context,
-      builder: (_) =>
-          AssignTechnicianDialog(responsavelAtual: responsavelAtual),
+      builder: (_) => AssignTechnicianDialog(
+        tecnicos: tecnicos,
+        responsavelAtual: responsavelAtual,
+      ),
     );
   }
 
@@ -160,34 +180,74 @@ class AssignTechnicianDialog extends StatefulWidget {
 
 class _AssignTechnicianDialogState extends State<AssignTechnicianDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final _responsavel = TextEditingController(
-    text: widget.responsavelAtual,
-  );
+  final _motivo = TextEditingController();
+  String? _responsavelId;
 
   @override
   void dispose() {
-    _responsavel.dispose();
+    _motivo.dispose();
     super.dispose();
   }
 
   void _salvar() {
     if (!_formKey.currentState!.validate()) return;
-    Navigator.of(context).pop(_responsavel.text.trim());
+    Navigator.of(context).pop(
+      AtribuicaoResult(
+        responsavelId: _responsavelId!,
+        motivo: widget._troca ? _motivo.text.trim() : null,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Reatribuir ao mesmo técnico não tem efeito (o backend responde 409).
+    final opcoes = widget.tecnicos
+        .where((t) => t.id != widget.responsavelAtual)
+        .toList();
+    final atual = widget.tecnicos
+        .where((t) => t.id == widget.responsavelAtual)
+        .map((t) => t.nome)
+        .firstOrNull;
     return AlertDialog(
-      title: const Text('Atribuir técnico'),
+      title: Text(widget._troca ? 'Trocar técnico' : 'Atribuir técnico'),
       content: SizedBox(
         width: 420,
         child: Form(
           key: _formKey,
-          child: TextFormField(
-            controller: _responsavel,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'ID do técnico'),
-            validator: _validarUuid,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget._troca) ...[
+                Text('Responsável atual: ${atual ?? 'técnico inativo'}'),
+                const SizedBox(height: 12),
+              ],
+              SeletorUsuario(
+                rotulo: 'Técnico',
+                usuarios: opcoes,
+                vazio: 'Nenhum outro técnico ativo. Cadastre um em "Usuários".',
+                onChanged: (id) => _responsavelId = id,
+                validator: (id) => id == null ? 'Selecione o técnico.' : null,
+              ),
+              if (widget._troca) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _motivo,
+                  minLines: 2,
+                  maxLines: 4,
+                  maxLength: 500,
+                  decoration: const InputDecoration(
+                    labelText: 'Motivo da troca',
+                    helperText: 'Fica registrado na auditoria da demanda.',
+                  ),
+                  validator: (v) =>
+                      (v?.trim().length ?? 0) < tamanhoMinimoMotivo
+                      ? 'Descreva o motivo (mínimo $tamanhoMinimoMotivo caracteres).'
+                      : null,
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -196,8 +256,52 @@ class _AssignTechnicianDialogState extends State<AssignTechnicianDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        FilledButton(onPressed: _salvar, child: const Text('Atribuir')),
+        FilledButton(
+          onPressed: opcoes.isEmpty ? null : _salvar,
+          child: Text(widget._troca ? 'Trocar' : 'Atribuir'),
+        ),
       ],
+    );
+  }
+}
+
+/// Lista suspensa de usuários (nome e e-mail); some quando não há opções.
+class SeletorUsuario extends StatelessWidget {
+  const SeletorUsuario({
+    super.key,
+    required this.rotulo,
+    required this.usuarios,
+    required this.vazio,
+    required this.onChanged,
+    required this.validator,
+  });
+
+  final String rotulo;
+  final List<UsuarioModel> usuarios;
+  final String vazio;
+  final ValueChanged<String?> onChanged;
+  final FormFieldValidator<String> validator;
+
+  @override
+  Widget build(BuildContext context) {
+    if (usuarios.isEmpty) {
+      return Align(alignment: Alignment.centerLeft, child: Text(vazio));
+    }
+    return DropdownButtonFormField<String>(
+      isExpanded: true,
+      decoration: InputDecoration(labelText: rotulo),
+      items: [
+        for (final u in usuarios)
+          DropdownMenuItem(
+            value: u.id,
+            child: Text(
+              u.email.isEmpty ? u.nome : '${u.nome} · ${u.email}',
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+      onChanged: onChanged,
+      validator: validator,
     );
   }
 }

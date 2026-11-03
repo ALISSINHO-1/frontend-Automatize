@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/widgets/main_layout.dart';
 import '../../../demands/data/models/pedido_model.dart';
 import '../../data/models/anexo_model.dart';
+import '../../data/models/usuario_model.dart';
 import '../../data/services/admin_demand_service.dart';
 import '../admin_style.dart';
 import '../widgets/admin_demand_dialogs.dart';
@@ -38,9 +39,16 @@ class _AdminDemandDetailsPageState extends State<AdminDemandDetailsPage> {
   bool _ocupado = false;
   // Trocar a key recria o painel e refaz o GET da auditoria após cada ação.
   int _versaoAuditoria = 0;
+  Map<String, String> _nomes = const {};
 
   String get _estado => AdminStyle.normalizar(_pedido.status);
   bool get _concluida => _estado == 'CONCLUIDO';
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarNomes();
+  }
 
   @override
   void dispose() {
@@ -88,15 +96,43 @@ class _AdminDemandDetailsPageState extends State<AdminDemandDetailsPage> {
   }
 
   Future<void> _atribuir() async {
-    final responsavel = await AssignTechnicianDialog.show(
+    setState(() => _ocupado = true);
+    List<UsuarioModel> tecnicos;
+    try {
+      tecnicos = await _admin.listarUsuarios(perfil: 'TECNICO', ativo: true);
+    } catch (erro) {
+      if (mounted) _mensagem('$erro');
+      return;
+    } finally {
+      if (mounted) setState(() => _ocupado = false);
+    }
+    if (!mounted) return;
+    final troca = _pedido.responsavelId != null;
+    final escolha = await AssignTechnicianDialog.show(
       context,
+      tecnicos: tecnicos,
       responsavelAtual: _pedido.responsavelId,
     );
-    if (responsavel == null || !mounted) return;
+    if (escolha == null || !mounted) return;
     await _executar(
-      () => _admin.atribuirResponsavel(_pedido.id, responsavel),
-      'Técnico atribuído.',
+      () => _admin.atribuirResponsavel(
+        _pedido.id,
+        escolha.responsavelId,
+        motivo: escolha.motivo,
+      ),
+      troca ? 'Técnico trocado.' : 'Técnico atribuído.',
     );
+    _carregarNomes();
+  }
+
+  Future<void> _carregarNomes() async {
+    try {
+      final usuarios = await _admin.listarUsuarios();
+      if (!mounted) return;
+      setState(() => _nomes = {for (final u in usuarios) u.id: u.nome});
+    } catch (_) {
+      // Sem a lista, os campos continuam mostrando o identificador.
+    }
   }
 
   Future<({String nome, List<int> bytes})?> _abrirSeletor() async {
@@ -203,12 +239,15 @@ class _AdminDemandDetailsPageState extends State<AdminDemandDetailsPage> {
                           _Info(
                             Icons.engineering_rounded,
                             'Técnico responsável',
-                            _pedido.responsavelId ?? 'Não atribuído',
+                            _pedido.responsavelId == null
+                                ? 'Não atribuído'
+                                : _nomes[_pedido.responsavelId] ??
+                                      _pedido.responsavelId!,
                           ),
                           _Info(
                             Icons.person_rounded,
                             'Cliente',
-                            _pedido.clienteId,
+                            _nomes[_pedido.clienteId] ?? _pedido.clienteId,
                           ),
                           _Info(
                             Icons.event_rounded,
@@ -261,6 +300,7 @@ class _AdminDemandDetailsPageState extends State<AdminDemandDetailsPage> {
                 DemandAuditPanel(
                   key: ValueKey(_versaoAuditoria),
                   carregar: () => _admin.listarAuditoria(_pedido.id),
+                  nomes: _nomes,
                 ),
               ],
             ),

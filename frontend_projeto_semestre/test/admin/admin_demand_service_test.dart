@@ -187,4 +187,70 @@ void main() {
       )),
     );
   });
+
+  test('atribuirResponsavel só envia motivo quando informado', () async {
+    final corpos = <Map<String, dynamic>>[];
+    final servico = _servico((req) async {
+      corpos.add(jsonDecode(req.body) as Map<String, dynamic>);
+      return _json({}, 200);
+    });
+
+    await servico.atribuirResponsavel(_id, _id);
+    await servico.atribuirResponsavel(_id, _id, motivo: '  Tecnico de ferias  ');
+
+    expect(corpos, [
+      {'responsavel_id': _id},
+      {'responsavel_id': _id, 'motivo': 'Tecnico de ferias'},
+    ]);
+  });
+
+  test('listarUsuarios filtra por perfil e status via query', () async {
+    late http.Request enviado;
+    final servico = _servico((req) async {
+      enviado = req;
+      return _json([
+        {'id': _id, 'nome': 'Tiago', 'email': 't@x.dev', 'perfil': 'tecnico', 'ativo': true},
+        {'id': 'x', 'nome': 'Ivo', 'perfil': 'CLIENTE', 'ativo': null},
+      ], 200);
+    });
+
+    final usuarios = await servico.listarUsuarios(perfil: 'TECNICO', ativo: true);
+
+    expect(enviado.url.path, '/usuarios');
+    expect(enviado.url.queryParameters, {'limit': '100', 'perfil': 'TECNICO', 'ativo': 'true'});
+    expect(usuarios.first.perfil, 'TECNICO');
+    // `ativo` nulo no banco não conta como ativo, igual ao backend.
+    expect(usuarios.last.ativo, isFalse);
+  });
+
+  test('gestão de usuários usa as rotas e corpos do backend', () async {
+    final chamadas = <String>[];
+    final servico = _servico((req) async {
+      chamadas.add('${req.method} ${req.url.path} ${req.body}');
+      return _json({'id': _id, 'nome': 'Rita', 'email': 'r@x.dev', 'perfil': 'TECNICO', 'ativo': true}, 200);
+    });
+
+    await servico.criarUsuario(nome: ' Rita ', email: ' r@x.dev ', senha: 'senha-forte', perfil: 'TECNICO');
+    await servico.alterarPerfil(_id, 'ADMIN');
+    await servico.alterarAtivo(_id, ativo: false);
+
+    expect(chamadas, [
+      'POST /usuarios {"nome":"Rita","email":"r@x.dev","senha":"senha-forte","perfil":"TECNICO"}',
+      'PATCH /usuarios/$_id/perfil {"perfil":"ADMIN"}',
+      'PATCH /usuarios/$_id/ativo {"ativo":false}',
+    ]);
+  });
+
+  test('regra violada no backend aparece com o detail (ex.: último ADMIN)', () async {
+    final servico = _servico(
+      (_) async => _json({'detail': 'Nao e possivel inativar o ultimo ADMIN ativo.'}, 409),
+    );
+
+    await expectLater(
+      servico.alterarAtivo(_id, ativo: false),
+      throwsA(isA<AdminApiException>()
+          .having((e) => e.statusCode, 'status', 409)
+          .having((e) => e.message, 'mensagem', contains('ultimo ADMIN'))),
+    );
+  });
 }
