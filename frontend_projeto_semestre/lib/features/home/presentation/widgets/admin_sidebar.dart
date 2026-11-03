@@ -21,7 +21,18 @@ class AdminSidebar extends StatelessWidget {
         final emDemandas = rotaAtual == AppRoutes.demandList ||
             rotaAtual == AppRoutes.demandDetails;
 
-        final selectedIndex = emDemandas ? 1 : 0;
+        final emHistorico = rotaAtual == AppRoutes.demandHistory;
+        final emAnexos = rotaAtual == AppRoutes.demandAttachments;
+
+        final selectedIndex = emAnexos
+            ? 3
+            : emHistorico
+                ? 2
+                : emDemandas
+                    ? 1
+                    : rotaAtual == AppRoutes.home
+                        ? 0
+                        : -1;
 
         return Container(
           width: 250,
@@ -55,48 +66,55 @@ class AdminSidebar extends StatelessWidget {
 
               const SizedBox(height: 48),
 
-              // Menu com indicador roxo deslizante.
               SizedBox(
                 height: (_itemHeight + _itemSpacing) * 4,
                 child: Stack(
                   children: [
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOutCubic,
-                      top: selectedIndex * (_itemHeight + _itemSpacing),
-                      left: 0,
-                      right: 0,
-                      height: _itemHeight,
-                      child: IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: RedesignColors.purple
-                                .withValues(alpha: 0.16),
-                            borderRadius: BorderRadius.circular(12),
+                    if (selectedIndex >= 0)
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOutCubic,
+                        top: selectedIndex *
+                            (_itemHeight + _itemSpacing),
+                        left: 0,
+                        right: 0,
+                        height: _itemHeight,
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: RedesignColors.purple
+                                  .withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
                     Column(
                       children: [
                         _menuItem(
                           Icons.dashboard_rounded,
                           'Visão geral',
-                          selected: !emDemandas,
+                          selected: selectedIndex == 0,
+                          onTap: () => _navegar(AppRoutes.home),
                         ),
                         _menuItem(
                           Icons.assignment_outlined,
                           'Demandas',
-                          selected: emDemandas,
+                          selected: selectedIndex == 1,
+                          onTap: () => _navegar(AppRoutes.demandList),
                         ),
                         _menuItem(
                           Icons.history_rounded,
                           'Histórico',
+                          selected: selectedIndex == 2,
+                          onTap: () => _navegar(AppRoutes.demandHistory),
                         ),
                         _menuItem(
                           Icons.folder_outlined,
                           'Anexos',
+                          selected: selectedIndex == 3,
+                          onTap: () => _navegar(AppRoutes.demandAttachments),
                         ),
                       ],
                     ),
@@ -105,7 +123,6 @@ class AdminSidebar extends StatelessWidget {
               ),
 
               const Spacer(),
-
               const Divider(color: RedesignColors.border),
               const SizedBox(height: 16),
 
@@ -149,10 +166,26 @@ class AdminSidebar extends StatelessWidget {
     );
   }
 
+  void _navegar(String rota) {
+    final navigator = adminNavigatorKey.currentState;
+
+    if (navigator == null) return;
+
+    if (adminNavigationController.currentRoute == rota) {
+      return;
+    }
+
+    navigator.pushNamedAndRemoveUntil(
+      rota,
+      (route) => false,
+    );
+  }
+
   Widget _menuItem(
     IconData icon,
     String title, {
     bool selected = false,
+    VoidCallback? onTap,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: _itemSpacing),
@@ -160,32 +193,7 @@ class AdminSidebar extends StatelessWidget {
         child: SizedBox(
           height: _itemHeight,
           child: ListTile(
-            onTap: () {
-              final navigator = adminNavigatorKey.currentState;
-
-              if (navigator == null) return;
-
-              if (title == 'Visão geral') {
-                if (adminNavigationController.currentRoute ==
-                    AppRoutes.home) {
-                  return;
-                }
-
-                navigator.pushNamedAndRemoveUntil(
-                  AppRoutes.home,
-                  (route) => false,
-                );
-              } else if (title == 'Demandas') {
-              if (adminNavigationController.currentRoute ==
-                  AppRoutes.demandList) {
-                return;
-              }
-
-              adminNavigationController.setRoute(AppRoutes.demandList);
-
-              navigator.pushNamed(AppRoutes.demandList);
-              }
-            },
+            onTap: onTap,
             dense: true,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,

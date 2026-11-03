@@ -7,11 +7,13 @@ import '../../data/models/pedido_model.dart';
 
 class DemandAttachmentsPage extends StatefulWidget {
   const DemandAttachmentsPage({
-    super.key,
-    required this.pedido,
-  });
+  super.key,
+  required this.pedido,
+  this.fromAttachmentsHub = false,
+});
 
   final PedidoModel pedido;
+  final bool fromAttachmentsHub;
 
   @override
   State<DemandAttachmentsPage> createState() =>
@@ -134,7 +136,11 @@ class _DemandAttachmentsPageState
                       Icons.arrow_back_rounded,
                       size: 18,
                     ),
-                    label: const Text('Voltar aos detalhes'),
+                    label: Text(
+                    widget.fromAttachmentsHub
+                        ? 'Voltar à Central de Anexos'
+                        : 'Voltar aos detalhes',
+                  ),
                     style: TextButton.styleFrom(
                       foregroundColor:
                           RedesignColors.textSecondary,

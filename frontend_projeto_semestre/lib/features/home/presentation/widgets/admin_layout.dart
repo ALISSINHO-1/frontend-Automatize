@@ -17,33 +17,30 @@ class AdminLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 900;
+    final larguraTela = MediaQuery.sizeOf(context).width;
+    final isDesktop = larguraTela >= 900;
 
-        return Overlay(
-          initialEntries: [
-            OverlayEntry(
-              builder: (context) => Material(
-                color: RedesignColors.background,
-                child: Row(
-                  children: [
-                    if (isDesktop) const AdminSidebar(),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          const _AdminTopBar(),
-                          Expanded(child: child),
-                        ],
-                      ),
-                    ),
-                  ],
+    return Overlay(
+      initialEntries: [
+        OverlayEntry(
+          builder: (context) => Material(
+            color: RedesignColors.background,
+            child: Row(
+              children: [
+                if (isDesktop) const AdminSidebar(),
+                Expanded(
+                  child: Column(
+                    children: [
+                      const _AdminTopBar(),
+                      Expanded(child: child),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 }
