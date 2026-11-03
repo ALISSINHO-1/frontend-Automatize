@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/redesign_colors.dart';
 import '../../data/mock/demand_mock_data.dart';
 import '../../data/models/pedido_model.dart';
-import 'demand_details_page.dart';
+import 'technical_demand_details_page.dart';
 
 class DemandHistoryPage extends StatelessWidget {
   const DemandHistoryPage({super.key});
@@ -133,7 +133,7 @@ class DemandHistoryPage extends StatelessWidget {
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) => DemandDetailsPage(
+                                        builder: (_) => TechnicalDemandDetailsPage(
                                           demandId: pedido.id,
                                           pedido: pedido,
                                         ),

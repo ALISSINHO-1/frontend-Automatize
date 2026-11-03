@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/redesign_colors.dart';
 import '../../data/mock/demand_mock_data.dart';
 import '../../data/models/pedido_model.dart';
-import 'demand_attachments_page.dart';
+import 'technical_demand_attachments_page.dart';
 
 class DemandAttachmentsHubPage extends StatelessWidget {
   const DemandAttachmentsHubPage({super.key});
@@ -74,7 +74,7 @@ class DemandAttachmentsHubPage extends StatelessWidget {
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) => DemandAttachmentsPage(
+                                        builder: (_) => TechnicalDemandAttachmentsPage(
                                         pedido: pedido,
                                       ),
                                       ),
