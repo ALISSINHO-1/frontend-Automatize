@@ -102,11 +102,21 @@ try:
                     entry['input_geometry'] = boxes
                     for box, value in ((boxes[0], f"{profile}.demo@automatize.local"), (boxes[-1], password)):
                         page.mouse.click(box['x'] + box['width'] * 0.4, box['y'] + box['height'] * 0.5)
+                        page.wait_for_timeout(300)
                         page.keyboard.press('ControlOrMeta+A')
+                        page.wait_for_timeout(100)
                         page.keyboard.type(value, delay=25)
-                    with page.expect_response(lambda r: r.url.endswith("/auth/login"), timeout=30000) as login:
+                    with page.expect_response(lambda r: r.url.endswith("/auth/login") and r.request.method == 'POST', timeout=30000) as login:
                         click_label(page, "Entrar na plataforma")
-                    assert login.value.status == 200
+                    sent = login.value.request.post_data_json
+                    entry['credentials_match_fixture'] = {
+                        'email': sent.get('email') == f'{profile}.demo@automatize.local',
+                        'password': sent.get('senha') == password,
+                        'password_length': len(sent.get('senha','')),
+                    }
+                    assert sent.get('email') == f'{profile}.demo@automatize.local', 'Automacao digitou email diferente da fixture'
+                    assert sent.get('senha') == password, 'Automacao digitou senha diferente da fixture'
+                    assert login.value.status == 200, f'Login retornou HTTP {login.value.status} com credenciais conferidas'
                     page.wait_for_timeout(1500)
                     page.screenshot(path=str(OUT / f"{profile}-home.png"), full_page=True)
                     with page.expect_response(lambda r: "/demandas" in r.url and r.request.method == "GET", timeout=30000) as demands:
