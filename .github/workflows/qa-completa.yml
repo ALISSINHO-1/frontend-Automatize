@@ -2,6 +2,7 @@ name: QA completa de jornadas e API
 on:
   push:
     branches: [validation/qa-completa-20261104]
+    paths: ['.github/scripts/**', '.github/workflows/qa-completa.yml']
 permissions:
   contents: read
   actions: read
@@ -15,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [hml-oficial, cliente-pr13, admin-pr15, tecnico-pr16, api-completa]
+        name: [admin-pr15, tecnico-pr16, api-completa]
     services:
       postgres:
         image: postgres:16

@@ -92,6 +92,8 @@ def upload_cases():
     check('anexo: acima de 10 MiB recusado',lambda:(choose_file('grande.pdf',b'x'*(10*1024*1024+1)),has('excede 10 MB')))
     check('anexo: formato não permitido recusado',lambda:(choose_file('invalido.exe',b'MZbad'),has('formato não permitido')))
     check('anexo: remover seleção local',lambda:(click('Remover arquivo'),has('Nenhum arquivo selecionado.')))
+    check('anexo: exatamente 10 MiB aceito localmente',lambda:(choose_file('limite.pdf',b'x'*(10*1024*1024)),has('limite.pdf')))
+    check('anexo: remover arquivo no limite',lambda:(click('Remover arquivo'),has('Nenhum arquivo selecionado.')))
 
 def homologation():
     detail(TITLES[0]);click('Abrir homologação');has('Li e concordo com a entrega')
@@ -112,6 +114,9 @@ def assert_disabled(name):
     assert loc.first.is_disabled(),'Botão deveria estar desabilitado: '+name
 
 def demo():
+    check('dashboard: botão Ver demandas',lambda:(open_route('/'),click('Ver demandas'),has('Acompanhe suas demandas.')))
+    for menu,title in [('Visão geral','Visão geral das demandas'),('Demandas','Acompanhe suas demandas.'),('Histórico','Histórico de demandas'),('Anexos','Central de anexos')]:
+        check('menu lateral '+menu,lambda m=menu,t=title:(open_route('/'),click(m),has(t)))
     for route,title in [('/','Visão geral das demandas'),('/demand-list','Minhas demandas'),('/demand-history','Histórico de demandas'),('/demand-attachments','Central de anexos')]:
         check('rota direta desktop '+route,lambda r=route,t=title:(open_route(r),has(t)))
         for width in (390,800):
@@ -199,6 +204,20 @@ def client_operations():
         if route=='/admin' and VAR!='admin-pr15':continue
         check('rota protegida sem sessão '+route,lambda r=route:(open_route(r),has('Entrar na plataforma')))
 
+
+def user_menu(name,action):
+    target=page.get_by_text(name,exact=True)
+    if not target.count(): target=page.get_by_label(name,exact=False)
+    assert target.count(),'Usuário não encontrado na interface: '+name
+    box=target.first.bounding_box();assert box
+    menus=[]
+    for loc in page.get_by_label('Ações do usuário',exact=True).all():
+        b=loc.bounding_box()
+        if b: menus.append((abs(b['y']+b['height']/2-box['y']-box['height']/2),loc))
+    assert menus,'Menu do usuário não encontrado'
+    distance,loc=min(menus,key=lambda x:x[0]);assert distance<90,'Menu não corresponde à linha alvo'
+    loc.click();click(action)
+
 def admin_operations():
     token=req('POST','/auth/login',data={'email':'admin.demo@automatize.local','senha':os.environ['DEMO_ADMIN_PASSWORD']})['access_token']
     login('admin');click('Ver lista de demandas');click('Painel administrativo')
@@ -228,6 +247,19 @@ def admin_operations():
         req('POST','/auth/login',data={'email':'qa.navegador@example.com','senha':'Qa-Senha-Sintetica-2026'})
         return 'Usuário criado pela UI consegue autenticar na API'
     check('admin: cadastro real de usuário e login independente',create_user)
+    def toggle_user():
+        users=req('GET','/usuarios',token);user=next(u for u in users if u['email']=='qa.navegador@example.com')
+        user_menu('QA Usuario Navegador','Inativar');click('Inativar')
+        assert next(u for u in req('GET','/usuarios',token) if u['id']==user['id'])['ativo'] is False
+        req('POST','/auth/login',data={'email':user['email'],'senha':'Qa-Senha-Sintetica-2026'},expected=401)
+        user_menu('QA Usuario Navegador','Reativar');click('Reativar')
+        req('POST','/auth/login',data={'email':user['email'],'senha':'Qa-Senha-Sintetica-2026'})
+    check('admin: inativar e reativar usuário pela UI com login confirmado',toggle_user)
+    def change_profile():
+        user_menu('QA Usuario Navegador','Alterar perfil');click('Tornar Técnico');page.wait_for_timeout(800)
+        user=next(u for u in req('GET','/usuarios',token) if u['email']=='qa.navegador@example.com')
+        assert user['perfil']=='TECNICO'
+    check('admin: alterar perfil pela UI e confirmar API',change_profile)
     shot('admin-final')
 
 def assert_no_admin():
