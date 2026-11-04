@@ -1,0 +1,92 @@
+name: Validar navegador com builds existentes
+on:
+  push:
+    branches: [validation/browser-20261104]
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [hml-oficial, admin-pr15]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_ci_only
+          POSTGRES_DB: automatize_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d automatize_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres_ci_only@localhost:5432/automatize_test
+      TEST_DATABASE_URL: postgresql+psycopg2://postgres:postgres_ci_only@localhost:5432/automatize_test
+      JWT_SECRET_KEY: chave-apenas-ci-build-descartavel-00000000000000000
+      CORS_ORIGINS: '["http://127.0.0.1:8080","http://localhost:8080"]'
+      DEMO_ADMIN_PASSWORD: SmokeBuild-Descartavel-2026
+      DEMO_TECNICO_PASSWORD: SmokeBuild-Descartavel-2026
+      DEMO_CLIENTE_PASSWORD: SmokeBuild-Descartavel-2026
+      VARIANT: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: validation
+      - uses: actions/download-artifact@v4
+        with:
+          name: automatize-${{ matrix.name }}
+          run-id: 41874462736
+          github-token: ${{ github.token }}
+          path: previous
+      - uses: actions/checkout@v4
+        with:
+          repository: ALISSINHO-1/backend-Automatize
+          ref: df6f3b4ea944e4082da196162a10f4b7dc44f5b5
+          path: backend
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Preparar API e navegador
+        working-directory: backend
+        run: |
+          mkdir -p ../reports
+          python -m pip install -r requirements.txt playwright
+          python -m playwright install --with-deps chromium
+          python -m scripts.prepare_test_database
+          alembic upgrade head
+          python -m scripts.seed_demo_environment --apply
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > ../reports/api.log 2>&1 &
+      - name: Servir mesmo build
+        run: |
+          python -m http.server 8080 --bind 127.0.0.1 --directory previous/frontend/frontend_projeto_semestre/build/web > reports/web-server.log 2>&1 &
+          python - <<'PY'
+          import time,urllib.request
+          for url in ('http://127.0.0.1:8000/health','http://127.0.0.1:8080'):
+              for attempt in range(60):
+                  try:
+                      urllib.request.urlopen(url,timeout=2)
+                      break
+                  except Exception:
+                      time.sleep(1)
+              else:
+                  raise RuntimeError('Servidor nao iniciou: '+url)
+          PY
+      - name: Testar login e demandas reais
+        env:
+          REPORT_DIR: ${{ github.workspace }}/reports
+        run: python validation/.github/scripts/build_smoke.py
+      - name: Evidencias
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navegador-${{ matrix.name }}
+          path: reports
+          retention-days: 7

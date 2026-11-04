@@ -92,8 +92,18 @@ try:
                 else:
                     fields = page.get_by_role("textbox")
                     assert fields.count() >= 2, "Campos de login nao expostos pela semantica Flutter"
-                    fields.nth(0).fill(f"{profile}.demo@automatize.local")
-                    fields.nth(1).fill(password)
+                    # Flutter mantem um espelho semantico e um editor nativo.
+                    # fill() no espelho pode nao atualizar o TextEditingController.
+                    # Clicar na geometria do campo e digitar testa o fluxo real.
+                    boxes = [field.bounding_box() for field in fields.all()]
+                    boxes = [box for box in boxes if box and box['width'] > 50 and box['height'] > 10]
+                    boxes.sort(key=lambda box: box['y'])
+                    assert len(boxes) >= 2, "Geometria dos campos de login indisponivel"
+                    entry['input_geometry'] = boxes
+                    for box, value in ((boxes[0], f"{profile}.demo@automatize.local"), (boxes[-1], password)):
+                        page.mouse.click(box['x'] + box['width'] * 0.4, box['y'] + box['height'] * 0.5)
+                        page.keyboard.press('ControlOrMeta+A')
+                        page.keyboard.type(value, delay=25)
                     with page.expect_response(lambda r: r.url.endswith("/auth/login"), timeout=30000) as login:
                         click_label(page, "Entrar na plataforma")
                     assert login.value.status == 200
