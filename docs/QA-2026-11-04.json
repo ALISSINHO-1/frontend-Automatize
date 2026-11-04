@@ -1,0 +1,2047 @@
+{
+  "date": "2026-11-04",
+  "api": {
+    "sha": "df6f3b4ea944e4082da196162a10f4b7dc44f5b5",
+    "tests_passed": 772,
+    "routes_called": 33,
+    "routes_successful": 33,
+    "coverage": {
+      "lines": 90.5703422053232,
+      "branches": 80.2158273381295,
+      "combined": 88.76333961079723
+    },
+    "run_id": 41882805797,
+    "route_results": [
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "hits": [
+          {
+            "status": 200,
+            "count": 10
+          },
+          {
+            "status": 401,
+            "count": 11
+          },
+          {
+            "status": 422,
+            "count": 9
+          },
+          {
+            "status": 500,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/auth/me",
+        "hits": [
+          {
+            "status": 200,
+            "count": 11
+          },
+          {
+            "status": 401,
+            "count": 11
+          },
+          {
+            "status": 500,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/demandas",
+        "hits": [
+          {
+            "status": 200,
+            "count": 17
+          },
+          {
+            "status": 422,
+            "count": 13
+          },
+          {
+            "status": 401,
+            "count": 23
+          },
+          {
+            "status": 500,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/demandas",
+        "hits": [
+          {
+            "status": 201,
+            "count": 64
+          },
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/demandas/indicadores",
+        "hits": [
+          {
+            "status": 200,
+            "count": 10
+          },
+          {
+            "status": 422,
+            "count": 10
+          },
+          {
+            "status": 401,
+            "count": 2
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/demandas/{id}",
+        "hits": [
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 3
+          },
+          {
+            "status": 404,
+            "count": 2
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "PATCH",
+        "path": "/demandas/{id}",
+        "hits": [
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "DELETE",
+        "path": "/demandas/{id}",
+        "hits": [
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 1
+          },
+          {
+            "status": 204,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/demandas/{id}/status",
+        "hits": [
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 3
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 403,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/demandas/{id}/aceite",
+        "hits": [
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 2
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/demandas/{id}/rejeicao",
+        "hits": [
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "PUT",
+        "path": "/demandas/{id}/responsavel",
+        "hits": [
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 2
+          },
+          {
+            "status": 403,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/demandas/{id}/etapas",
+        "hits": [
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/demandas/{id}/etapas",
+        "hits": [
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 2
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 3
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 3
+          },
+          {
+            "status": 201,
+            "count": 2
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "PATCH",
+        "path": "/demandas/{id}/etapas/{etapa_id}",
+        "hits": [
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 2
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 2
+          },
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 2
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 2
+          },
+          {
+            "status": 401,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "DELETE",
+        "path": "/demandas/{id}/etapas/{etapa_id}",
+        "hits": [
+          {
+            "status": 422,
+            "count": 1
+          },
+          {
+            "status": 204,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 204,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 1
+          },
+          {
+            "status": 204,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 204,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/demandas/{id}/etapas/{etapa_id}/conclusao",
+        "hits": [
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/demandas/{id}/evidencias",
+        "hits": [
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/demandas/{id}/historico",
+        "hits": [
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/demandas/{id}/anexos",
+        "hits": [
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/demandas/{id}/anexos/{anexo_id}/acesso",
+        "hits": [
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 503,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 503,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/demandas/{id}/ocorrencias",
+        "hits": [
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/demandas/{id}/ocorrencias",
+        "hits": [
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 2
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 201,
+            "count": 2
+          },
+          {
+            "status": 409,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/demandas/{id}/ocorrencias/{ocorrencia_id}/resolucao",
+        "hits": [
+          {
+            "status": 403,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/usuarios/tecnicos",
+        "hits": [
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 2
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/usuarios/clientes",
+        "hits": [
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 3
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 422,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/usuarios/clientes/{client_id}",
+        "hits": [
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/usuarios",
+        "hits": [
+          {
+            "status": 403,
+            "count": 2
+          },
+          {
+            "status": 401,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "POST",
+        "path": "/usuarios",
+        "hits": [
+          {
+            "status": 403,
+            "count": 2
+          },
+          {
+            "status": 201,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 422,
+            "count": 4
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "PATCH",
+        "path": "/usuarios/{usuario_id}/perfil",
+        "hits": [
+          {
+            "status": 403,
+            "count": 2
+          },
+          {
+            "status": 403,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "PATCH",
+        "path": "/usuarios/{usuario_id}/ativo",
+        "hits": [
+          {
+            "status": 403,
+            "count": 2
+          },
+          {
+            "status": 200,
+            "count": 2
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 403,
+            "count": 1
+          },
+          {
+            "status": 409,
+            "count": 1
+          },
+          {
+            "status": 200,
+            "count": 1
+          },
+          {
+            "status": 404,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/",
+        "hits": [
+          {
+            "status": 200,
+            "count": 1
+          }
+        ],
+        "called": true,
+        "success": true
+      },
+      {
+        "method": "GET",
+        "path": "/health",
+        "hits": [
+          {
+            "status": 200,
+            "count": 3
+          }
+        ],
+        "called": true,
+        "success": true
+      }
+    ]
+  },
+  "browser": {
+    "hml": {
+      "run_id": 41881895484,
+      "cases": [
+        {
+          "name": "login: credencial inválida recusada",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: login real",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: listar demandas reais",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: atualizar lista",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: recarregar exige nova autenticação",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: login real",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: listar demandas reais",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: atualizar lista",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: recarregar exige nova autenticação",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: login real",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: listar demandas reais",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: atualizar lista",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: recarregar exige nova autenticação",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: API indisponível tem mensagem de erro",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: validação vazia e criação persistida",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: busca, estado vazio e limpar",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: abrir e fechar detalhes",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: cancelar saída, sair e bloquear retorno",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /home",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /demand-list",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /demand-details",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: jornadas de escrita e sessão",
+          "status": "PASS"
+        }
+      ],
+      "sha": "fc1c2a66e28921550b98a95fce4c99c9fa1b5d33"
+    },
+    "cliente_pr13": {
+      "run_id": 41881895484,
+      "cases": [
+        {
+          "name": "login: credencial inválida recusada",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: login real",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: listar demandas reais",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: atualizar lista",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: recarregar exige nova autenticação",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: login real",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: listar demandas reais",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: atualizar lista",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: recarregar exige nova autenticação",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: login real",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: listar demandas reais",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: atualizar lista",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: recarregar exige nova autenticação",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: API indisponível tem mensagem de erro",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: validação vazia e criação persistida",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: busca, estado vazio e limpar",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: abrir e fechar detalhes",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: cancelar saída, sair e bloquear retorno",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /home",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /demand-list",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /demand-details",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: jornadas de escrita e sessão",
+          "status": "PASS"
+        }
+      ],
+      "sha": "07412681c24e4d4d6c57277e5647206880456717"
+    },
+    "tecnico_pr16": {
+      "run_id": 41882805797,
+      "cases": [
+        {
+          "name": "dashboard: botão Ver demandas",
+          "status": "PASS"
+        },
+        {
+          "name": "menu lateral Visão geral",
+          "status": "PASS"
+        },
+        {
+          "name": "menu lateral Demandas",
+          "status": "PASS"
+        },
+        {
+          "name": "menu lateral Histórico",
+          "status": "PASS"
+        },
+        {
+          "name": "menu lateral Anexos",
+          "status": "PASS"
+        },
+        {
+          "name": "rota direta desktop /",
+          "status": "PASS"
+        },
+        {
+          "name": "navegação 390px /",
+          "status": "PASS"
+        },
+        {
+          "name": "navegação 800px /",
+          "status": "PASS"
+        },
+        {
+          "name": "rota direta desktop /demand-list",
+          "status": "PASS"
+        },
+        {
+          "name": "navegação 390px /demand-list",
+          "status": "FAIL",
+          "error": "Sem menu/retorno interno nesta largura"
+        },
+        {
+          "name": "navegação 800px /demand-list",
+          "status": "FAIL",
+          "error": "Sem menu/retorno interno nesta largura"
+        },
+        {
+          "name": "rota direta desktop /demand-history",
+          "status": "PASS"
+        },
+        {
+          "name": "navegação 390px /demand-history",
+          "status": "FAIL",
+          "error": "Sem menu/retorno interno nesta largura"
+        },
+        {
+          "name": "navegação 800px /demand-history",
+          "status": "FAIL",
+          "error": "Sem menu/retorno interno nesta largura"
+        },
+        {
+          "name": "rota direta desktop /demand-attachments",
+          "status": "PASS"
+        },
+        {
+          "name": "navegação 390px /demand-attachments",
+          "status": "FAIL",
+          "error": "Sem menu/retorno interno nesta largura"
+        },
+        {
+          "name": "navegação 800px /demand-attachments",
+          "status": "FAIL",
+          "error": "Sem menu/retorno interno nesta largura"
+        },
+        {
+          "name": "detalhes /demand-list Configuração de rede",
+          "status": "PASS"
+        },
+        {
+          "name": "retorno detalhes /demand-list Configuração de rede",
+          "status": "PASS"
+        },
+        {
+          "name": "detalhes /demand-history Configuração de rede",
+          "status": "PASS"
+        },
+        {
+          "name": "retorno detalhes /demand-history Configuração de rede",
+          "status": "PASS"
+        },
+        {
+          "name": "anexos e retorno /demand-list Configuração de rede",
+          "status": "PASS"
+        },
+        {
+          "name": "anexos e retorno /demand-attachments Configuração de rede",
+          "status": "PASS"
+        },
+        {
+          "name": "detalhes /demand-list Validação do sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "retorno detalhes /demand-list Validação do sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "detalhes /demand-history Validação do sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "retorno detalhes /demand-history Validação do sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "anexos e retorno /demand-list Validação do sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "anexos e retorno /demand-attachments Validação do sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "detalhes /demand-list Manutenção de notebook",
+          "status": "PASS"
+        },
+        {
+          "name": "retorno detalhes /demand-list Manutenção de notebook",
+          "status": "PASS"
+        },
+        {
+          "name": "detalhes /demand-history Manutenção de notebook",
+          "status": "PASS"
+        },
+        {
+          "name": "retorno detalhes /demand-history Manutenção de notebook",
+          "status": "PASS"
+        },
+        {
+          "name": "anexos e retorno /demand-list Manutenção de notebook",
+          "status": "PASS"
+        },
+        {
+          "name": "anexos e retorno /demand-attachments Manutenção de notebook",
+          "status": "PASS"
+        },
+        {
+          "name": "detalhes /demand-list Instalação de sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "retorno detalhes /demand-list Instalação de sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "detalhes /demand-history Instalação de sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "retorno detalhes /demand-history Instalação de sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "anexos e retorno /demand-list Instalação de sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "anexos e retorno /demand-attachments Instalação de sistema",
+          "status": "PASS"
+        },
+        {
+          "name": "busca notebook",
+          "status": "PASS"
+        },
+        {
+          "name": "busca AUT-002",
+          "status": "PASS"
+        },
+        {
+          "name": "busca CONECTIVIDADE",
+          "status": "PASS"
+        },
+        {
+          "name": "busca zzzinexistente",
+          "status": "PASS"
+        },
+        {
+          "name": "filtro Planejamento",
+          "status": "PASS"
+        },
+        {
+          "name": "filtro Execução",
+          "status": "PASS"
+        },
+        {
+          "name": "filtro Homologação",
+          "status": "PASS"
+        },
+        {
+          "name": "filtro Concluído",
+          "status": "PASS"
+        },
+        {
+          "name": "filtro Todos os estados",
+          "status": "PASS"
+        },
+        {
+          "name": "atualizar demandas",
+          "status": "PASS"
+        },
+        {
+          "name": "anexo: seleção local PDF",
+          "status": "PASS"
+        },
+        {
+          "name": "anexo: duplicado por nome recusado",
+          "status": "PASS"
+        },
+        {
+          "name": "anexo: acima de 10 MiB recusado",
+          "status": "PASS"
+        },
+        {
+          "name": "anexo: formato não permitido recusado",
+          "status": "PASS"
+        },
+        {
+          "name": "anexo: remover seleção local",
+          "status": "PASS"
+        },
+        {
+          "name": "anexo: exatamente 10 MiB aceito localmente",
+          "status": "PASS"
+        },
+        {
+          "name": "anexo: remover arquivo no limite",
+          "status": "PASS"
+        },
+        {
+          "name": "anexos: controles e validações",
+          "status": "PASS"
+        },
+        {
+          "name": "homologação: aprovação bloqueada antes da declaração",
+          "status": "PASS"
+        },
+        {
+          "name": "homologação: rejeição abre formulário",
+          "status": "PASS"
+        },
+        {
+          "name": "homologação: ajuste vazio bloqueia envio",
+          "status": "PASS"
+        },
+        {
+          "name": "homologação: ajuste com 9 caracteres bloqueia envio",
+          "status": "PASS"
+        },
+        {
+          "name": "homologação: cancelar solicitação",
+          "status": "PASS"
+        },
+        {
+          "name": "homologação: solicitação válida demonstrativa",
+          "status": "PASS"
+        },
+        {
+          "name": "homologação: aceite demonstrativo",
+          "status": "PASS"
+        },
+        {
+          "name": "homologação: retorno aos detalhes",
+          "status": "PASS"
+        },
+        {
+          "name": "homologação: percurso completo",
+          "status": "PASS"
+        },
+        {
+          "name": "redimensionamento desktop para tablet",
+          "status": "PASS"
+        },
+        {
+          "name": "demonstração: não faz chamadas à API",
+          "status": "PASS"
+        }
+      ],
+      "visual_findings": [
+        {
+          "name": "Redimensionar 1440 para 800 px",
+          "status": "FAIL",
+          "finding": "Sidebar desktop permanece após reduzir a janela; assertiva semântica deu falso PASS.",
+          "artifact_id": 13348924661,
+          "screenshot": "redimensionamento-1440-800.png"
+        }
+      ],
+      "sha": "1f0cf1a920cbb5cdd03b56b62701ec9dae347f2d"
+    },
+    "admin_pr15": {
+      "run_ids": [
+        41881895484,
+        41884910982,
+        41885099019,
+        41885806143
+      ],
+      "cases": [
+        {
+          "name": "login: credencial inválida recusada",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: login real",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: listar demandas reais",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: atualizar lista",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: não expor painel administrativo",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: recarregar exige nova autenticação",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: login real",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: listar demandas reais",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: atualizar lista",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: não expor painel administrativo",
+          "status": "PASS"
+        },
+        {
+          "name": "tecnico: recarregar exige nova autenticação",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: login real",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: listar demandas reais",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: atualizar lista",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: abrir painel",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: abrir e cancelar nova demanda",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: abrir usuários",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: formulário de novo usuário",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: validação formulário vazio",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: cancelar novo usuário",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: recarregar exige nova autenticação",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: API indisponível tem mensagem de erro",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: validação vazia e criação persistida",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: busca, estado vazio e limpar",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: abrir e fechar detalhes",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: cancelar saída, sair e bloquear retorno",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /home",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /demand-list",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /demand-details",
+          "status": "PASS"
+        },
+        {
+          "name": "rota protegida sem sessão /admin",
+          "status": "PASS"
+        },
+        {
+          "name": "cliente: jornadas de escrita e sessão",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: cadastrar demanda pela UI e confirmar persistência",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: editar demanda pela UI e confirmar persistência",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: atribuir técnico pela UI e confirmar auditoria",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: cancelar e confirmar exclusão de demanda",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: cadastro real de usuário e login independente",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: jornadas de escrita reais",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: inativar e reativar usuário pela UI com login confirmado",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: alterar perfil pela UI e confirmar API",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: trocar técnico exige motivo, audita e altera o acesso",
+          "status": "PASS"
+        },
+        {
+          "name": "admin: filtros de todos os perfis e limpar",
+          "status": "PASS"
+        }
+      ],
+      "sha": "87328f1df90341b2db60fca3cfcc06cbd39d6030"
+    }
+  },
+  "limits": [
+    "Storage real não validado; Storage simulado na suíte",
+    "Ambiente isolado; localhost da máquina do usuário inacessível",
+    "Versões testadas separadamente; integração final pendente",
+    "Cobertura de rotas não cobre todas as combinações de argumentos",
+    "Painel técnico sem autenticação e sem chamadas à API"
+  ],
+  "notes": [
+    "Contagens incluem verificações agrupadas; não são jornadas independentes.",
+    "Testes de automação corrigidos foram repetidos; falhas de seletores/temporização não são defeitos de produto.",
+    "A inspeção visual reprovou a adaptação 1440→800 apesar de uma assertiva semântica ter passado."
+  ]
+}
