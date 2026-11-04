@@ -36,38 +36,37 @@ void main() {
   });
 
   test('rejeita percentuais inválidos sem inventar progresso', () {
-    for (final valor in ['NaN', 'Infinity', 'invalido', -1, 101, null]) {
+    final valoresInvalidos = ['NaN', 'Infinity', 'invalido', -1, 101];
+
+    for (final valor in valoresInvalidos) {
       expect(
         () => PedidoModel.fromJson({
           ...respostaValida,
           'percentual_progresso': valor,
         }),
-        throwsFormatException,
+        throwsA(isA<FormatException>()),
       );
     }
   });
 
-  test('busca todas as páginas autorizadas pela API', () async {
-    final offsets = <String?>[];
-    final cliente = MockClient((requisicao) async {
-      offsets.add(requisicao.url.queryParameters['offset']);
-      expect(requisicao.url.queryParameters['limit'], '100');
-      final offset = int.parse(requisicao.url.queryParameters['offset']!);
-      return http.Response(
-        jsonEncode(
-          List.generate(
-            offset == 0 ? 100 : 1,
-            (index) => {...respostaValida, 'id': 'demanda-${offset + index}'},
-          ),
-        ),
-        200,
-        headers: {'content-type': 'application/json; charset=utf-8'},
-      );
+  test('aceita percentual null retornado pela FastAPI', () {
+    final pedido = PedidoModel.fromJson({
+      ...respostaValida,
+      'percentual_progresso': null,
     });
-    addTearDown(cliente.close);
-    final resultado = await DemandService(client: cliente).buscarDemandas();
-    expect(resultado, hasLength(101));
-    expect(offsets, ['0', '100']);
+
+    expect(pedido.progressoInformado, isFalse);
+    expect(pedido.percentualProgresso, 0.0);
+  });
+
+  test('diferencia progresso zero de progresso não informado', () {
+    final pedido = PedidoModel.fromJson({
+      ...respostaValida,
+      'percentual_progresso': 0,
+    });
+
+    expect(pedido.progressoInformado, isTrue);
+    expect(pedido.percentualProgresso, 0.0);
   });
 
   test('não inventa percentual quando a API omite o campo', () {
@@ -79,29 +78,64 @@ void main() {
     );
   });
 
-  test('GET /demandas retorna registros reais do cliente HTTP', () async {
+  test('GET /demandas carrega mais de 100 demandas com paginação', () async {
+    final offsets = <int>[];
+
     final cliente = MockClient((requisicao) async {
       expect(requisicao.method, 'GET');
       expect(requisicao.url.path, '/demandas');
 
+      final offset = int.parse(requisicao.url.queryParameters['offset']!);
+
+      final limit = int.parse(requisicao.url.queryParameters['limit']!);
+
+      expect(limit, 100);
+      offsets.add(offset);
+
+      final quantidade = offset == 0
+          ? 100
+          : offset == 100
+          ? 1
+          : 0;
+
+      final registros = List.generate(quantidade, (index) {
+        final numero = offset + index;
+
+        return {
+          'id': '00000000-0000-4000-8000-${numero.toString().padLeft(12, '0')}',
+          'codigo_identificador': 'AUT-$numero',
+          'titulo': 'Demanda $numero',
+          'descricao': 'Teste de paginação',
+          'status': 'PLANEJAMENTO',
+          'percentual_progresso': '37.50',
+          'cliente_id': 'e8952d21-4805-4219-8ea2-343102749989',
+        };
+      });
+
       return http.Response(
-        jsonEncode([respostaValida]),
+        jsonEncode(registros),
         200,
         headers: {'content-type': 'application/json; charset=utf-8'},
       );
     });
 
+    addTearDown(cliente.close);
+
     final servico = DemandService(client: cliente);
 
-    try {
-      final resultado = await servico.buscarDemandas();
+    final resultado = await servico.buscarDemandas();
 
-      expect(resultado, hasLength(1));
-      expect(resultado.single.id, uuid);
-      expect(resultado.single.percentualProgresso, 32.5);
-    } finally {
-      cliente.close();
-    }
+    // Deve carregar todos os 101 registros.
+    expect(resultado, hasLength(101));
+
+    // Deve solicitar as páginas corretas.
+    expect(offsets, [0, 100]);
+
+    // Não pode perder ou duplicar identificadores.
+    expect(resultado.map((pedido) => pedido.id).toSet(), hasLength(101));
+
+    // Mantém o percentual decimal enviado pela FastAPI.
+    expect(resultado.first.percentualProgresso, 37.5);
   });
 
   test('POST /demandas envia somente titulo e descricao', () async {

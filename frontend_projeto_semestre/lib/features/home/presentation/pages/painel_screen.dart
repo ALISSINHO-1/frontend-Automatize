@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
@@ -9,26 +8,26 @@ import 'demandas_screen.dart';
 
 class PainelScreen extends StatefulWidget {
   const PainelScreen({super.key});
-
   @override
   State<PainelScreen> createState() => _PainelScreenState();
 }
 
 class _PainelScreenState extends State<PainelScreen> {
   final DemandaStore _store = DemandaStore.instance;
-
+  static const _corTexto = AutomatizeColors.text;
+  static const _corSecundaria = AutomatizeColors.muted;
+  static const _corBorda = AutomatizeColors.border;
   @override
   void initState() {
     super.initState();
-
     _store.addListener(_atualizarPainel);
-    _store.carregarDemandas();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _store.carregarDemandas();
+    });
   }
 
   void _atualizarPainel() {
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   @override
@@ -37,378 +36,340 @@ class _PainelScreenState extends State<PainelScreen> {
     super.dispose();
   }
 
-  String _normalizarStatus(String estado) {
-    final normalizado = estado
-        .trim()
-        .toUpperCase()
-        .replaceAll('Ç', 'C')
-        .replaceAll('Ã', 'A')
-        .replaceAll('Í', 'I');
-    return normalizado == 'PLANEAMENTO' ? 'PLANEJAMENTO' : normalizado;
+  // Traduz os estados do backend apenas para apresentação.
+  String _rotuloEstado(String estado) {
+    switch (estado.trim().toUpperCase()) {
+      case 'PLANEAMENTO':
+      case 'PLANEJAMENTO':
+        return 'Planejamento';
+      case 'EXECUCAO':
+      case 'EXECUÇÃO':
+        return 'Execução';
+      case 'HOMOLOGACAO':
+      case 'HOMOLOGAÇÃO':
+        return 'Homologação';
+      case 'CONCLUIDO':
+      case 'CONCLUÍDO':
+        return 'Concluído';
+      default:
+        return estado.trim().isEmpty ? 'Não informado' : estado;
+    }
   }
 
   Color _corStatus(String estado) {
-    switch (_normalizarStatus(estado)) {
-      case 'PLANEJAMENTO':
-        return const Color(0xFF6366F1);
-
-      case 'HOMOLOGACAO':
-        return const Color(0xFF8B5CF6);
-
-      case 'CONCLUIDO':
-        return const Color(0xFF059669);
-
+    switch (_rotuloEstado(estado)) {
+      case 'Planejamento':
+        return AutomatizeColors.purple;
+      case 'Execução':
+        return AutomatizeColors.primary;
+      case 'Homologação':
+        return AutomatizeColors.cyan;
+      case 'Concluído':
+        return AutomatizeColors.success;
       default:
-        return Colors.blueGrey;
+        return AutomatizeColors.muted;
     }
+  }
+
+  String _textoProgresso(DemandaItem demanda) {
+    if (!demanda.progressoInformado) return 'Não informado';
+    return '${demanda.progresso.toStringAsFixed(2).replaceAll('.', ',')}%';
+  }
+
+  Widget _barraProgresso(DemandaItem demanda) {
+    if (!demanda.progressoInformado) {
+      return Container(
+        height: 6,
+        decoration: BoxDecoration(
+          color: _corBorda,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      );
+    }
+    return LinearProgressIndicator(
+      value: (demanda.progresso / 100).clamp(0.0, 1.0),
+      minHeight: 6,
+      backgroundColor: _corBorda,
+      valueColor: AlwaysStoppedAnimation<Color>(_corStatus(demanda.estado)),
+      borderRadius: BorderRadius.circular(8),
+    );
   }
 
   void _navegarParaDemandas() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => const DemandasScreen(),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const DemandasScreen()),
     );
   }
 
   Future<void> _sair() async {
     await LocalStorageService.removeToken();
-
     _store.limpar();
-
     if (!mounted) return;
-
     Navigator.of(
       context,
       rootNavigator: true,
-    ).pushNamedAndRemoveUntil(
-      AppRoutes.login,
-      (route) => false,
-    );
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final demandas = _store.demandas;
-
-    final total = demandas.length;
-
-    final planejamento = demandas
-        .where(
-          (d) => _normalizarStatus(d.estado) == 'PLANEJAMENTO',
-        )
-        .length;
-
-    final homologacao = demandas
-        .where(
-          (d) => _normalizarStatus(d.estado) == 'HOMOLOGACAO',
-        )
-        .length;
-
-    final concluidas = demandas
-        .where(
-          (d) => _normalizarStatus(d.estado) == 'CONCLUIDO',
-        )
-        .length;
-
-    final recentes = demandas.take(5).toList();
-
     return MainLayout(
       selectedIndex: 0,
       onDestinationSelected: (index) {
-        if (index == 1) {
-          _navegarParaDemandas();
-        }
+        if (index == 1) _navegarParaDemandas();
       },
       onLogout: _sair,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: AutomatizeColors.background,
         body: SafeArea(
           child: _store.carregando
-              ? const Center(
-                  child: CircularProgressIndicator(),
-                )
+              ? const Center(child: CircularProgressIndicator())
               : _store.erro != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _store.erro!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Color(0xFFB91C1C),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            FilledButton.icon(
-                              onPressed: _store.carregarDemandas,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Tentar novamente'),
-                            ),
-                          ],
+              ? _estadoErro(_store.erro!)
+              : _conteudoPainel(_store.demandas),
+        ),
+      ),
+    );
+  }
+
+  Widget _estadoErro(String mensagem) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              mensagem,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AutomatizeColors.danger),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _store.carregarDemandas,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Tentar novamente'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _conteudoPainel(List<DemandaItem> demandas) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Painel',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: _corTexto,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Acompanhe o resumo das suas demandas.',
+            style: TextStyle(color: _corSecundaria, fontSize: 14),
+          ),
+          const SizedBox(height: 28),
+          _tituloSecao('Visão geral'),
+          const SizedBox(height: 16),
+          _indicadores(demandas),
+          const SizedBox(height: 32),
+          _tituloSecao('Demandas recentes'),
+          const SizedBox(height: 16),
+          _listaRecentes(demandas),
+          const SizedBox(height: 16),
+          const Text(
+            'As informações exibidas são consultadas na API.',
+            style: TextStyle(color: _corSecundaria, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tituloSecao(String texto) {
+    return Text(
+      texto,
+      style: const TextStyle(
+        fontSize: 19,
+        fontWeight: FontWeight.w600,
+        color: _corTexto,
+      ),
+    );
+  }
+
+  Widget _indicadores(List<DemandaItem> demandas) {
+    int contar(String estado) {
+      return demandas.where((d) => _rotuloEstado(d.estado) == estado).length;
+    }
+
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: [
+        _IndicadorCard(
+          titulo: 'Total de demandas',
+          valor: '${demandas.length}',
+          descricao: 'Demandas cadastradas',
+          icone: Icons.assignment_outlined,
+          cor: AutomatizeColors.primary,
+        ),
+        _IndicadorCard(
+          titulo: 'Planejamento',
+          valor: '${contar('Planejamento')}',
+          descricao: 'Em planejamento',
+          icone: Icons.calendar_month_outlined,
+          cor: AutomatizeColors.purple,
+        ),
+        _IndicadorCard(
+          titulo: 'Execução',
+          valor: '${contar('Execução')}',
+          descricao: 'Em execução',
+          icone: Icons.build_circle_outlined,
+          cor: AutomatizeColors.primary,
+        ),
+        _IndicadorCard(
+          titulo: 'Homologação',
+          valor: '${contar('Homologação')}',
+          descricao: 'Em homologação',
+          icone: Icons.fact_check_outlined,
+          cor: AutomatizeColors.cyan,
+        ),
+        _IndicadorCard(
+          titulo: 'Concluídas',
+          valor: '${contar('Concluído')}',
+          descricao: 'Finalizadas',
+          icone: Icons.check_circle_outline,
+          cor: AutomatizeColors.success,
+        ),
+      ],
+    );
+  }
+
+  Widget _listaRecentes(List<DemandaItem> demandas) {
+    final ordenadas = [...demandas]
+      ..sort((a, b) {
+        if (a.createdAt == null && b.createdAt == null) return 0;
+        if (a.createdAt == null) return 1;
+        if (b.createdAt == null) return -1;
+        return b.createdAt!.compareTo(a.createdAt!);
+      });
+    final recentes = ordenadas.take(5).toList();
+    return Card(
+      elevation: 0,
+      color: AutomatizeColors.panel,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: _corBorda),
+      ),
+      child: recentes.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.assignment_outlined,
+                      size: 42,
+                      color: _corSecundaria,
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      'Nenhuma demanda cadastrada.',
+                      style: TextStyle(color: _corSecundaria),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: recentes.length,
+              separatorBuilder: (_, _) =>
+                  const Divider(height: 1, color: _corBorda),
+              itemBuilder: (context, index) => _itemRecente(recentes[index]),
+            ),
+    );
+  }
+
+  Widget _itemRecente(DemandaItem demanda) {
+    final cor = _corStatus(demanda.estado);
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: cor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.assignment_outlined, color: cor),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  demanda.titulo,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: _corTexto,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  demanda.codigo,
+                  style: const TextStyle(fontSize: 12, color: _corSecundaria),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _rotuloEstado(demanda.estado),
+                        style: TextStyle(
+                          color: cor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    )
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(28),
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Painel',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Acompanhe o resumo das suas demandas.',
-                            style: TextStyle(
-                              color: Color(0xFF64748B),
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-                          const Text(
-                            'Visão geral',
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Wrap(
-                            spacing: 16,
-                            runSpacing: 16,
-                            children: [
-                              _IndicadorCard(
-                                titulo: 'Total de demandas',
-                                valor: '$total',
-                                descricao: 'Demandas cadastradas',
-                                icone: Icons.assignment_outlined,
-                                cor: const Color(0xFF1677F2),
-                              ),
-                              _IndicadorCard(
-                                titulo: 'Planejamento',
-                                valor: '$planejamento',
-                                descricao: 'Em planejamento',
-                                icone: Icons.calendar_month_outlined,
-                                cor: const Color(0xFF6366F1),
-                              ),
-                              _IndicadorCard(
-                                titulo: 'Homologação',
-                                valor: '$homologacao',
-                                descricao: 'Em homologação',
-                                icone: Icons.fact_check_outlined,
-                                cor: const Color(0xFF8B5CF6),
-                              ),
-                              _IndicadorCard(
-                                titulo: 'Concluídas',
-                                valor: '$concluidas',
-                                descricao: 'Finalizadas',
-                                icone: Icons.check_circle_outline,
-                                cor: const Color(0xFF059669),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
-                          const Text(
-                            'Demandas recentes',
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Card(
-                            elevation: 0,
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12),
-                              side: const BorderSide(
-                                color: Color(0xFFE2E8F0),
-                              ),
-                            ),
-                            child: recentes.isEmpty
-                                ? const Padding(
-                                    padding: EdgeInsets.all(32),
-                                    child: Center(
-                                      child: Column(
-                                        children: [
-                                          Icon(
-                                            Icons.assignment_outlined,
-                                            size: 42,
-                                            color: Color(0xFF94A3B8),
-                                          ),
-                                          SizedBox(height: 12),
-                                          Text(
-                                            'Nenhuma demanda cadastrada.',
-                                            style: TextStyle(
-                                              color: Color(0xFF64748B),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : ListView.separated(
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemCount: recentes.length,
-                                    separatorBuilder: (_, _) =>
-                                        const Divider(
-                                      height: 1,
-                                      color: Color(0xFFE2E8F0),
-                                    ),
-                                    itemBuilder: (context, index) {
-                                      final demanda = recentes[index];
-                                      final cor = _corStatus(
-                                        demanda.estado,
-                                      );
-
-                                      return Padding(
-                                        padding:
-                                            const EdgeInsets.all(16),
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              width: 42,
-                                              height: 42,
-                                              decoration: BoxDecoration(
-                                                color: cor.withValues(
-                                                  alpha: 0.12,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                  10,
-                                                ),
-                                              ),
-                                              child: Icon(
-                                                Icons.assignment_outlined,
-                                                color: cor,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 14),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    demanda.titulo,
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color:
-                                                          Color(0xFF0F172A),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 5),
-                                                  Text(
-                                                    demanda.codigo,
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color:
-                                                          Color(0xFF64748B),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 10),
-                                                  Wrap(
-                                                    spacing: 12,
-                                                    runSpacing: 8,
-                                                    crossAxisAlignment:
-                                                        WrapCrossAlignment
-                                                            .center,
-                                                    children: [
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                          horizontal: 9,
-                                                          vertical: 5,
-                                                        ),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: cor
-                                                              .withValues(
-                                                            alpha: 0.12,
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                            6,
-                                                          ),
-                                                        ),
-                                                        child: Text(
-                                                          demanda.estado,
-                                                          style: TextStyle(
-                                                            color: cor,
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w600,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        'Progresso: '
-                                                        '${demanda.progresso}%',
-                                                        style:
-                                                            const TextStyle(
-                                                          color:
-                                                              Color(0xFF64748B),
-                                                          fontSize: 12,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 10),
-                                                  LinearProgressIndicator(
-                                                    value:
-                                                        (demanda.progresso /
-                                                                100)
-                                                            .clamp(0.0, 1.0),
-                                                    minHeight: 6,
-                                                    backgroundColor:
-                                                        const Color(
-                                                      0xFFE2E8F0,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                      8,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'As informações exibidas são consultadas na API.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
+                    ),
+                    Text(
+                      'Progresso: ${_textoProgresso(demanda)}',
+                      style: const TextStyle(
+                        color: _corSecundaria,
+                        fontSize: 12,
                       ),
                     ),
-        ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _barraProgresso(demanda),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -420,7 +381,6 @@ class _IndicadorCard extends StatelessWidget {
   final String descricao;
   final IconData icone;
   final Color cor;
-
   const _IndicadorCard({
     required this.titulo,
     required this.valor,
@@ -428,18 +388,15 @@ class _IndicadorCard extends StatelessWidget {
     required this.icone,
     required this.cor,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 225,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AutomatizeColors.panel,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: AutomatizeColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,23 +407,19 @@ class _IndicadorCard extends StatelessWidget {
                 child: Text(
                   titulo,
                   style: const TextStyle(
-                    color: Color(0xFF64748B),
+                    color: AutomatizeColors.muted,
                     fontSize: 13,
                   ),
                 ),
               ),
-              Icon(
-                icone,
-                color: cor,
-                size: 23,
-              ),
+              Icon(icone, color: cor, size: 23),
             ],
           ),
           const SizedBox(height: 16),
           Text(
             valor,
             style: const TextStyle(
-              color: Color(0xFF0F172A),
+              color: AutomatizeColors.text,
               fontSize: 30,
               fontWeight: FontWeight.bold,
             ),
@@ -474,10 +427,7 @@ class _IndicadorCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             descricao,
-            style: const TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: AutomatizeColors.muted, fontSize: 12),
           ),
         ],
       ),
