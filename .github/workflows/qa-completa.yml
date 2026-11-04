@@ -90,7 +90,7 @@ jobs:
         if: matrix.name == 'api-completa'
         working-directory: backend
         run: |
-          PYTHONPATH="$GITHUB_WORKSPACE/validation/.github/scripts:$GITHUB_WORKSPACE/backend" python -m pytest -p qa_route_coverage --junitxml=../reports/pytest.xml --cov=app --cov-branch --cov-report=term-missing --cov-report=json:../reports/coverage.json --cov-report=html:../reports/coverage-html -ra | tee ../reports/pytest.txt
+          PYTHONPATH="$GITHUB_WORKSPACE/validation/.github/scripts:$GITHUB_WORKSPACE/backend" python -m pytest tests "$GITHUB_WORKSPACE/validation/.github/scripts/test_api_entrypoints.py" -p qa_route_coverage --junitxml=../reports/pytest.xml --cov=app --cov-branch --cov-report=term-missing --cov-report=json:../reports/coverage.json --cov-report=html:../reports/coverage-html -ra | tee ../reports/pytest.txt
           python - <<'PY'
           import json
           from app.main import app

@@ -18,13 +18,22 @@ def pytest_sessionfinish(session,exitstatus):
     httpx.Client.send=original
     from app.main import app
     paths=app.openapi()['paths']; inventory=[]; matched=set()
+    # Static routes such as /indicadores must precede /{id}.
+    ordered=sorted(paths,key=lambda p:(p.count('{'),-len(p)))
+    resolved={}
+    for verb,url,status in calls:
+        for route in ordered:
+            route_pattern='^'+re.sub(r'\{[^}]+\}',r'[^/]+',route)+'$'
+            if verb.lower() in paths[route] and re.match(route_pattern,url):
+                resolved[(verb,url,status)]=route
+                break
     for path,ops in paths.items():
         pattern='^'+re.sub(r'\{[^}]+\}',r'[^/]+',path)+'$'
         for method in ops:
             if method not in ('get','post','put','patch','delete'):continue
             hits=[]
             for (verb,url,status),count in calls.items():
-                if verb==method.upper() and re.match(pattern,url):
+                if verb==method.upper() and resolved.get((verb,url,status))==path:
                     hits.append(dict(status=status,count=count));matched.add((verb,url,status))
             inventory.append(dict(method=method.upper(),path=path,hits=hits,called=bool(hits),success=any(h['status']<300 for h in hits)))
     out=Path(os.environ['REPORT_DIR']);out.mkdir(exist_ok=True,parents=True)

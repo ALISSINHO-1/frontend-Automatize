@@ -10,7 +10,7 @@ results=[]; requests=[]; errors=[]
 
 def check(name,fn):
     try:
-        details=fn()
+        details=json.loads(json.dumps(fn(),default=lambda _:None))
         results.append(dict(name=name,status='PASS',details=details))
     except Exception as exc:
         results.append(dict(name=name,status='FAIL',error=str(exc),trace=traceback.format_exc()[-1800:]))
@@ -64,7 +64,7 @@ def type_field(index,value):
 def shot(name): page.screenshot(path=str(OUT/(name+'.png')),full_page=True)
 
 def select_filter(option):
-    click('Filtrar por estado',False); click(option);page.wait_for_timeout(400)
+    click('Todos os estados',False); click(option);page.wait_for_timeout(400)
 
 TITLES=['Configuração de rede','Validação do sistema','Manutenção de notebook','Instalação de sistema']
 
@@ -72,7 +72,8 @@ def detail(title,origin='/demand-list'):
     open_route(origin);click(title,False);has(title);has('Abrir anexos')
 
 def back_detail(title,origin):
-    detail(title,origin);click('Minhas demandas');has('Acompanhe suas demandas.')
+    detail(title,origin);click('Minhas demandas')
+    has('Histórico de demandas' if origin=='/demand-history' else 'Acompanhe suas demandas.')
 
 def attachments(title,origin):
     open_route(origin);click(title,False)
@@ -243,3 +244,5 @@ with sync_playwright() as p:
 report=dict(variant=VAR,cases=results,network=requests,runtime_errors=errors,limits=['Sem Supabase Storage real no runner','Demonstração sem persistência/API','Combinações não exercitadas não são consideradas aprovadas'])
 (OUT/'jornadas.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
 print(json.dumps(dict(variant=VAR,passed=sum(x['status']=='PASS' for x in results),failed=sum(x['status']=='FAIL' for x in results)),ensure_ascii=False))
+
+raise SystemExit(1 if any(c['status']=='FAIL' for c in results) else 0)
