@@ -227,6 +227,7 @@ def user_menu(name,action):
 
 def admin_operations():
     token=req('POST','/auth/login',data={'email':'admin.demo@automatize.local','senha':os.environ['DEMO_ADMIN_PASSWORD']})['access_token']
+    alternate=req('POST','/usuarios',token,data={'nome':'QA Tecnico Alternativo','email':'qa.tecnico@example.com','senha':'Qa-Senha-Sintetica-2026','perfil':'TECNICO'},expected=201)
     login('admin');click('Ver lista de demandas');click('Painel administrativo')
     def create_demand():
         click('Nova demanda');type_field(0,'QA Jornada completa');type_field(1,'Demanda criada no navegador e confirmada na API real.');click('Cliente');click('Cliente DEMO',False);click('Cadastrar');page.wait_for_timeout(1200)
@@ -243,6 +244,17 @@ def admin_operations():
         rows=req('GET','/demandas?busca=QA%20Jornada',token);assert rows[0]['responsavel_id']
         history=req('GET','/demandas/'+rows[0]['id']+'/historico',token);assert any(x['acao']=='ATRIBUICAO_RESPONSAVEL' for x in history)
     check('admin: atribuir técnico pela UI e confirmar auditoria',assign)
+    def reassign():
+        click('Trocar técnico');click('Técnico');click('QA Tecnico Alternativo',False);click('Trocar');has('Descreva o motivo')
+        type_field(0,'Troca de responsável validada pelo navegador');click('Trocar');page.wait_for_timeout(800)
+        demand=req('GET','/demandas?busca=QA%20Jornada',token)[0];assert demand['responsavel_id']==alternate['id']
+        history=req('GET','/demandas/'+demand['id']+'/historico',token)
+        assert any((e.get('detalhes') or {}).get('motivo')=='Troca de responsável validada pelo navegador' for e in history)
+        previous=req('POST','/auth/login',data={'email':'tecnico.demo@automatize.local','senha':os.environ['DEMO_TECNICO_PASSWORD']})['access_token']
+        req('GET','/demandas/'+demand['id'],previous,expected=404)
+        new=req('POST','/auth/login',data={'email':'qa.tecnico@example.com','senha':'Qa-Senha-Sintetica-2026'})['access_token']
+        req('GET','/demandas/'+demand['id'],new)
+    check('admin: trocar técnico exige motivo, audita e altera o acesso',reassign)
     def delete():
         click('Excluir');click('Cancelar');has('QA Jornada editada');click('Excluir');click('Excluir');page.wait_for_timeout(800)
         rows=req('GET','/demandas?busca=QA%20Jornada',token);assert not rows,'Exclusão não persistiu'
@@ -267,6 +279,11 @@ def admin_operations():
         user=next(u for u in req('GET','/usuarios',token) if u['email']=='qa.navegador@example.com')
         assert user['perfil']=='TECNICO'
     check('admin: alterar perfil pela UI e confirmar API',change_profile)
+    def filter_users():
+        for profile,expected,hidden in [('Administrador','Admin DEMO','Cliente DEMO'),('Cliente','Cliente DEMO','QA Usuario Navegador'),('Técnico','QA Usuario Navegador','Cliente DEMO')]:
+            click(re.compile('^'+profile+r' \('));has(expected);assert hidden not in labels(),'Filtro de perfil mantém pessoa de outro perfil'
+        click(re.compile(r'^Todos \('));has('Cliente DEMO');has('QA Usuario Navegador')
+    check('admin: filtros de todos os perfis e limpar',filter_users)
     shot('admin-final')
 
 def assert_no_admin():
