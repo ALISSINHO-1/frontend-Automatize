@@ -1,5 +1,5 @@
 """QA de jornadas em Chromium; API real isolada; demonstração identificada."""
-import json, os, re, traceback
+import json, os, re, traceback, time
 from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
@@ -47,7 +47,7 @@ def semantics():
 
 def open_route(route='/',width=1440):
     page.set_viewport_size(dict(width=width,height=1000))
-    page.goto(WEB+'/#'+route,wait_until='networkidle',timeout=90000)
+    page.goto(WEB+'/?qa='+str(time.time_ns())+'#'+route,wait_until='networkidle',timeout=90000)
     page.wait_for_selector('flutter-view',timeout=60000); semantics()
 
 def type_field(index,value):
@@ -174,6 +174,60 @@ def official():
         try: click('Atualizar demandas');page.wait_for_timeout(1500);has('Não foi possível')
         finally: context.set_offline(False)
     check('cliente: API indisponível tem mensagem de erro',offline)
+    check('cliente: jornadas de escrita e sessão',client_operations)
+    if VAR=='admin-pr15': check('admin: jornadas de escrita reais',admin_operations)
+
+
+
+def client_operations():
+    login();click('Ver lista de demandas')
+    def creation():
+        click('Nova demanda');click('Salvar Demanda');has('O título é obrigatório.')
+        type_field(0,'QA Cliente Navegador');type_field(1,'Cadastro validado pelo navegador com API e PostgreSQL reais.');click('Salvar Demanda');page.wait_for_timeout(1000)
+        token=req('POST','/auth/login',data={'email':'cliente.demo@automatize.local','senha':os.environ['DEMO_CLIENTE_PASSWORD']})['access_token']
+        rows=req('GET','/demandas?busca=QA%20Cliente',token);assert any(x['titulo']=='QA Cliente Navegador' for x in rows)
+    check('cliente: validação vazia e criação persistida',creation)
+    def search():
+        type_field(0,'QA Cliente Navegador');has('QA Cliente Navegador');type_field(0,'zzzinexistente');has('Nenhuma demanda encontrada');click('Limpar busca');has('QA Cliente Navegador')
+    check('cliente: busca, estado vazio e limpar',search)
+    check('cliente: abrir e fechar detalhes',lambda:(click('Ver detalhes'),has('Detalhes da demanda'),click('Entendi')))
+    def logout():
+        click('Sair da conta');click('Continuar aqui');has('Nova demanda');click('Sair da conta');click('Sair');has('Entrar na plataforma');page.go_back();page.wait_for_timeout(600);assert 'Nova demanda' not in labels(),'Voltar recuperou tela autenticada após logout'
+    check('cliente: cancelar saída, sair e bloquear retorno',logout)
+    for route in ('/home','/demand-list','/demand-details','/admin'):
+        if route=='/admin' and VAR!='admin-pr15':continue
+        check('rota protegida sem sessão '+route,lambda r=route:(open_route(r),has('Entrar na plataforma')))
+
+def admin_operations():
+    token=req('POST','/auth/login',data={'email':'admin.demo@automatize.local','senha':os.environ['DEMO_ADMIN_PASSWORD']})['access_token']
+    login('admin');click('Ver lista de demandas');click('Painel administrativo')
+    def create_demand():
+        click('Nova demanda');type_field(0,'QA Jornada completa');type_field(1,'Demanda criada no navegador e confirmada na API real.');click('Cliente');click('Cliente DEMO',False);click('Cadastrar');page.wait_for_timeout(1200)
+        rows=req('GET','/demandas?busca=QA%20Jornada',token)
+        assert any(d['titulo']=='QA Jornada completa' for d in rows),'Cadastro não persistiu na API'
+        return 'POST real confirmado por GET independente'
+    check('admin: cadastrar demanda pela UI e confirmar persistência',create_demand)
+    def edit_demand():
+        click('QA Jornada completa',False);click('Editar');type_field(0,'QA Jornada editada');click('Salvar');page.wait_for_timeout(800)
+        rows=req('GET','/demandas?busca=QA%20Jornada',token);assert any(d['titulo']=='QA Jornada editada' for d in rows)
+    check('admin: editar demanda pela UI e confirmar persistência',edit_demand)
+    def assign():
+        click('Atribuir técnico');click('Técnico');click('Tecnico DEMO',False);click('Atribuir');page.wait_for_timeout(800)
+        rows=req('GET','/demandas?busca=QA%20Jornada',token);assert rows[0]['responsavel_id']
+        history=req('GET','/demandas/'+rows[0]['id']+'/historico',token);assert any(x['acao']=='ATRIBUICAO_RESPONSAVEL' for x in history)
+    check('admin: atribuir técnico pela UI e confirmar auditoria',assign)
+    def delete():
+        click('Excluir');click('Cancelar');has('QA Jornada editada');click('Excluir');click('Excluir');page.wait_for_timeout(800)
+        rows=req('GET','/demandas?busca=QA%20Jornada',token);assert not rows,'Exclusão não persistiu'
+    check('admin: cancelar e confirmar exclusão de demanda',delete)
+    login('admin');click('Ver lista de demandas');click('Painel administrativo');click('Usuários')
+    def create_user():
+        click('Novo usuário');type_field(0,'QA Usuario Navegador');type_field(1,'qa.navegador@example.com');type_field(2,'Qa-Senha-Sintetica-2026');click('Perfil');click('Cliente');click('Cadastrar');page.wait_for_timeout(1000)
+        users=req('GET','/usuarios',token);assert any(u['email']=='qa.navegador@example.com' for u in users)
+        req('POST','/auth/login',data={'email':'qa.navegador@example.com','senha':'Qa-Senha-Sintetica-2026'})
+        return 'Usuário criado pela UI consegue autenticar na API'
+    check('admin: cadastro real de usuário e login independente',create_user)
+    shot('admin-final')
 
 def assert_no_admin():
     assert page.get_by_label('Painel administrativo',exact=True).count()==0,'Perfil não administrador recebeu controle administrativo'
@@ -184,7 +238,6 @@ with sync_playwright() as p:
     page.on('response',lambda r:requests.append(dict(method=r.request.method,path=r.url.replace(BASE,''),status=r.status)) if r.url.startswith(BASE) else None)
     try: demo() if VAR=='tecnico-pr16' else official()
     except Exception as exc: results.append(dict(name='harness',status='FAIL',error=str(exc),trace=traceback.format_exc()))
-    check('navegador: nenhum erro JavaScript',lambda: no_runtime()) if False else None
     if errors: results.append(dict(name='erros JavaScript',status='FAIL',errors=errors))
     context.close();browser.close()
 report=dict(variant=VAR,cases=results,network=requests,runtime_errors=errors,limits=['Sem Supabase Storage real no runner','Demonstração sem persistência/API','Combinações não exercitadas não são consideradas aprovadas'])
