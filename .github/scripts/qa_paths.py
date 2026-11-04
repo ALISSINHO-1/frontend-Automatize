@@ -279,12 +279,21 @@ def admin_operations():
         user=next(u for u in req('GET','/usuarios',token) if u['email']=='qa.navegador@example.com')
         assert user['perfil']=='TECNICO'
     check('admin: alterar perfil pela UI e confirmar API',change_profile)
-    def filter_users():
-        for profile,expected,hidden in [('Administrador','Admin DEMO','Cliente DEMO'),('Cliente','Cliente DEMO','QA Usuario Navegador'),('Técnico','QA Usuario Navegador','Cliente DEMO')]:
-            click(re.compile('^'+profile+r' \('));has(expected);assert hidden not in labels(),'Filtro de perfil mantém pessoa de outro perfil'
-        click(re.compile(r'^Todos \('));has('Cliente DEMO');has('QA Usuario Navegador')
-    check('admin: filtros de todos os perfis e limpar',filter_users)
+    check('admin: filtros de todos os perfis e limpar',filter_admin_users)
     shot('admin-final')
+
+
+def filter_admin_users():
+    for profile,expected,hidden in [('Administrador','Admin DEMO','Cliente DEMO'),('Cliente','Cliente DEMO','QA Usuario Navegador'),('Técnico','QA Usuario Navegador','Cliente DEMO')]:
+        click(re.compile('^'+profile+r' \('));has(expected)
+        assert page.get_by_text(hidden,exact=True).count()==0,'Filtro de perfil mantém pessoa de outro perfil na lista'
+    click(re.compile(r'^Todos \('));has('Cliente DEMO');has('QA Usuario Navegador')
+
+def admin_filter_only():
+    token=req('POST','/auth/login',data={'email':'admin.demo@automatize.local','senha':os.environ['DEMO_ADMIN_PASSWORD']})['access_token']
+    req('POST','/usuarios',token,data={'nome':'QA Usuario Navegador','email':'qa.filtro@example.com','senha':'Qa-Senha-Sintetica-2026','perfil':'TECNICO'},expected=201)
+    login('admin');click('Ver lista de demandas');click('Painel administrativo');click('Usuários')
+    check('admin: filtros de todos os perfis e limpar',filter_admin_users)
 
 def assert_no_admin():
     assert page.get_by_label('Painel administrativo',exact=True).count()==0,'Perfil não administrador recebeu controle administrativo'
@@ -294,7 +303,9 @@ with sync_playwright() as p:
     page.on('pageerror',lambda e:errors.append(str(e)))
     page.on('response',lambda r:requests.append(dict(method=r.request.method,path=r.url.replace(BASE,''),status=r.status)) if r.url.startswith(BASE) else None)
     try:
-        if os.environ.get('QA_MODE')=='admin-write':
+        if os.environ.get('QA_MODE')=='admin-filters':
+            admin_filter_only()
+        elif os.environ.get('QA_MODE')=='admin-write':
             check('admin: jornadas de escrita reais',admin_operations)
         else:
             demo() if VAR=='tecnico-pr16' else official()
