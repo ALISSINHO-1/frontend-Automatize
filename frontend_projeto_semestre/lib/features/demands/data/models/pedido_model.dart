@@ -4,7 +4,13 @@ class PedidoModel {
   final String titulo;
   final String descricao;
   final String status;
+
+  // Percentual recebido do backend.
   final double percentualProgresso;
+
+  // Indica se a API realmente informou o progresso.
+  final bool progressoInformado;
+
   final String clienteId;
   final String? responsavelId;
   final DateTime? createdAt;
@@ -17,20 +23,33 @@ class PedidoModel {
     required this.descricao,
     required this.status,
     required this.percentualProgresso,
+    this.progressoInformado = true,
     required this.clienteId,
     this.responsavelId,
     this.createdAt,
     this.updatedAt,
   });
 
+  // Converte o JSON da FastAPI para o modelo Flutter.
   factory PedidoModel.fromJson(Map<String, dynamic> json) {
+    if (!json.containsKey('percentual_progresso')) {
+      throw const FormatException('Campo percentual_progresso ausente na API.');
+    }
+
+    final percentual = _parsePercentual(json['percentual_progresso']);
+
     return PedidoModel(
       id: _textoObrigatorio(json, 'id'),
       codigoIdentificador: _textoOpcional(json['codigo_identificador']),
       titulo: _textoObrigatorio(json, 'titulo'),
       descricao: _textoOpcional(json['descricao']) ?? '',
       status: _textoObrigatorio(json, 'status'),
-      percentualProgresso: _percentualObrigatorio(json),
+
+      // O valor zero é usado internamente quando o dado é null.
+      // A interface consulta progressoInformado antes de exibi-lo.
+      percentualProgresso: percentual ?? 0.0,
+      progressoInformado: percentual != null,
+
       clienteId: _textoObrigatorio(json, 'cliente_id'),
       responsavelId: _textoOpcional(json['responsavel_id']),
       createdAt: _parseDate(json['created_at'] ?? json['data_criacao']),
@@ -38,6 +57,31 @@ class PedidoModel {
     );
   }
 
+  // Aceita Decimal como String, número ou null.
+  static double? _parsePercentual(Object? valor) {
+    if (valor == null) {
+      return null;
+    }
+
+    double? percentual;
+
+    if (valor is num) {
+      percentual = valor.toDouble();
+    } else if (valor is String) {
+      percentual = double.tryParse(valor.trim());
+    }
+
+    if (percentual == null ||
+        !percentual.isFinite ||
+        percentual < 0 ||
+        percentual > 100) {
+      throw const FormatException('Percentual de progresso inválido na API.');
+    }
+
+    return percentual;
+  }
+
+  // Valida campos de texto obrigatórios.
   static String _textoObrigatorio(Map<String, dynamic> json, String campo) {
     final valor = json[campo];
 
@@ -48,36 +92,24 @@ class PedidoModel {
     return valor;
   }
 
+  // Converte campos de texto opcionais.
   static String? _textoOpcional(Object? valor) {
-    if (valor == null) return null;
+    if (valor == null) {
+      return null;
+    }
 
-    if (valor is String) return valor;
+    if (valor is String) {
+      return valor;
+    }
 
     throw const FormatException('Campo de texto opcional inválido na API.');
   }
 
-  static double _percentualObrigatorio(Map<String, dynamic> json) {
-    final valor = json['percentual_progresso'];
-    final percentual = valor is num
-        ? valor.toDouble()
-        : valor is String
-        ? double.tryParse(valor)
-        : null;
-
-    if (percentual == null ||
-        !percentual.isFinite ||
-        percentual < 0 ||
-        percentual > 100) {
-      throw const FormatException(
-        'Campo percentual_progresso ausente ou inválido na API.',
-      );
-    }
-
-    return percentual;
-  }
-
+  // Converte datas enviadas pelo backend.
   static DateTime? _parseDate(Object? valor) {
-    if (valor == null) return null;
+    if (valor == null) {
+      return null;
+    }
 
     if (valor is! String) {
       throw const FormatException('Data recebida em formato inválido.');
