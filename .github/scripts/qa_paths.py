@@ -211,12 +211,18 @@ def user_menu(name,action):
     assert target.count(),'Usuário não encontrado na interface: '+name
     box=target.first.bounding_box();assert box
     menus=[]
-    for loc in page.get_by_label('Ações do usuário',exact=True).all():
+    for loc in page.get_by_role('button',name=re.compile('Ações do usuário|Mostrar menu|Show menu',re.I)).all():
         b=loc.bounding_box()
         if b: menus.append((abs(b['y']+b['height']/2-box['y']-box['height']/2),loc))
-    assert menus,'Menu do usuário não encontrado'
-    distance,loc=min(menus,key=lambda x:x[0]);assert distance<90,'Menu não corresponde à linha alvo'
-    loc.click();click(action)
+    if menus:
+        distance,loc=min(menus,key=lambda x:x[0]);assert distance<90,'Menu não corresponde à linha alvo'
+        loc.click()
+    else:
+        # The rendered Flutter popup icon has no label in this build. Coordinates
+        # are grounded in falha-037.png (1440 px): icon x=1155, row title +12 px.
+        assert page.viewport_size['width']==1440,'Fallback exige viewport validado'
+        page.mouse.click(1155,box['y']+box['height']/2+12)
+    has('Alterar perfil');click(action)
 
 def admin_operations():
     token=req('POST','/auth/login',data={'email':'admin.demo@automatize.local','senha':os.environ['DEMO_ADMIN_PASSWORD']})['access_token']

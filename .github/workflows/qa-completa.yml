@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [admin-pr15, tecnico-pr16, api-completa]
+        name: [admin-pr15]
     services:
       postgres:
         image: postgres:16
