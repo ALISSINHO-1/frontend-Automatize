@@ -222,6 +222,7 @@ def user_menu(name,action):
         # are grounded in falha-037.png (1440 px): icon x=1155, row title +12 px.
         assert page.viewport_size['width']==1440,'Fallback exige viewport validado'
         page.mouse.click(1155,box['y']+box['height']/2+12)
+    page.wait_for_timeout(650)
     has('Alterar perfil');click(action)
 
 def admin_operations():
@@ -275,7 +276,11 @@ with sync_playwright() as p:
     browser=p.chromium.launch();context=browser.new_context(viewport=dict(width=1440,height=1000));page=context.new_page();page.set_default_timeout(7000)
     page.on('pageerror',lambda e:errors.append(str(e)))
     page.on('response',lambda r:requests.append(dict(method=r.request.method,path=r.url.replace(BASE,''),status=r.status)) if r.url.startswith(BASE) else None)
-    try: demo() if VAR=='tecnico-pr16' else official()
+    try:
+        if os.environ.get('QA_MODE')=='admin-write':
+            check('admin: jornadas de escrita reais',admin_operations)
+        else:
+            demo() if VAR=='tecnico-pr16' else official()
     except Exception as exc: results.append(dict(name='harness',status='FAIL',error=str(exc),trace=traceback.format_exc()))
     if errors: results.append(dict(name='erros JavaScript',status='FAIL',errors=errors))
     context.close();browser.close()

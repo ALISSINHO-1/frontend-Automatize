@@ -37,6 +37,7 @@ jobs:
       DEMO_TECNICO_PASSWORD: SmokeBuild-Descartavel-2026
       DEMO_CLIENTE_PASSWORD: SmokeBuild-Descartavel-2026
       VARIANT: ${{ matrix.name }}
+      QA_MODE: admin-write
       REPORT_DIR: ${{ github.workspace }}/reports
     steps:
       - uses: actions/checkout@v4
