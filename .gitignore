@@ -10,3 +10,9 @@
 .env
 .env.*
 !.env.example
+
+# Contexto local do Claude Code (sincronizado via OneDrive)
+CLAUDE.md
+docs/CONTEXTO.md
+.claude/
+.mcp.json
