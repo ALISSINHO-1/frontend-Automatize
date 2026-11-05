@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/storage/local_storage_service.dart';
+import '../../features/admin/presentation/widgets/admin_guard.dart';
 
 /// Paleta visual compartilhada pelas telas do Automatize.
 
@@ -34,6 +35,9 @@ class MainLayout extends StatelessWidget {
     this.onDestinationSelected,
     this.onLogout,
   });
+
+  /// Item administrativo disponível somente para ADMIN.
+  static const int indiceAdmin = 3;
 
   // Aliases mantidos para não quebrar as telas existentes.
   static const Color sidebarColor = AutomatizeColors.sidebar;
@@ -111,6 +115,10 @@ class MainLayout extends StatelessWidget {
 
   void _selecionarDestino(BuildContext context, int index, String label) {
     if (selectedIndex == index) return;
+    if (index == indiceAdmin) {
+      Navigator.of(context).pushNamed(AppRoutes.admin);
+      return;
+    }
     if (onDestinationSelected != null) {
       onDestinationSelected!(index);
       return;
@@ -191,6 +199,15 @@ class MainLayout extends StatelessWidget {
                         index: 1,
                         icon: Icons.assignment_rounded,
                         label: 'Minhas demandas',
+                      ),
+                      AdminMenuGate(
+                        child: _navigationItem(
+                          context,
+                          compact: compact,
+                          index: indiceAdmin,
+                          icon: Icons.admin_panel_settings_rounded,
+                          label: 'Painel administrativo',
+                        ),
                       ),
                       const Spacer(),
                       Padding(

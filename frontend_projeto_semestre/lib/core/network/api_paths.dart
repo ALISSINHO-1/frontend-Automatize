@@ -3,4 +3,5 @@ abstract final class ApiPaths {
 
   // Prefixo definido no roteador do backend.
   static const String demandas = '/demandas';
+  static const String usuarios = '/usuarios';
 }
