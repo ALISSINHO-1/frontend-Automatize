@@ -29,22 +29,33 @@ class DemandService {
   final http.Client _client;
   final bool _ownsClient;
 
-  // Consulta as demandas cadastradas na API.
+  // ============================================
+  // LISTAGEM DE DEMANDAS
+  // ============================================
+
+  // Consulta todas as demandas cadastradas na API.
   Future<List<PedidoModel>> buscarDemandas() async {
     const tamanhoPagina = 100;
     final demandas = <PedidoModel>[];
+
     while (true) {
       final pagina = await _buscarPagina(demandas.length, tamanhoPagina);
+
       demandas.addAll(pagina);
-      if (pagina.length < tamanhoPagina) return demandas;
+
+      if (pagina.length < tamanhoPagina) {
+        return demandas;
+      }
     }
   }
 
+  // Busca uma página de demandas.
   Future<List<PedidoModel>> _buscarPagina(int offset, int limit) async {
     final resposta = await _executar(
       () => _client.get(
-        AppConfig.apiUri(ApiPaths.demandas)
-            .replace(queryParameters: {'offset': '$offset', 'limit': '$limit'}),
+        AppConfig.apiUri(
+          ApiPaths.demandas,
+        ).replace(queryParameters: {'offset': '$offset', 'limit': '$limit'}),
         headers: {'Accept': 'application/json'},
       ),
     );
@@ -80,6 +91,10 @@ class DemandService {
     }
   }
 
+  // ============================================
+  // CADASTRO DE DEMANDAS
+  // ============================================
+
   // Cadastra uma nova demanda na API.
   Future<void> criarDemanda(String titulo, String descricao) async {
     final resposta = await _executar(
@@ -95,6 +110,58 @@ class DemandService {
 
     _verificarStatus(resposta, esperado: 201, operacao: 'criar demanda');
   }
+
+  // ============================================
+  // EDIÇÃO DE DEMANDAS - SCRUM-60
+  // ============================================
+
+  // Atualiza título e descrição de uma demanda.
+  Future<void> editarDemanda({
+    required String id,
+    required String titulo,
+    required String descricao,
+  }) async {
+    final idLimpo = id.trim();
+    final tituloLimpo = titulo.trim();
+    final descricaoLimpa = descricao.trim();
+
+    // Impede envio de dados obrigatórios inválidos.
+    if (idLimpo.isEmpty) {
+      throw ArgumentError('O identificador da demanda é obrigatório.');
+    }
+
+    if (tituloLimpo.isEmpty) {
+      throw ArgumentError('O título da demanda é obrigatório.');
+    }
+
+    // Endpoint de atualização da FastAPI.
+    final url = AppConfig.apiUri(
+      '${ApiPaths.demandas}/${Uri.encodeComponent(idLimpo)}',
+    );
+
+    // Envia os dados atualizados.
+    final resposta = await _executar(
+      () => _client.patch(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'titulo': tituloLimpo, 'descricao': descricaoLimpa}),
+      ),
+    );
+
+    // Aceita HTTP 200 ou 204 como sucesso.
+    // Os códigos definitivos precisam ser
+    // conferidos no OpenAPI da API utilizada.
+    if (resposta.statusCode != 200 && resposta.statusCode != 204) {
+      _verificarStatus(resposta, esperado: 200, operacao: 'editar demanda');
+    }
+  }
+
+  // ============================================
+  // COMUNICAÇÃO COM A API
+  // ============================================
 
   // Trata falhas de comunicação e timeout.
   Future<http.Response> _executar(
@@ -113,24 +180,33 @@ class DemandService {
     }
   }
 
-  // Valida os códigos HTTP retornados pela API.
+  // ============================================
+  // TRATAMENTO DE STATUS HTTP
+  // ============================================
+
   void _verificarStatus(
     http.Response resposta, {
     required int esperado,
     required String operacao,
   }) {
-    if (resposta.statusCode == esperado) return;
+    if (resposta.statusCode == esperado) {
+      return;
+    }
 
     final detalhe = _detalheFastApi(resposta);
 
     final mensagem = switch (resposta.statusCode) {
       401 => 'Sua sessão expirou. Faça login novamente.',
+
       403 => 'Você não tem permissão para realizar esta operação.',
+
       404 => 'O recurso solicitado não foi encontrado.',
+
       422 =>
         detalhe == null
             ? 'Os dados enviados não foram aceitos pela API.'
             : 'Dados inválidos: $detalhe',
+
       _ =>
         'Não foi possível $operacao '
             '(HTTP ${resposta.statusCode}).',
@@ -139,7 +215,10 @@ class DemandService {
     throw DemandServiceException(mensagem, statusCode: resposta.statusCode);
   }
 
-  // Extrai mensagens de validação da FastAPI.
+  // ============================================
+  // MENSAGENS DE ERRO DA FASTAPI
+  // ============================================
+
   static String? _detalheFastApi(http.Response resposta) {
     try {
       final dados = jsonDecode(utf8.decode(resposta.bodyBytes));
@@ -171,6 +250,10 @@ class DemandService {
 
     return null;
   }
+
+  // ============================================
+  // LIBERAÇÃO DE RECURSOS
+  // ============================================
 
   void dispose() {
     if (_ownsClient) {
