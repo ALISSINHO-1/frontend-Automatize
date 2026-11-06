@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../demands/data/services/demand_service.dart';
 
 class NovaDemandaScreen extends StatefulWidget {
-  const NovaDemandaScreen({super.key});
+  const NovaDemandaScreen({super.key, this.demandService});
+
+  // Permite utilizar um serviço simulado nos testes.
+  // No aplicativo normal, utiliza o DemandService real.
+  final DemandService? demandService;
 
   @override
   State<NovaDemandaScreen> createState() => _NovaDemandaScreenState();
@@ -14,23 +18,39 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
   final _tituloController = TextEditingController();
   final _descricaoController = TextEditingController();
 
-  final DemandService _demandService = DemandService();
+  late final DemandService _demandService;
 
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Reutiliza o serviço informado nos testes.
+    // Caso contrário, cria o serviço HTTP normal.
+    _demandService = widget.demandService ?? DemandService();
+  }
 
   @override
   void dispose() {
     _tituloController.dispose();
     _descricaoController.dispose();
-    _demandService.dispose();
+
+    // Fecha somente o serviço criado por esta tela.
+    if (widget.demandService == null) {
+      _demandService.dispose();
+    }
+
     super.dispose();
   }
 
+  // Valida o formulário antes de enviar para a API.
   Future<void> _guardarDemanda() async {
     if (_isLoading) return;
 
     final formularioValido = _formKey.currentState?.validate() ?? false;
 
+    // Dados inválidos não são enviados à API.
     if (!formularioValido) return;
 
     FocusScope.of(context).unfocus();
@@ -73,9 +93,7 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nova Demanda'),
-      ),
+      appBar: AppBar(title: const Text('Nova Demanda')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -83,9 +101,11 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
             constraints: const BoxConstraints(maxWidth: 650),
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // CAMPO: TÍTULO
                   TextFormField(
                     controller: _tituloController,
                     enabled: !_isLoading,
@@ -103,7 +123,10 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
                       return null;
                     },
                   ),
+
                   const SizedBox(height: 20),
+
+                  // CAMPO: DESCRIÇÃO
                   TextFormField(
                     controller: _descricaoController,
                     enabled: !_isLoading,
@@ -118,7 +141,10 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 32),
+
+                  // BOTÃO: SALVAR DEMANDA
                   SizedBox(
                     height: 50,
                     child: FilledButton.icon(
