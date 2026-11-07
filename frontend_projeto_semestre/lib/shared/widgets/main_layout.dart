@@ -38,6 +38,7 @@ class MainLayout extends StatelessWidget {
 
   /// Item administrativo disponível somente para ADMIN.
   static const int indiceAdmin = 3;
+  static const int _indiceChat = 4;
 
   // Aliases mantidos para não quebrar as telas existentes.
   static const Color sidebarColor = AutomatizeColors.sidebar;
@@ -115,6 +116,10 @@ class MainLayout extends StatelessWidget {
 
   void _selecionarDestino(BuildContext context, int index, String label) {
     if (selectedIndex == index) return;
+    if (index == _indiceChat) {
+      Navigator.of(context).pushNamed(AppRoutes.chat);
+      return;
+    }
     if (index == indiceAdmin) {
       Navigator.of(context).pushNamed(AppRoutes.admin);
       return;
@@ -199,6 +204,13 @@ class MainLayout extends StatelessWidget {
                         index: 1,
                         icon: Icons.assignment_rounded,
                         label: 'Minhas demandas',
+                      ),
+                      _navigationItem(
+                        context,
+                        compact: compact,
+                        index: _indiceChat,
+                        icon: Icons.forum_outlined,
+                        label: 'Chat',
                       ),
                       AdminMenuGate(
                         child: _navigationItem(
