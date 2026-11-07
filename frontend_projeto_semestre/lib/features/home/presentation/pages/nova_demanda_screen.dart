@@ -105,7 +105,9 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // ==========================================
                   // CAMPO: TÍTULO
+                  // ==========================================
                   TextFormField(
                     controller: _tituloController,
                     enabled: !_isLoading,
@@ -114,10 +116,21 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
                       labelText: 'Título da Demanda *',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.title),
+                      helperText: 'Entre 3 e 255 caracteres.',
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
+                      final titulo = value?.trim() ?? '';
+
+                      if (titulo.isEmpty) {
                         return 'O título é obrigatório.';
+                      }
+
+                      if (titulo.length < 3) {
+                        return 'O título deve ter pelo menos 3 caracteres.';
+                      }
+
+                      if (titulo.length > 255) {
+                        return 'O título deve ter no máximo 255 caracteres.';
                       }
 
                       return null;
@@ -126,25 +139,43 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
 
                   const SizedBox(height: 20),
 
+                  // ==========================================
                   // CAMPO: DESCRIÇÃO
+                  // ==========================================
                   TextFormField(
                     controller: _descricaoController,
                     enabled: !_isLoading,
                     keyboardType: TextInputType.multiline,
                     maxLines: 4,
                     decoration: const InputDecoration(
-                      labelText: 'Descrição',
+                      labelText: 'Descrição *',
+                      helperText: 'Mínimo de 5 caracteres.',
                       border: OutlineInputBorder(),
                       prefixIcon: Padding(
                         padding: EdgeInsets.only(bottom: 60),
                         child: Icon(Icons.description),
                       ),
                     ),
+                    validator: (value) {
+                      final descricao = value?.trim() ?? '';
+
+                      if (descricao.isEmpty) {
+                        return 'A descrição é obrigatória.';
+                      }
+
+                      if (descricao.length < 5) {
+                        return 'A descrição deve ter pelo menos 5 caracteres.';
+                      }
+
+                      return null;
+                    },
                   ),
 
                   const SizedBox(height: 32),
 
+                  // ==========================================
                   // BOTÃO: SALVAR DEMANDA
+                  // ==========================================
                   SizedBox(
                     height: 50,
                     child: FilledButton.icon(

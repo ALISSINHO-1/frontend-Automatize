@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -7,45 +9,135 @@ import 'package:frontend_projeto_semestre/features/demands/data/services/demand_
 import 'package:frontend_projeto_semestre/features/home/presentation/pages/nova_demanda_screen.dart';
 
 void main() {
-  testWidgets(
-    'Nao envia demanda quando o titulo esta vazio ou so tem espacos',
-    (tester) async {
-      var requisicoes = 0;
+  testWidgets('Cadastro bloqueia títulos inválidos sem enviar POST', (
+    tester,
+  ) async {
+    var requisicoes = 0;
+    final cliente = MockClient((request) async {
+      requisicoes++;
+      return http.Response('{}', 201);
+    });
+    addTearDown(cliente.close);
 
-      // Simula a API sem conectar ao backend real.
-      final cliente = MockClient((request) async {
-        requisicoes++;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NovaDemandaScreen(demandService: DemandService(client: cliente)),
+      ),
+    );
 
-        return http.Response('{}', 201);
-      });
+    final campos = find.byType(TextFormField);
+    await tester.enterText(campos.at(1), 'Descrição válida');
 
-      final servico = DemandService(client: cliente);
+    for (final titulo in [
+      '',
+      '   ',
+      'AB',
+      ' A ',
+      List.filled(256, 'A').join(),
+    ]) {
+      await tester.enterText(campos.at(0), titulo);
+      await tester.tap(find.text('Salvar Demanda'));
+      await tester.pump();
 
-      addTearDown(cliente.close);
+      final mensagem = titulo.trim().isEmpty
+          ? 'O título é obrigatório.'
+          : titulo.trim().length < 3
+          ? 'O título deve ter pelo menos 3 caracteres.'
+          : 'O título deve ter no máximo 255 caracteres.';
+      expect(find.text(mensagem), findsOneWidget);
+      expect(requisicoes, 0);
+    }
+  });
 
-      await tester.pumpWidget(
-        MaterialApp(home: NovaDemandaScreen(demandService: servico)),
+  testWidgets('Cadastro bloqueia descrições inválidas sem enviar POST', (
+    tester,
+  ) async {
+    var requisicoes = 0;
+    final cliente = MockClient((request) async {
+      requisicoes++;
+      return http.Response('{}', 201);
+    });
+    addTearDown(cliente.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NovaDemandaScreen(demandService: DemandService(client: cliente)),
+      ),
+    );
+
+    final campos = find.byType(TextFormField);
+    await tester.enterText(campos.at(0), 'Título válido');
+
+    for (final descricao in ['', '   ', 'ABCD', ' ABCD ']) {
+      await tester.enterText(campos.at(1), descricao);
+      await tester.tap(find.text('Salvar Demanda'));
+      await tester.pump();
+
+      expect(
+        find.text(
+          descricao.trim().isEmpty
+              ? 'A descrição é obrigatória.'
+              : 'A descrição deve ter pelo menos 5 caracteres.',
+        ),
+        findsOneWidget,
       );
-
-      // TESTE 1: titulo vazio.
-      await tester.tap(find.text('Salvar Demanda'));
-      await tester.pump();
-
-      expect(find.text('O título é obrigatório.'), findsOneWidget);
-
-      // Nenhuma requisicao pode ser enviada.
       expect(requisicoes, 0);
+    }
+  });
 
-      // TESTE 2: titulo apenas com espacos.
-      await tester.enterText(find.byType(TextFormField).first, '   ');
+  testWidgets('Cadastro válido faz um POST com dados sem espaços externos', (
+    tester,
+  ) async {
+    final pedidos = <http.Request>[];
+    final cliente = MockClient((request) async {
+      pedidos.add(request);
+      return http.Response('{}', 201);
+    });
+    addTearDown(cliente.close);
 
-      await tester.tap(find.text('Salvar Demanda'));
-      await tester.pump();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NovaDemandaScreen(demandService: DemandService(client: cliente)),
+      ),
+    );
 
-      expect(find.text('O título é obrigatório.'), findsOneWidget);
+    final campos = find.byType(TextFormField);
+    await tester.enterText(campos.at(0), '  ABC  ');
+    await tester.enterText(campos.at(1), '  12345  ');
+    await tester.tap(find.text('Salvar Demanda'));
+    await tester.pumpAndSettle();
 
-      // Continua sem realizar chamadas HTTP.
-      expect(requisicoes, 0);
-    },
-  );
+    expect(pedidos, hasLength(1));
+    expect(pedidos.single.method, 'POST');
+    expect(pedidos.single.url.path, endsWith('/demandas'));
+    expect(jsonDecode(pedidos.single.body), {
+      'titulo': 'ABC',
+      'descricao': '12345',
+    });
+  });
+
+  testWidgets('Cadastro aceita título com exatamente 255 caracteres', (
+    tester,
+  ) async {
+    var requisicoes = 0;
+    final cliente = MockClient((request) async {
+      requisicoes++;
+      return http.Response('{}', 201);
+    });
+    addTearDown(cliente.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NovaDemandaScreen(demandService: DemandService(client: cliente)),
+      ),
+    );
+
+    final campos = find.byType(TextFormField);
+    await tester.enterText(campos.at(0), List.filled(255, 'A').join());
+    await tester.enterText(campos.at(1), 'Descrição válida');
+    await tester.tap(find.text('Salvar Demanda'));
+    await tester.pumpAndSettle();
+
+    expect(requisicoes, 1);
+  });
 }

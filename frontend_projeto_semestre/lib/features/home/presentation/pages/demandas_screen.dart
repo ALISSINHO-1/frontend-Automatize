@@ -1,10 +1,18 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
+import '../../../../app/app.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../../core/config/app_config.dart';
+import '../../../../core/network/auth_interceptor.dart';
 import '../../../../core/storage/local_storage_service.dart';
 import '../../../../shared/widgets/main_layout.dart';
 import 'demanda_store.dart';
+import 'editar_demanda_screen.dart';
 import 'nova_demanda_screen.dart';
 import 'painel_screen.dart';
+import 'permissao_edicao.dart';
 
 class DemandasScreen extends StatefulWidget {
   const DemandasScreen({super.key});
@@ -130,8 +138,76 @@ class _DemandasScreenState extends State<DemandasScreen> {
         return AutomatizeColors.muted;
     }
   }
+  // Confirma a identidade real antes de oferecer a edição.
+  // Se a sessão mudou ou a API falhou, a permissão é negada.
+
+  Future<bool> _podeEditarDemanda(DemandaItem demanda) async {
+    final pedido = demanda.pedidoOriginal;
+    if (pedido == null) return false;
+    final token = await LocalStorageService.getToken();
+    if (token == null || token.trim().isEmpty) return false;
+    final client = AuthInterceptorClient(navigatorKey: appNavigatorKey);
+    try {
+      final resposta = await client
+          .get(
+            AppConfig.apiUri('/auth/me'),
+            headers: {'Accept': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 15));
+      if (resposta.statusCode != 200) return false;
+      final dados = jsonDecode(utf8.decode(resposta.bodyBytes));
+      if (dados is! Map<String, dynamic>) return false;
+      final idUsuario = dados['id'];
+      final perfil = dados['perfil'];
+      if (idUsuario is! String || perfil is! String) return false;
+      // Impede que a resposta de uma sessão anterior libere edição.
+      final tokenAtual = await LocalStorageService.getToken();
+      if (tokenAtual != token) return false;
+      return usuarioPodeEditarDemanda(
+        perfil: perfil,
+        idUsuario: idUsuario,
+        clienteId: pedido.clienteId,
+        status: pedido.status,
+      );
+    } catch (_) {
+      return false;
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<void> _abrirEdicaoDemanda(
+    DemandaItem demanda,
+    BuildContext dialogContext,
+  ) async {
+    final pedido = demanda.pedidoOriginal;
+    if (pedido == null) return;
+    // A permissão é verificada novamente no momento do clique.
+    final autorizado = await _podeEditarDemanda(demanda);
+    if (!mounted || !dialogContext.mounted) return;
+    if (!autorizado) {
+      Navigator.of(dialogContext).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Você não tem permissão para editar esta demanda.'),
+        ),
+      );
+      return;
+    }
+    Navigator.of(dialogContext).pop();
+    final alterado = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => EditarDemandaScreen(pedido: pedido),
+      ),
+    );
+    if (alterado == true && mounted) {
+      // A listagem só é atualizada após o PATCH ser confirmado pela API.
+      await _carregarDemandas();
+    }
+  }
 
   void _visualizarDemanda(DemandaItem demanda) {
+    final permissaoFuture = _podeEditarDemanda(demanda);
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -263,6 +339,19 @@ class _DemandasScreenState extends State<DemandasScreen> {
           ),
           actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
           actions: [
+            FutureBuilder<bool>(
+              future: permissaoFuture,
+              builder: (context, snapshot) {
+                if (snapshot.data != true) {
+                  return const SizedBox.shrink();
+                }
+                return OutlinedButton.icon(
+                  onPressed: () => _abrirEdicaoDemanda(demanda, dialogContext),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Editar demanda'),
+                );
+              },
+            ),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: AutomatizeColors.primary,

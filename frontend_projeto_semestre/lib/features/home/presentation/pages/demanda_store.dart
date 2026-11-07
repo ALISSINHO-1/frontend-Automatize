@@ -15,6 +15,10 @@ class DemandaItem {
   final bool progressoInformado;
   final DateTime? createdAt;
 
+  // Preserva o modelo original recebido da API.
+  // Utilizado para acessar todos os dados na edição.
+  final PedidoModel? pedidoOriginal;
+
   const DemandaItem({
     required this.id,
     required this.codigo,
@@ -24,6 +28,7 @@ class DemandaItem {
     required this.progresso,
     this.progressoInformado = true,
     this.createdAt,
+    this.pedidoOriginal,
   });
 
   // Converte os dados recebidos da API para a interface.
@@ -37,6 +42,9 @@ class DemandaItem {
       progresso: pedido.percentualProgresso,
       progressoInformado: pedido.progressoInformado,
       createdAt: pedido.createdAt,
+
+      // Mantém os dados completos para edição e permissões.
+      pedidoOriginal: pedido,
     );
   }
 }

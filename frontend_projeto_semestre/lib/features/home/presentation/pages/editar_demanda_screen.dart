@@ -30,10 +30,12 @@ class _EditarDemandaScreenState extends State<EditarDemandaScreen> {
   void initState() {
     super.initState();
 
+    // Preenche o formulário com os dados atuais da demanda.
     _tituloController = TextEditingController(text: widget.pedido.titulo);
 
     _descricaoController = TextEditingController(text: widget.pedido.descricao);
 
+    // Permite utilizar um serviço simulado nos testes.
     _demandService = widget.demandService ?? DemandService();
   }
 
@@ -42,6 +44,7 @@ class _EditarDemandaScreenState extends State<EditarDemandaScreen> {
     _tituloController.dispose();
     _descricaoController.dispose();
 
+    // Fecha somente o serviço criado por esta tela.
     if (widget.demandService == null) {
       _demandService.dispose();
     }
@@ -49,16 +52,18 @@ class _EditarDemandaScreenState extends State<EditarDemandaScreen> {
     super.dispose();
   }
 
+  // Valida os campos antes de enviar alterações à API.
   Future<void> _salvarAlteracoes() async {
     if (_isLoading) return;
 
     final valido = _formKey.currentState?.validate() ?? false;
 
-    // Impede envio quando o formulário está inválido.
+    // Impede o envio de dados inválidos.
     if (!valido) return;
 
     FocusScope.of(context).unfocus();
 
+    // Remove espaços nas extremidades.
     final titulo = _tituloController.text.trim();
     final descricao = _descricaoController.text.trim();
 
@@ -73,7 +78,7 @@ class _EditarDemandaScreenState extends State<EditarDemandaScreen> {
 
       if (!mounted) return;
 
-      // Informa à tela anterior que houve alteração.
+      // Avisa à tela anterior que a demanda foi alterada.
       Navigator.of(context).pop(true);
     } catch (erro) {
       if (!mounted) return;
@@ -82,6 +87,7 @@ class _EditarDemandaScreenState extends State<EditarDemandaScreen> {
         SnackBar(
           content: Text('Não foi possível salvar as alterações: $erro'),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
         ),
       );
     } finally {
@@ -106,18 +112,30 @@ class _EditarDemandaScreenState extends State<EditarDemandaScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // CAMPO: TÍTULO
                   TextFormField(
                     controller: _tituloController,
                     enabled: !_isLoading,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
                       labelText: 'Título da Demanda *',
+                      helperText: 'Entre 3 e 255 caracteres.',
                       prefixIcon: Icon(Icons.title),
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
+                      final titulo = value?.trim() ?? '';
+
+                      if (titulo.isEmpty) {
                         return 'O título é obrigatório.';
+                      }
+
+                      if (titulo.length < 3) {
+                        return 'O título deve ter pelo menos 3 caracteres.';
+                      }
+
+                      if (titulo.length > 255) {
+                        return 'O título deve ter no máximo 255 caracteres.';
                       }
 
                       return null;
@@ -126,20 +144,36 @@ class _EditarDemandaScreenState extends State<EditarDemandaScreen> {
 
                   const SizedBox(height: 20),
 
+                  // CAMPO: DESCRIÇÃO
                   TextFormField(
                     controller: _descricaoController,
                     enabled: !_isLoading,
                     keyboardType: TextInputType.multiline,
                     maxLines: 4,
                     decoration: const InputDecoration(
-                      labelText: 'Descrição',
+                      labelText: 'Descrição *',
+                      helperText: 'Mínimo de 5 caracteres.',
                       prefixIcon: Icon(Icons.description),
                       border: OutlineInputBorder(),
                     ),
+                    validator: (value) {
+                      final descricao = value?.trim() ?? '';
+
+                      if (descricao.isEmpty) {
+                        return 'A descrição é obrigatória.';
+                      }
+
+                      if (descricao.length < 5) {
+                        return 'A descrição deve ter pelo menos 5 caracteres.';
+                      }
+
+                      return null;
+                    },
                   ),
 
                   const SizedBox(height: 32),
 
+                  // BOTÕES: CANCELAR E SALVAR
                   Row(
                     children: [
                       Expanded(
