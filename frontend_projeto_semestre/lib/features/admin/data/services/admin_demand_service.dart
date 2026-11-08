@@ -126,7 +126,7 @@ class AdminDemandService {
       final query = Uri(
         queryParameters: {
           'limit': '$tamanhoPagina',
-          'offset': '${usuarios.length}',
+          if (usuarios.isNotEmpty) 'offset': '${usuarios.length}',
           'perfil': ?perfil,
           if (ativo != null) 'ativo': '$ativo',
         },

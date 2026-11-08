@@ -141,7 +141,12 @@ class _ClientesPageState extends State<ClientesPage> {
     super.dispose();
   }
 
-  void _atualizar() => setState(() => _dados = _carregar());
+  void _atualizar() {
+    final dados = _carregar();
+    setState(() {
+      _dados = dados;
+    });
+  }
 
   Future<void> _salvar(Future<void> Function() acao, String sucesso) async {
     if (_salvando) return;
@@ -158,9 +163,11 @@ class _ClientesPageState extends State<ClientesPage> {
     }
   }
 
-  void _mensagem(String texto) =>
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(texto)));
+  void _mensagem(String texto) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(texto)));
+  }
 
   Future<void> _novoCliente() async {
     final dados = await UsuarioFormDialog.show(context, perfilFixo: 'CLIENTE');
@@ -401,7 +408,7 @@ class _ClientesPageState extends State<ClientesPage> {
                   _cores[3],
                 ),
               ],
-              larguraMinima: 176,
+              larguraMinima: compacto ? 135 : 176,
               maximo: 4,
             ),
             const SizedBox(height: 22),

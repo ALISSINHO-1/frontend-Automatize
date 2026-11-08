@@ -146,6 +146,7 @@ void main() {
       final origem = tester.getCenter(find.text('Implantação'));
       final destino = tester.getCenter(find.text('Execução'));
       final gesto = await tester.startGesture(origem);
+      await tester.pump(const Duration(milliseconds: 550));
       await gesto.moveBy(const Offset(20, 0));
       await tester.pump();
       await gesto.moveTo(destino + const Offset(0, 55));
@@ -183,6 +184,7 @@ void main() {
     await _abrir(tester, _Api(), 'ADMIN');
     final quadro = find.byTooltip('Quadro');
     await tester.ensureVisible(quadro);
+    await tester.pumpAndSettle();
     await tester.tap(quadro);
     await tester.pumpAndSettle();
     expect(find.text('Demandas por cliente'), findsOneWidget);

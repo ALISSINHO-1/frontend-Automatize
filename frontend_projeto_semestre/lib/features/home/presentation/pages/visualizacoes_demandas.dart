@@ -124,7 +124,7 @@ class QuadroDemandas extends StatelessWidget {
           demanda.codigo,
           if (prazo != null)
             MaterialLocalizations.of(context).formatCompactDate(prazo),
-          if (nome != null) nome,
+          ?nome,
         ].join(' · '),
       ),
       onTap: () => abrir(demanda),

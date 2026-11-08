@@ -33,8 +33,12 @@ class _DemandTasksPageState extends State<DemandTasksPage> {
   bool get _operacional =>
       widget.usuario?.isAdmin == true || widget.usuario?.perfil == 'TECNICO';
 
-  void _recarregar() =>
-      setState(() => _tarefas = _api.listarTarefas(widget.demandaId));
+  void _recarregar() {
+    final tarefas = _api.listarTarefas(widget.demandaId);
+    setState(() {
+      _tarefas = tarefas;
+    });
+  }
 
   Future<void> _salvar(Future<void> Function() acao) async {
     if (_salvando) return;
@@ -46,8 +50,9 @@ class _DemandTasksPageState extends State<DemandTasksPage> {
       _recarregar();
     } catch (erro) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(erro.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(erro.toString())));
       }
     } finally {
       if (mounted) setState(() => _salvando = false);
