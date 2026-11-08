@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../app/routes/app_routes.dart';
 import 'demandas_screen.dart';
 
 class HomePage extends StatelessWidget {
@@ -119,6 +121,11 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(width: 20),
         ],
+        IconButton(
+          onPressed: () => Navigator.of(context).pushNamed(AppRoutes.chat),
+          tooltip: 'Chat',
+          icon: const Icon(Icons.forum_outlined),
+        ),
         OutlinedButton.icon(
           onPressed: () => _abrirDemandas(context),
           style: OutlinedButton.styleFrom(
