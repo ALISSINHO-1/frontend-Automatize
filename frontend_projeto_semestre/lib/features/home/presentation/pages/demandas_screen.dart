@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/storage/local_storage_service.dart';
 import '../../../../shared/widgets/main_layout.dart';
-import '../../../demands/data/models/pedido_model.dart';
-import '../../../demands/data/services/demand_service.dart';
 import 'demanda_store.dart';
 import 'nova_demanda_screen.dart';
 import 'painel_screen.dart';
@@ -17,52 +14,57 @@ class DemandasScreen extends StatefulWidget {
 
 class _DemandasScreenState extends State<DemandasScreen> {
   final TextEditingController _buscaController = TextEditingController();
-  final DemandService _service = DemandService();
-  List<DemandaItem> _demandas = [];
-  bool _carregando = false;
-  String? _erro;
-  Future<void> _carregarDemandas() async {
-    if (_carregando) return;
-    setState(() {
-      _carregando = true;
-      _erro = null;
-    });
-    try {
-      final pedidos = await _service.buscarDemandas();
-      if (!mounted) return;
-      setState(() {
-        _demandas = pedidos.map(_converterPedido).toList();
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _erro = 'Não foi possível carregar as demandas: $e';
-        _demandas = []; // Não apresentar dados simulados quando a API falhar.
-      });
-    } finally {
-      if (mounted) setState(() => _carregando = false);
+  final DemandaStore _store = DemandaStore.instance;
+  List<DemandaItem> get _demandas => _store.demandas;
+  bool get _carregando => _store.carregando;
+  String? get _erro => _store.erro;
+  // Compartilha com o painel os dados que vieram da API.
+  Future<void> _carregarDemandas() => _store.carregarDemandas();
+  void _atualizarDemandas() {
+    if (mounted) setState(() {});
+  }
+
+  // Apresenta os nomes dos estados, sem mudar os valores vindos do backend.
+  String _rotuloEstado(String estado) {
+    switch (estado.trim().toUpperCase()) {
+      case 'PLANEAMENTO':
+      case 'PLANEJAMENTO':
+        return 'Planejamento';
+      case 'EXECUCAO':
+      case 'EXECUÇÃO':
+        return 'Execução';
+      case 'HOMOLOGACAO':
+      case 'HOMOLOGAÇÃO':
+        return 'Homologação';
+      case 'CONCLUIDO':
+      case 'CONCLUÍDO':
+        return 'Concluído';
+      default:
+        return estado.trim().isEmpty ? 'Não informado' : estado;
     }
   }
 
-  DemandaItem _converterPedido(PedidoModel pedido) {
-    final estado = switch (pedido.status.toLowerCase()) {
-      'planeamento' ||
-      'planejamento' ||
-      'pending' ||
-      'pendente' => 'Planejamento',
-      'execucao' || 'execução' => 'Execução',
-      'homologacao' || 'homologação' => 'Homologação',
-      'concluido' || 'concluído' || 'completed' => 'Concluído',
-      _ => pedido.status,
-    };
-    return DemandaItem(
-      id: pedido.id,
-      codigo: pedido.codigoIdentificador ?? pedido.id,
-      titulo: pedido.titulo,
-      descricao: pedido.descricao,
-      estado: estado,
-      progresso: pedido.percentualProgresso,
-      createdAt: pedido.createdAt,
+  String _formatarProgresso(DemandaItem demanda) {
+    if (!demanda.progressoInformado) return 'Não informado';
+    return '${demanda.progresso.toStringAsFixed(2).replaceAll('.', ',')}%';
+  }
+
+  // Um valor null mostra uma faixa neutra, não um progresso fictício de 0%.
+  Widget _barraProgresso(DemandaItem demanda, Color cor, {double altura = 6}) {
+    if (!demanda.progressoInformado) {
+      return Container(
+        height: altura,
+        decoration: BoxDecoration(
+          color: AutomatizeColors.border,
+          borderRadius: BorderRadius.circular(altura),
+        ),
+      );
+    }
+    return LinearProgressIndicator(
+      value: (demanda.progresso / 100).clamp(0.0, 1.0),
+      minHeight: altura,
+      backgroundColor: AutomatizeColors.border,
+      valueColor: AlwaysStoppedAnimation<Color>(cor),
     );
   }
 
@@ -84,6 +86,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
   @override
   void initState() {
     super.initState();
+    _store.addListener(_atualizarDemandas);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _carregarDemandas();
     });
@@ -91,7 +94,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
 
   @override
   void dispose() {
-    _service.dispose();
+    _store.removeListener(_atualizarDemandas);
     _buscaController.dispose();
     super.dispose();
   }
@@ -105,27 +108,24 @@ class _DemandasScreenState extends State<DemandasScreen> {
           demanda.descricao.toLowerCase().contains(busca);
       final correspondeStatus =
           _filtroStatus == 'Todos os estados' ||
-          demanda.estado == _filtroStatus;
+          _rotuloEstado(demanda.estado) == _filtroStatus;
       return correspondeBusca && correspondeStatus;
     }).toList();
   }
 
-  int _contarEstado(String estado) =>
-      _demandas.where((demanda) => demanda.estado == estado).length;
+  int _contarEstado(String estado) => _demandas
+      .where((demanda) => _rotuloEstado(demanda.estado) == estado)
+      .length;
   Color _corStatus(String estado) {
-    switch (estado.toLowerCase()) {
-      case 'planejamento':
+    switch (_rotuloEstado(estado)) {
+      case 'Planejamento':
         return const Color(0xFF8C9DFF);
-      case 'homologação':
-        return AutomatizeColors.purple;
-      case 'concluído':
-      case 'concluido':
-        return AutomatizeColors.success;
-      case 'em andamento':
-      case 'execução':
+      case 'Execução':
         return const Color(0xFF63A8FF);
-      case 'bloqueado':
-        return AutomatizeColors.danger;
+      case 'Homologação':
+        return AutomatizeColors.purple;
+      case 'Concluído':
+        return AutomatizeColors.success;
       default:
         return AutomatizeColors.muted;
     }
@@ -136,7 +136,6 @@ class _DemandasScreenState extends State<DemandasScreen> {
       context: context,
       builder: (dialogContext) {
         final cor = _corStatus(demanda.estado);
-        final progresso = (demanda.progresso / 100).clamp(0.0, 1.0).toDouble();
         return AlertDialog(
           backgroundColor: AutomatizeColors.panel,
           shape: RoundedRectangleBorder(
@@ -227,7 +226,10 @@ class _DemandasScreenState extends State<DemandasScreen> {
                     ),
                   ),
                   const SizedBox(height: 9),
-                  _StatusChip(status: demanda.estado, color: cor),
+                  _StatusChip(
+                    status: _rotuloEstado(demanda.estado),
+                    color: cor,
+                  ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -241,7 +243,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
                         ),
                       ),
                       Text(
-                        '${demanda.progresso}%',
+                        _formatarProgresso(demanda),
                         style: TextStyle(
                           color: cor,
                           fontSize: 13,
@@ -253,12 +255,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
                   const SizedBox(height: 9),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: LinearProgressIndicator(
-                      value: progresso,
-                      minHeight: 9,
-                      backgroundColor: AutomatizeColors.border,
-                      valueColor: AlwaysStoppedAnimation<Color>(cor),
-                    ),
+                    child: _barraProgresso(demanda, cor, altura: 9),
                   ),
                 ],
               ),
@@ -366,6 +363,13 @@ class _DemandasScreenState extends State<DemandasScreen> {
                       subtitle: 'Em fase de organização',
                       icon: Icons.event_note_rounded,
                       color: const Color(0xFF8C9DFF),
+                    ),
+                    _summaryCard(
+                      title: 'Em execução',
+                      value: _contarEstado('Execução').toString(),
+                      subtitle: 'Em andamento',
+                      icon: Icons.autorenew_rounded,
+                      color: const Color(0xFF63A8FF),
                     ),
                     _summaryCard(
                       title: 'Em homologação',
@@ -826,195 +830,199 @@ class _DemandasScreenState extends State<DemandasScreen> {
             child: demandas.isEmpty
                 ? _emptyState()
                 : Scrollbar(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          headingRowHeight: 47,
-                          dataRowMinHeight: 66,
-                          dataRowMaxHeight: 76,
-                          columnSpacing: 25,
-                          horizontalMargin: 19,
-                          dividerThickness: 0.6,
-                          headingRowColor: WidgetStateProperty.all(
-                            AutomatizeColors.panelLight,
-                          ),
-                          dataRowColor: WidgetStateProperty.resolveWith<Color?>(
-                            (states) {
-                              if (states.contains(WidgetState.hovered)) {
-                                return AutomatizeColors.panelLight.withValues(
-                                  alpha: 0.5,
-                                );
-                              }
-                              return null;
-                            },
-                          ),
-                          columns: const [
-                            DataColumn(label: _TableHeader('CÓDIGO')),
-                            DataColumn(label: _TableHeader('DEMANDA')),
-                            DataColumn(label: _TableHeader('ESTADO')),
-                            DataColumn(label: _TableHeader('PROGRESSO')),
-                            DataColumn(label: _TableHeader('')),
-                          ],
-                          rows: demandas.map((demanda) {
-                            final cor = _corStatus(demanda.estado);
-                            final progresso = (demanda.progresso / 100)
-                                .clamp(0.0, 1.0)
-                                .toDouble();
-                            return DataRow(
-                              cells: [
-                                DataCell(
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 9,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AutomatizeColors.background,
-                                      borderRadius: BorderRadius.circular(7),
-                                      border: Border.all(
-                                        color: AutomatizeColors.border,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      demanda.codigo,
-                                      style: const TextStyle(
-                                        color: AutomatizeColors.cyan,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SingleChildScrollView(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth,
+                              ),
+                              child: DataTable(
+                                headingRowHeight: 47,
+                                dataRowMinHeight: 66,
+                                dataRowMaxHeight: 76,
+                                columnSpacing: 25,
+                                horizontalMargin: 19,
+                                dividerThickness: 0.6,
+                                headingRowColor: WidgetStateProperty.all(
+                                  AutomatizeColors.panelLight,
                                 ),
-                                DataCell(
-                                  SizedBox(
-                                    width: 270,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          demanda.titulo,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: AutomatizeColors.text,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
+                                dataRowColor:
+                                    WidgetStateProperty.resolveWith<Color?>((
+                                      states,
+                                    ) {
+                                      if (states.contains(
+                                        WidgetState.hovered,
+                                      )) {
+                                        return AutomatizeColors.panelLight
+                                            .withValues(alpha: 0.5);
+                                      }
+                                      return null;
+                                    }),
+                                columns: const [
+                                  DataColumn(label: _TableHeader('CÓDIGO')),
+                                  DataColumn(label: _TableHeader('DEMANDA')),
+                                  DataColumn(label: _TableHeader('ESTADO')),
+                                  DataColumn(label: _TableHeader('PROGRESSO')),
+                                  DataColumn(label: _TableHeader('')),
+                                ],
+                                rows: demandas.map((demanda) {
+                                  final cor = _corStatus(demanda.estado);
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 9,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AutomatizeColors.background,
+                                            borderRadius: BorderRadius.circular(
+                                              7,
+                                            ),
+                                            border: Border.all(
+                                              color: AutomatizeColors.border,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            demanda.codigo,
+                                            style: const TextStyle(
+                                              color: AutomatizeColors.cyan,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                          demanda.descricao.isEmpty
-                                              ? 'Sem descrição adicional'
-                                              : demanda.descricao,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: AutomatizeColors.muted,
-                                            fontSize: 10,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                DataCell(
-                                  _StatusChip(
-                                    status: demanda.estado,
-                                    color: cor,
-                                  ),
-                                ),
-                                DataCell(
-                                  SizedBox(
-                                    width: 160,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                child: LinearProgressIndicator(
-                                                  value: progresso,
-                                                  minHeight: 6,
-                                                  backgroundColor:
-                                                      AutomatizeColors.border,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(cor),
+                                      ),
+                                      DataCell(
+                                        SizedBox(
+                                          width: 270,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                demanda.titulo,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: AutomatizeColors.text,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
                                                 ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Text(
-                                              '${demanda.progresso}%',
-                                              style: TextStyle(
-                                                color: cor,
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w800,
+                                              const SizedBox(height: 5),
+                                              Text(
+                                                demanda.descricao.isEmpty
+                                                    ? 'Sem descrição adicional'
+                                                    : demanda.descricao,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: AutomatizeColors.muted,
+                                                  fontSize: 10,
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                          _textoProgresso(demanda.progresso),
-                                          style: const TextStyle(
-                                            color: AutomatizeColors.muted,
-                                            fontSize: 9,
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                DataCell(
-                                  IconButton.filledTonal(
-                                    tooltip: 'Ver detalhes',
-                                    onPressed: () =>
-                                        _visualizarDemanda(demanda),
-                                    style: IconButton.styleFrom(
-                                      backgroundColor: AutomatizeColors.primary
-                                          .withValues(alpha: 0.13),
-                                      foregroundColor: AutomatizeColors.cyan,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
                                       ),
-                                    ),
-                                    icon: const Icon(
-                                      Icons.arrow_outward_rounded,
-                                      size: 17,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                      ),
+                                      DataCell(
+                                        _StatusChip(
+                                          status: _rotuloEstado(demanda.estado),
+                                          color: cor,
+                                        ),
+                                      ),
+                                      DataCell(
+                                        SizedBox(
+                                          width: 160,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                      child: _barraProgresso(
+                                                        demanda,
+                                                        cor,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Text(
+                                                    _formatarProgresso(demanda),
+                                                    style: TextStyle(
+                                                      color: cor,
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 5),
+                                              Text(
+                                                demanda.progressoInformado
+                                                    ? 'Percentual informado pelo sistema'
+                                                    : 'Aguardando informação de progresso',
+                                                style: const TextStyle(
+                                                  color: AutomatizeColors.muted,
+                                                  fontSize: 9,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        IconButton.filledTonal(
+                                          tooltip: 'Ver detalhes',
+                                          onPressed: () =>
+                                              _visualizarDemanda(demanda),
+                                          style: IconButton.styleFrom(
+                                            backgroundColor: AutomatizeColors
+                                                .primary
+                                                .withValues(alpha: 0.13),
+                                            foregroundColor:
+                                                AutomatizeColors.cyan,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          icon: const Icon(
+                                            Icons.arrow_outward_rounded,
+                                            size: 17,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
           ),
         ],
       ),
     );
-  }
-
-  String _textoProgresso(double value) {
-    if (value >= 100) return 'Etapa finalizada';
-    if (value >= 70) return 'Quase concluída';
-    if (value >= 30) return 'Em desenvolvimento';
-    if (value > 0) return 'Início do processo';
-    return 'Aguardando início';
   }
 
   Widget _emptyState() {

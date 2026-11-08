@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../../app/routes/app_routes.dart';
 import '../../core/storage/local_storage_service.dart';
+import '../../features/admin/presentation/widgets/admin_guard.dart';
 
 /// Paleta visual compartilhada pelas telas do Automatize.
+
 class AutomatizeColors {
   static const background = Color(0xFF07172A);
   static const sidebar = Color(0xFF0A1B30);
@@ -32,6 +35,10 @@ class MainLayout extends StatelessWidget {
     this.onDestinationSelected,
     this.onLogout,
   });
+
+  /// Item administrativo disponível somente para ADMIN.
+  static const int indiceAdmin = 3;
+  static const int _indiceChat = 4;
 
   // Aliases mantidos para não quebrar as telas existentes.
   static const Color sidebarColor = AutomatizeColors.sidebar;
@@ -95,7 +102,6 @@ class MainLayout extends StatelessWidget {
     // Encerra a sessão antes de iniciar a navegação.
     await LocalStorageService.removeToken();
     if (!context.mounted) return;
-
     if (onLogout != null) {
       onLogout!();
       return;
@@ -110,6 +116,14 @@ class MainLayout extends StatelessWidget {
 
   void _selecionarDestino(BuildContext context, int index, String label) {
     if (selectedIndex == index) return;
+    if (index == _indiceChat) {
+      Navigator.of(context).pushNamed(AppRoutes.chat);
+      return;
+    }
+    if (index == indiceAdmin) {
+      Navigator.of(context).pushNamed(AppRoutes.admin);
+      return;
+    }
     if (onDestinationSelected != null) {
       onDestinationSelected!(index);
       return;
@@ -123,155 +137,178 @@ class MainLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 900;
-        final sidebarWidth = compact ? 78.0 : 252.0;
-        return Row(
-          children: [
-            Container(
-              width: sidebarWidth,
-              decoration: const BoxDecoration(
-                color: AutomatizeColors.sidebar,
-                border: Border(
-                  right: BorderSide(color: AutomatizeColors.border, width: 0.7),
+    // Garante o contexto Material para todos os textos e elementos da sidebar.
+    return Material(
+      color: AutomatizeColors.background,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 900;
+          final sidebarWidth = compact ? 78.0 : 252.0;
+          return Row(
+            children: [
+              Container(
+                width: sidebarWidth,
+                decoration: const BoxDecoration(
+                  color: AutomatizeColors.sidebar,
+                  border: Border(
+                    right: BorderSide(
+                      color: AutomatizeColors.border,
+                      width: 0.7,
+                    ),
+                  ),
                 ),
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: compact ? 15 : 21,
-                        vertical: 25,
-                      ),
-                      child: compact
-                          ? const _BrandIcon()
-                          : const Row(
-                              children: [
-                                _BrandIcon(),
-                                SizedBox(width: 11),
-                                Expanded(child: _BrandName()),
-                              ],
-                            ),
-                    ),
-                    if (!compact)
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(22, 4, 18, 12),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'ÁREA DO CLIENTE',
-                            style: TextStyle(
-                              color: Color(0xFF66819D),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.4,
-                            ),
-                          ),
-                        ),
-                      ),
-                    _navigationItem(
-                      context,
-                      compact: compact,
-                      index: 0,
-                      icon: Icons.grid_view_rounded,
-                      label: 'Painel',
-                    ),
-                    _navigationItem(
-                      context,
-                      compact: compact,
-                      index: 1,
-                      icon: Icons.assignment_rounded,
-                      label: 'Minhas demandas',
-                    ),
-                    const Spacer(),
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: compact ? 10 : 15,
-                      ),
-                      child: Container(
+                child: SafeArea(
+                  child: Column(
+                    children: [
+                      Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: compact ? 0 : 12,
-                          vertical: compact ? 12 : 13,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AutomatizeColors.panel,
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: AutomatizeColors.border),
+                          horizontal: compact ? 15 : 21,
+                          vertical: 25,
                         ),
                         child: compact
-                            ? const Center(child: _UserAvatar())
+                            ? const _BrandIcon()
                             : const Row(
                                 children: [
-                                  _UserAvatar(),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Minha conta',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: AutomatizeColors.text,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          'Cliente',
-                                          style: TextStyle(
-                                            color: AutomatizeColors.muted,
-                                            fontSize: 11,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.more_horiz,
-                                    color: AutomatizeColors.muted,
-                                    size: 19,
-                                  ),
+                                  _BrandIcon(),
+                                  SizedBox(width: 11),
+                                  Expanded(child: _BrandName()),
                                 ],
                               ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    _navigationItem(
-                      context,
-                      compact: compact,
-                      index: 2,
-                      icon: Icons.logout_rounded,
-                      label: 'Sair da conta',
-                      isLogout: true,
-                    ),
-                    const SizedBox(height: 16),
-                    if (!compact)
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 14),
-                        child: Text(
-                          'AUTOMATIZE  •  CLIENTE',
-                          style: TextStyle(
-                            color: Color(0xFF58728E),
-                            fontSize: 9,
-                            letterSpacing: 1.1,
-                            fontWeight: FontWeight.w700,
+                      if (!compact)
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(22, 4, 18, 12),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'ÁREA DO CLIENTE',
+                              style: TextStyle(
+                                color: Color(0xFF66819D),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.4,
+                              ),
+                            ),
                           ),
                         ),
+                      _navigationItem(
+                        context,
+                        compact: compact,
+                        index: 0,
+                        icon: Icons.grid_view_rounded,
+                        label: 'Painel',
                       ),
-                  ],
+                      _navigationItem(
+                        context,
+                        compact: compact,
+                        index: 1,
+                        icon: Icons.assignment_rounded,
+                        label: 'Minhas demandas',
+                      ),
+                      _navigationItem(
+                        context,
+                        compact: compact,
+                        index: _indiceChat,
+                        icon: Icons.forum_outlined,
+                        label: 'Chat',
+                      ),
+                      AdminMenuGate(
+                        child: _navigationItem(
+                          context,
+                          compact: compact,
+                          index: indiceAdmin,
+                          icon: Icons.admin_panel_settings_rounded,
+                          label: 'Painel administrativo',
+                        ),
+                      ),
+                      const Spacer(),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 10 : 15,
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: compact ? 0 : 12,
+                            vertical: compact ? 12 : 13,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AutomatizeColors.panel,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: AutomatizeColors.border),
+                          ),
+                          child: compact
+                              ? const Center(child: _UserAvatar())
+                              : const Row(
+                                  children: [
+                                    _UserAvatar(),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Minha conta',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: AutomatizeColors.text,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'Cliente',
+                                            style: TextStyle(
+                                              color: AutomatizeColors.muted,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.more_horiz,
+                                      color: AutomatizeColors.muted,
+                                      size: 19,
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _navigationItem(
+                        context,
+                        compact: compact,
+                        index: 2,
+                        icon: Icons.logout_rounded,
+                        label: 'Sair da conta',
+                        isLogout: true,
+                      ),
+                      const SizedBox(height: 16),
+                      if (!compact)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 14),
+                          child: Text(
+                            'AUTOMATIZE  •  CLIENTE',
+                            style: TextStyle(
+                              color: Color(0xFF58728E),
+                              fontSize: 9,
+                              letterSpacing: 1.1,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            Expanded(child: child),
-          ],
-        );
-      },
+              Expanded(child: child),
+            ],
+          );
+        },
+      ),
     );
   }
 
