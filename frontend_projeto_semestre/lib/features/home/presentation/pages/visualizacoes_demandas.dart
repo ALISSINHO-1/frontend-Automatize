@@ -53,10 +53,9 @@ class QuadroDemandas extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, medidas) {
-      final personalizado = nomeResponsavel != null;
-      final largura = personalizado
-          ? (medidas.maxWidth / estados.length).clamp(220.0, 360.0).toDouble()
-          : 265.0;
+      final largura = (medidas.maxWidth / estados.length)
+          .clamp(245.0, 340.0)
+          .toDouble();
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -80,23 +79,36 @@ class QuadroDemandas extends StatelessWidget {
           .where((d) => rotuloEstado(d.estado) == estado)
           .toList();
       final cor = corEstado(estado);
-      final personalizado = nomeResponsavel != null;
       return Card(
         clipBehavior: Clip.antiAlias,
         color: candidatos.isNotEmpty
             ? AutomatizeColors.panelLight
-            : personalizado
-            ? cor.withValues(alpha: .09)
-            : AutomatizeColors.panel,
+            : cor.withValues(alpha: .075),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: cor.withValues(alpha: .32)),
+        ),
         child: ListView.builder(
           itemCount: itens.length + 2,
           itemBuilder: (context, index) {
             if (index == 0) {
               return ListTile(
-                dense: personalizado,
-                tileColor: personalizado ? cor.withValues(alpha: .2) : null,
-                title: Text(estado, style: TextStyle(color: cor)),
-                trailing: Text('${itens.length}'),
+                tileColor: cor.withValues(alpha: .15),
+                title: Text(
+                  estado,
+                  style: TextStyle(color: cor, fontWeight: FontWeight.w800),
+                ),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AutomatizeColors.background.withValues(alpha: .55),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text('${itens.length}'),
+                ),
               );
             }
             if (index == 1) return const Divider(height: 1);
@@ -117,33 +129,81 @@ class QuadroDemandas extends StatelessWidget {
     final podeMover = _podeMover(demanda);
     final nome = nomeResponsavel?.call(demanda.responsavelId);
     final prazo = demanda.dataPrevisao;
-    final conteudo = ListTile(
-      title: Text(demanda.titulo),
-      subtitle: Text(
-        [
-          demanda.codigo,
-          if (prazo != null)
-            MaterialLocalizations.of(context).formatCompactDate(prazo),
-          ?nome,
-        ].join(' · '),
+    final tile = Card(
+      margin: const EdgeInsets.fromLTRB(8, 9, 8, 0),
+      color: const Color(0xFF142C49),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(13),
+        side: const BorderSide(color: AutomatizeColors.border),
       ),
-      onTap: () => abrir(demanda),
-      trailing: podeMover
-          ? IconButton(
-              tooltip:
-                  'Avançar para ${_transicoes[rotuloEstado(demanda.estado)]!.coluna}',
-              onPressed: () => _avancar(demanda),
-              icon: const Icon(Icons.arrow_forward),
-            )
-          : null,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(13),
+        onTap: () => abrir(demanda),
+        child: Padding(
+          padding: const EdgeInsets.all(13),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      demanda.titulo,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  if (podeMover)
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      tooltip:
+                          'Avançar para ${_transicoes[rotuloEstado(demanda.estado)]!.coluna}',
+                      onPressed: () => _avancar(demanda),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 19),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Text(
+                demanda.codigo,
+                style: const TextStyle(
+                  color: AutomatizeColors.cyan,
+                  fontSize: 11,
+                ),
+              ),
+              if (prazo != null || nome != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  [
+                    if (prazo != null)
+                      'Prazo ${MaterialLocalizations.of(context).formatCompactDate(prazo)}',
+                    ?nome,
+                  ].join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AutomatizeColors.muted,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 11),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  minHeight: 5,
+                  value: demanda.progressoInformado
+                      ? (demanda.progresso / 100).clamp(0, 1)
+                      : 0,
+                  backgroundColor: AutomatizeColors.background,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-    final tile = nomeResponsavel == null
-        ? conteudo
-        : Card(
-            margin: const EdgeInsets.fromLTRB(6, 7, 6, 0),
-            color: const Color(0xFF18243A),
-            child: conteudo,
-          );
     if (!podeMover) return tile;
     final feedback = Material(
       color: AutomatizeColors.panelLight,
@@ -193,6 +253,21 @@ class CalendarioDemandas extends StatefulWidget {
 }
 
 class _CalendarioDemandasState extends State<CalendarioDemandas> {
+  static const _meses = [
+    'janeiro',
+    'fevereiro',
+    'março',
+    'abril',
+    'maio',
+    'junho',
+    'julho',
+    'agosto',
+    'setembro',
+    'outubro',
+    'novembro',
+    'dezembro',
+  ];
+  static const _diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   DateTime _dia = DateUtils.dateOnly(DateTime.now());
 
   void _mudarMes(int passo) {
@@ -214,18 +289,17 @@ class _CalendarioDemandasState extends State<CalendarioDemandas> {
       }
     }
     final primeiro = DateTime(_dia.year, _dia.month);
-    final deslocamento =
-        (primeiro.weekday % 7 - idioma.firstDayOfWeekIndex + 7) % 7;
+    final deslocamento = primeiro.weekday % 7;
     final totalDias = DateUtils.getDaysInMonth(_dia.year, _dia.month);
     final doDia = eventos[_dia] ?? const [];
     return SingleChildScrollView(
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 700),
+          constraints: const BoxConstraints(maxWidth: 980),
           child: Card(
             color: AutomatizeColors.panel,
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   Row(
@@ -237,8 +311,12 @@ class _CalendarioDemandasState extends State<CalendarioDemandas> {
                       ),
                       Expanded(
                         child: Text(
-                          idioma.formatMonthYear(_dia),
+                          '${_meses[_dia.month - 1][0].toUpperCase()}${_meses[_dia.month - 1].substring(1)} ${_dia.year}',
                           textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                       IconButton(
@@ -250,13 +328,15 @@ class _CalendarioDemandasState extends State<CalendarioDemandas> {
                   ),
                   Row(
                     children: [
-                      for (var i = 0; i < 7; i++)
+                      for (final diaSemana in _diasSemana)
                         Expanded(
                           child: Text(
-                            idioma.narrowWeekdays[(idioma.firstDayOfWeekIndex +
-                                    i) %
-                                7],
+                            diaSemana,
                             textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AutomatizeColors.muted,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                     ],
@@ -267,7 +347,7 @@ class _CalendarioDemandasState extends State<CalendarioDemandas> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 7,
-                          mainAxisExtent: 48,
+                          mainAxisExtent: 62,
                         ),
                     itemCount: deslocamento + totalDias,
                     itemBuilder: (context, index) {
@@ -278,19 +358,41 @@ class _CalendarioDemandasState extends State<CalendarioDemandas> {
                         index - deslocamento + 1,
                       );
                       final total = eventos[dia]?.length ?? 0;
+                      final hoje = DateUtils.isSameDay(dia, DateTime.now());
+                      final selecionado = DateUtils.isSameDay(dia, _dia);
                       return Tooltip(
                         message:
                             '${idioma.formatCompactDate(dia)} · $total evento(s)',
                         child: InkWell(
                           onTap: () => setState(() => _dia = dia),
-                          child: ColoredBox(
-                            color: dia == _dia
-                                ? AutomatizeColors.panelLight
-                                : Colors.transparent,
+                          child: Container(
+                            margin: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: selecionado
+                                  ? AutomatizeColors.primary.withValues(
+                                      alpha: .22,
+                                    )
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: hoje
+                                    ? AutomatizeColors.cyan
+                                    : selecionado
+                                    ? AutomatizeColors.primary
+                                    : Colors.transparent,
+                              ),
+                            ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('${dia.day}'),
+                                Text(
+                                  '${dia.day}',
+                                  style: TextStyle(
+                                    fontWeight: hoje || selecionado
+                                        ? FontWeight.w800
+                                        : FontWeight.w500,
+                                  ),
+                                ),
                                 if (total > 0)
                                   Text(
                                     '$total',
