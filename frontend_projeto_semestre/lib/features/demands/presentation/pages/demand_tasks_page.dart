@@ -10,19 +10,21 @@ class DemandTasksPage extends StatefulWidget {
     required this.titulo,
     required this.status,
     required this.usuario,
+    this.service,
   });
 
   final String demandaId;
   final String titulo;
   final String status;
   final UsuarioAtualModel? usuario;
+  final DemandService? service;
 
   @override
   State<DemandTasksPage> createState() => _DemandTasksPageState();
 }
 
 class _DemandTasksPageState extends State<DemandTasksPage> {
-  final _api = DemandService();
+  late final _api = widget.service ?? DemandService();
   final _descricao = TextEditingController();
   late var _tarefas = _api.listarTarefas(widget.demandaId);
   bool _salvando = false;
@@ -54,7 +56,7 @@ class _DemandTasksPageState extends State<DemandTasksPage> {
 
   @override
   void dispose() {
-    _api.dispose();
+    if (widget.service == null) _api.dispose();
     _descricao.dispose();
     super.dispose();
   }

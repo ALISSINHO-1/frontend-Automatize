@@ -40,7 +40,7 @@ class MainLayout extends StatefulWidget {
   /// Item administrativo disponível somente para ADMIN.
   static const int indiceAdmin = 3;
   static const int _indiceChat = 4;
-  static const int _indiceClientes = 5;
+  static const int indiceClientes = 5;
 
   // Aliases mantidos para não quebrar as telas existentes.
   static const Color sidebarColor = AutomatizeColors.sidebar;
@@ -130,7 +130,7 @@ class _MainLayoutState extends State<MainLayout> {
       Navigator.of(context).pushNamed(AppRoutes.chat);
       return;
     }
-    if (index == MainLayout._indiceClientes) {
+    if (index == MainLayout.indiceClientes) {
       Navigator.of(context).pushNamed(AppRoutes.clientes);
       return;
     }
@@ -246,7 +246,7 @@ class _MainLayoutState extends State<MainLayout> {
                             _navigationItem(
                               context,
                               compact: compact,
-                              index: MainLayout._indiceClientes,
+                              index: MainLayout.indiceClientes,
                               icon: Icons.people_outline,
                               label: 'Clientes',
                             ),

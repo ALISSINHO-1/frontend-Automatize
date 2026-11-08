@@ -19,6 +19,7 @@ class QuadroDemandas extends StatelessWidget {
     required this.abrir,
     this.tecnicoId,
     this.mover,
+    this.nomeResponsavel,
   });
 
   final List<DemandaItem> demandas;
@@ -27,6 +28,7 @@ class QuadroDemandas extends StatelessWidget {
   final Color Function(String) corEstado;
   final ValueChanged<DemandaItem> abrir;
   final String? tecnicoId;
+  final String Function(String?)? nomeResponsavel;
   final void Function(DemandaItem, String, String)? mover;
 
   static const _transicoes = {
@@ -49,50 +51,60 @@ class QuadroDemandas extends StatelessWidget {
       _transicoes.containsKey(rotuloEstado(demanda.estado));
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final estado in estados)
-          SizedBox(
-            width: 265,
-            child: DragTarget<DemandaItem>(
-              onWillAcceptWithDetails: (dados) =>
-                  _podeMover(dados.data) &&
-                  _transicoes[rotuloEstado(dados.data.estado)]?.coluna ==
-                      estado,
-              onAcceptWithDetails: (dados) => _avancar(dados.data),
-              builder: (context, candidatos, _) {
-                final itens = demandas
-                    .where((d) => rotuloEstado(d.estado) == estado)
-                    .toList();
-                return Card(
-                  color: candidatos.isEmpty
-                      ? AutomatizeColors.panel
-                      : AutomatizeColors.panelLight,
-                  child: ListView.builder(
-                    itemCount: itens.length + 2,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return ListTile(
-                          title: Text(
-                            estado,
-                            style: TextStyle(color: corEstado(estado)),
-                          ),
-                          trailing: Text('${itens.length}'),
-                        );
-                      }
-                      if (index == 1) return const Divider(height: 1);
-                      return _cartao(context, itens[index - 2]);
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-      ],
-    ),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, medidas) {
+      final personalizado = nomeResponsavel != null;
+      final largura = personalizado
+          ? (medidas.maxWidth / estados.length).clamp(220.0, 360.0).toDouble()
+          : 265.0;
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final estado in estados)
+              SizedBox(width: largura, child: _coluna(estado)),
+          ],
+        ),
+      );
+    },
+  );
+
+  Widget _coluna(String estado) => DragTarget<DemandaItem>(
+    onWillAcceptWithDetails: (dados) =>
+        _podeMover(dados.data) &&
+        _transicoes[rotuloEstado(dados.data.estado)]?.coluna == estado,
+    onAcceptWithDetails: (dados) => _avancar(dados.data),
+    builder: (context, candidatos, _) {
+      final itens = demandas
+          .where((d) => rotuloEstado(d.estado) == estado)
+          .toList();
+      final cor = corEstado(estado);
+      final personalizado = nomeResponsavel != null;
+      return Card(
+        clipBehavior: Clip.antiAlias,
+        color: candidatos.isNotEmpty
+            ? AutomatizeColors.panelLight
+            : personalizado
+            ? cor.withValues(alpha: .09)
+            : AutomatizeColors.panel,
+        child: ListView.builder(
+          itemCount: itens.length + 2,
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return ListTile(
+                dense: personalizado,
+                tileColor: personalizado ? cor.withValues(alpha: .2) : null,
+                title: Text(estado, style: TextStyle(color: cor)),
+                trailing: Text('${itens.length}'),
+              );
+            }
+            if (index == 1) return const Divider(height: 1);
+            return _cartao(context, itens[index - 2]);
+          },
+        ),
+      );
+    },
   );
 
   void _avancar(DemandaItem demanda) {
@@ -103,12 +115,17 @@ class QuadroDemandas extends StatelessWidget {
 
   Widget _cartao(BuildContext context, DemandaItem demanda) {
     final podeMover = _podeMover(demanda);
-    final tile = ListTile(
+    final nome = nomeResponsavel?.call(demanda.responsavelId);
+    final prazo = demanda.dataPrevisao;
+    final conteudo = ListTile(
       title: Text(demanda.titulo),
       subtitle: Text(
-        demanda.dataPrevisao == null
-            ? demanda.codigo
-            : '${demanda.codigo} · ${MaterialLocalizations.of(context).formatCompactDate(demanda.dataPrevisao!)}',
+        [
+          demanda.codigo,
+          if (prazo != null)
+            MaterialLocalizations.of(context).formatCompactDate(prazo),
+          if (nome != null) nome,
+        ].join(' · '),
       ),
       onTap: () => abrir(demanda),
       trailing: podeMover
@@ -120,6 +137,13 @@ class QuadroDemandas extends StatelessWidget {
             )
           : null,
     );
+    final tile = nomeResponsavel == null
+        ? conteudo
+        : Card(
+            margin: const EdgeInsets.fromLTRB(6, 7, 6, 0),
+            color: const Color(0xFF18243A),
+            child: conteudo,
+          );
     if (!podeMover) return tile;
     final feedback = Material(
       color: AutomatizeColors.panelLight,
