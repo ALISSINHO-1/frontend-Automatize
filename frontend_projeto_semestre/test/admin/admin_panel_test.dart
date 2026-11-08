@@ -8,6 +8,7 @@ import 'package:frontend_projeto_semestre/features/admin/data/services/usuario_a
 import 'package:frontend_projeto_semestre/features/admin/presentation/pages/admin_panel_page.dart';
 import 'package:frontend_projeto_semestre/features/admin/presentation/widgets/admin_guard.dart';
 import 'package:frontend_projeto_semestre/features/demands/data/services/demand_service.dart';
+import 'package:frontend_projeto_semestre/shared/widgets/main_layout.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -42,12 +43,12 @@ http.Response _json(Object? body, [int status = 200]) => http.Response.bytes(
 );
 
 /// Faz o `/auth/me` responder com [perfil] sem tocar na rede.
-void _perfil(String perfil) {
+void _perfil(String perfil, {String nome = 'Ana Admin'}) {
   UsuarioAtualStore.instance.criarServico = () => AdminDemandService(
     client: MockClient(
       (_) async => _json({
         'id': 'u1',
-        'nome': 'Ana Admin',
+        'nome': nome,
         'email': 'a@x.dev',
         'perfil': perfil,
       }),
@@ -91,6 +92,30 @@ void main() {
 
     expect(find.text('Painel administrativo'), findsWidgets);
     expect(find.text('Nenhuma demanda encontrada.'), findsOneWidget);
+  });
+
+  testWidgets('menu lateral mostra a identidade da sessão atual', (tester) async {
+    const casos = [
+      ('ADMIN', 'Ana Souza', 'Administrador', 'AS', 'ÁREA ADMINISTRATIVA'),
+      ('TECNICO', 'Tiago Dias', 'Técnico', 'TD', 'ÁREA TÉCNICA'),
+      ('CLIENTE', 'Carla Lima', 'Cliente', 'CL', 'ÁREA DO CLIENTE'),
+    ];
+
+    for (final (perfil, nome, rotulo, iniciais, area) in casos) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await LocalStorageService.saveToken('token-$perfil');
+      _perfil(perfil, nome: nome);
+      await abrir(tester, const MainLayout(child: SizedBox.shrink()));
+
+      expect(find.text(nome), findsOneWidget);
+      expect(find.text(rotulo), findsOneWidget);
+      expect(find.text(iniciais), findsOneWidget);
+      expect(find.text(area), findsOneWidget);
+      expect(
+        find.text('Painel administrativo'),
+        perfil == 'ADMIN' ? findsOneWidget : findsNothing,
+      );
+    }
   });
 
   testWidgets('conta por estado, filtra pelo card e cadastra escolhendo o cliente', (tester) async {
