@@ -25,7 +25,7 @@ class _ChatPageState extends State<ChatPage> {
     ({
       UsuarioAtualModel? usuario,
       List<PedidoModel> demandas,
-      List<DemandaNaFila> fila,
+      List<DemandaNaFila>? fila,
     })
   >
   _carregar() async {
@@ -33,9 +33,14 @@ class _ChatPageState extends State<ChatPage> {
     final demandas = usuario == null
         ? <PedidoModel>[]
         : await _demandas.buscarDemandas();
-    final fila = usuario?.perfil == 'TECNICO'
-        ? await _chat.buscarFila()
-        : <DemandaNaFila>[];
+    List<DemandaNaFila>? fila = const [];
+    if (usuario?.perfil == 'TECNICO') {
+      try {
+        fila = await _chat.buscarFila();
+      } catch (_) {
+        fila = null;
+      }
+    }
     return (usuario: usuario, demandas: demandas.reversed.toList(), fila: fila);
   }
 
@@ -105,6 +110,7 @@ class _ChatPageState extends State<ChatPage> {
           return const Center(child: Text('Nenhuma conversa disponível.'));
         }
         final tecnico = usuario.perfil == 'TECNICO';
+        final fila = dados.fila;
         if (!tecnico && dados.demandas.isEmpty) {
           return const Center(child: Text('Nenhuma conversa disponível.'));
         }
@@ -117,11 +123,19 @@ class _ChatPageState extends State<ChatPage> {
                   'Assuma uma demanda para liberar o chat com o cliente.',
                 ),
               ),
-              if (dados.fila.isEmpty)
+              if (fila == null)
+                ListTile(
+                  title: const Text('Não foi possível carregar a fila.'),
+                  trailing: TextButton(
+                    onPressed: _atualizar,
+                    child: const Text('Tentar novamente'),
+                  ),
+                )
+              else if (fila.isEmpty)
                 const ListTile(
                   title: Text('Nenhuma demanda disponível na fila.'),
                 ),
-              for (final demanda in dados.fila)
+              for (final demanda in fila ?? const <DemandaNaFila>[])
                 ListTile(
                   title: Text(demanda.titulo),
                   subtitle: Text(demanda.codigo),

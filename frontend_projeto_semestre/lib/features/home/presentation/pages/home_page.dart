@@ -115,7 +115,7 @@ class HomePage extends StatelessWidget {
           const Icon(Icons.verified_user_outlined, color: verde, size: 18),
           const SizedBox(width: 8),
           const Text(
-            'Portal do cliente',
+            'Portal de demandas',
             style: TextStyle(color: secundario, fontSize: 12),
           ),
           const SizedBox(width: 20),
@@ -358,6 +358,7 @@ class HomePage extends StatelessWidget {
       builder: (dialogContext) {
         return AlertDialog(
           scrollable: true,
+          constraints: const BoxConstraints(maxWidth: 560),
           backgroundColor: painel,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -371,14 +372,39 @@ class HomePage extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          content: const Text(
-            'O Automatize é um portal para consultar as demandas '
-            'do projeto, visualizar seus estados e acompanhar o '
-            'progresso das atividades.\n\n'
-            'No Chat, os técnicos veem as demandas que aguardam atendimento. '
-            'Quando um técnico assume uma demanda, a conversa com o cliente '
-            'é liberada. A conversa com a administração fica em um canal separado.',
-            style: TextStyle(color: secundario, fontSize: 13, height: 1.7),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Acompanhe solicitações, entregas e conversas do projeto em um só lugar.',
+                style: TextStyle(color: secundario, fontSize: 14, height: 1.5),
+              ),
+              SizedBox(height: 20),
+              _Etapa(
+                numero: '01',
+                cor: ciano,
+                icone: Icons.assignment_outlined,
+                titulo: 'Registro e triagem',
+                descricao: 'O cliente registra a solicitação. A demanda fica disponível para um técnico assumir.',
+              ),
+              SizedBox(height: 12),
+              _Etapa(
+                numero: '02',
+                cor: azul,
+                icone: Icons.forum_outlined,
+                titulo: 'Atendimento e acompanhamento',
+                descricao: 'Com um responsável definido, cliente e técnico conversam na demanda. A administração tem um canal interno separado.',
+              ),
+              SizedBox(height: 12),
+              _Etapa(
+                numero: '03',
+                cor: verde,
+                icone: Icons.fact_check_outlined,
+                titulo: 'Validação da entrega',
+                descricao: 'Na homologação, o cliente pode aprovar a entrega ou solicitar correções. O histórico registra o andamento.',
+              ),
+            ],
           ),
           actions: [
             TextButton(

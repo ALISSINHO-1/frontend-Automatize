@@ -38,10 +38,11 @@ class UsuarioAtualStore extends ValueNotifier<UsuarioAtualModel?> {
     try {
       final usuario = await servico.usuarioAtual();
       // Ignora a resposta se a sessão mudou enquanto a requisição estava no ar.
-      if (await LocalStorageService.getToken() == token) value = usuario;
+      if (await LocalStorageService.getToken() != token) return null;
+      value = usuario;
       return usuario;
     } finally {
-      _emAndamento = null;
+      if (_tokenDoCache == token) _emAndamento = null;
       servico.dispose();
     }
   }
