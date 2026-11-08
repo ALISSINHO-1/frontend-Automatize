@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
-import 'demandas_screen.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -17,8 +16,7 @@ class HomePage extends StatelessWidget {
   static const roxo = Color(0xFFB784FF);
 
   void _abrirDemandas(BuildContext context) {
-    Navigator.of(context)
-        .push(MaterialPageRoute<void>(builder: (_) => const DemandasScreen()));
+    Navigator.of(context).pushNamed(AppRoutes.demandas);
   }
 
   @override
@@ -387,7 +385,8 @@ class HomePage extends StatelessWidget {
                 icone: Icons.assignment_outlined,
                 titulo: 'Registro e triagem',
                 descricao: 'Da solicitação à fila de atendimento.',
-                detalhes: 'O cliente abre a demanda em Minhas demandas. No Chat, um técnico pode assumir a solicitação que estiver sem responsável.',
+                detalhes:
+                    'O cliente abre a demanda em Minhas demandas. No Chat, um técnico pode assumir a solicitação que estiver sem responsável.',
               ),
               SizedBox(height: 12),
               _Etapa(
@@ -396,7 +395,8 @@ class HomePage extends StatelessWidget {
                 icone: Icons.forum_outlined,
                 titulo: 'Atendimento e acompanhamento',
                 descricao: 'Converse com quem acompanha a demanda.',
-                detalhes: 'Depois da atribuição, cliente e técnico podem trocar mensagens na demanda. O técnico também pode falar com a administração em um canal interno separado.',
+                detalhes:
+                    'Depois da atribuição, cliente e técnico podem trocar mensagens na demanda. O técnico também pode falar com a administração em um canal interno separado.',
               ),
               SizedBox(height: 12),
               _Etapa(
@@ -405,7 +405,8 @@ class HomePage extends StatelessWidget {
                 icone: Icons.fact_check_outlined,
                 titulo: 'Validação da entrega',
                 descricao: 'Revise e confirme a entrega na homologação.',
-                detalhes: 'Quando a demanda chega à homologação, o cliente pode aprovar a entrega ou solicitar correções. O histórico registra o andamento.',
+                detalhes:
+                    'Quando a demanda chega à homologação, o cliente pode aprovar a entrega ou solicitar correções. O histórico registra o andamento.',
               ),
             ],
           ),

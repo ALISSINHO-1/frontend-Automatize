@@ -84,8 +84,11 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) => MainLayout(
     selectedIndex: 4,
     onDestinationSelected: (index) {
-      if (index == 0 || index == 1) {
-        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+      if (index == 0) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.painel);
+      }
+      if (index == 1) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.demandas);
       }
     },
     child: Scaffold(

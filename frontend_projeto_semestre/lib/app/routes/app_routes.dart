@@ -7,6 +7,8 @@ import '/features/admin/presentation/widgets/admin_guard.dart';
 import '/features/chat/chat_page.dart';
 import '/features/home/presentation/pages/login_screen.dart';
 import '/features/home/presentation/pages/home_page.dart';
+import '/features/home/presentation/pages/demandas_screen.dart';
+import '/features/home/presentation/pages/painel_screen.dart';
 import '/features/demands/presentation/pages/demand_details_page.dart';
 import '/features/demands/presentation/pages/demand_list_page.dart';
 import '/features/demands/data/models/pedido_model.dart';
@@ -14,6 +16,8 @@ import '/features/demands/data/models/pedido_model.dart';
 abstract final class AppRoutes {
   static const String login = '/login';
   static const String home = '/home';
+  static const String painel = '/painel';
+  static const String demandas = '/demandas';
   static const String demandDetails = '/demand-details';
   static const String demandList = '/demand-list';
   static const String admin = '/admin';
@@ -26,6 +30,10 @@ abstract final class AppRoutes {
 
     // Rota protegida: Home do cliente.
     home: (_) => const AuthGuard(child: HomePage()),
+
+    // Rotas próprias evitam que a navegação lateral volte à apresentação.
+    painel: (_) => const AuthGuard(child: PainelScreen()),
+    demandas: (_) => const AuthGuard(child: DemandasScreen()),
 
     // Rota protegida: exige sessão e perfil ADMIN (GET /auth/me).
     admin: (_) => const AuthGuard(child: AdminGuard(child: AdminPanelPage())),

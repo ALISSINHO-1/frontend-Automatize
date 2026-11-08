@@ -4,7 +4,6 @@ import '../../../../app/routes/app_routes.dart';
 import '../../../../core/storage/local_storage_service.dart';
 import '../../../../shared/widgets/main_layout.dart';
 import 'demanda_store.dart';
-import 'demandas_screen.dart';
 
 class PainelScreen extends StatefulWidget {
   const PainelScreen({super.key});
@@ -96,9 +95,7 @@ class _PainelScreenState extends State<PainelScreen> {
   }
 
   void _navegarParaDemandas() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const DemandasScreen()),
-    );
+    Navigator.of(context).pushReplacementNamed(AppRoutes.demandas);
   }
 
   Future<void> _sair() async {
