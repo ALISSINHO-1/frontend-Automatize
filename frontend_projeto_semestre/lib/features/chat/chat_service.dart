@@ -35,9 +35,43 @@ class ChatMensagem {
   final DateTime criadoEm;
 }
 
+typedef DemandaNaFila = ({String id, String codigo, String titulo});
+
 class ChatService {
   final _client = AuthInterceptorClient(navigatorKey: appNavigatorKey);
   static const _timeout = Duration(seconds: 15);
+
+  Future<List<DemandaNaFila>> buscarFila() async {
+    const limite = 50;
+    final fila = <DemandaNaFila>[];
+    while (true) {
+      final uri = AppConfig.apiUri('${ApiPaths.demandas}/chat/fila').replace(
+        queryParameters: {'offset': '${fila.length}', 'limit': '$limite'},
+      );
+      final resposta = await _client.get(uri).timeout(_timeout);
+      if (resposta.statusCode != 200) throw ChatException(resposta.statusCode);
+      final pagina = jsonDecode(utf8.decode(resposta.bodyBytes)) as List;
+      fila.addAll(
+        pagina.map(
+          (item) => (
+            id: item['id'] as String,
+            codigo: item['codigo_identificador'] as String,
+            titulo: item['titulo'] as String,
+          ),
+        ),
+      );
+      if (pagina.length < limite) return fila;
+    }
+  }
+
+  Future<bool> assumir(String demandaId) async {
+    final id = Uri.encodeComponent(demandaId);
+    final uri = AppConfig.apiUri('${ApiPaths.demandas}/$id/assumir');
+    final resposta = await _client.post(uri).timeout(_timeout);
+    if (resposta.statusCode == 409) return false;
+    if (resposta.statusCode != 204) throw ChatException(resposta.statusCode);
+    return true;
+  }
 
   Uri _uri(String demandaId, ChatCanal canal) => AppConfig.apiUri(
     '${ApiPaths.demandas}/${Uri.encodeComponent(demandaId)}/chat/${canal.name}',

@@ -17,9 +17,8 @@ class HomePage extends StatelessWidget {
   static const roxo = Color(0xFFB784FF);
 
   void _abrirDemandas(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const DemandasScreen()));
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const DemandasScreen()));
   }
 
   @override
@@ -358,6 +357,7 @@ class HomePage extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          scrollable: true,
           backgroundColor: painel,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -374,8 +374,10 @@ class HomePage extends StatelessWidget {
           content: const Text(
             'O Automatize é um portal para consultar as demandas '
             'do projeto, visualizar seus estados e acompanhar o '
-            'progresso das atividades. As informações exibidas '
-            'dependem dos dados disponibilizados pelo sistema.',
+            'progresso das atividades.\n\n'
+            'No Chat, os técnicos veem as demandas que aguardam atendimento. '
+            'Quando um técnico assume uma demanda, a conversa com o cliente '
+            'é liberada. A conversa com a administração fica em um canal separado.',
             style: TextStyle(color: secundario, fontSize: 13, height: 1.7),
           ),
           actions: [
