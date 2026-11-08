@@ -71,25 +71,21 @@ class QuadroDemandas extends StatelessWidget {
                   color: candidatos.isEmpty
                       ? AutomatizeColors.panel
                       : AutomatizeColors.panelLight,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        title: Text(
-                          estado,
-                          style: TextStyle(color: corEstado(estado)),
-                        ),
-                        trailing: Text('${itens.length}'),
-                      ),
-                      const Divider(height: 1),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: itens.length,
-                          itemBuilder: (context, index) =>
-                              _cartao(context, itens[index]),
-                        ),
-                      ),
-                    ],
+                  child: ListView.builder(
+                    itemCount: itens.length + 2,
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return ListTile(
+                          title: Text(
+                            estado,
+                            style: TextStyle(color: corEstado(estado)),
+                          ),
+                          trailing: Text('${itens.length}'),
+                        );
+                      }
+                      if (index == 1) return const Divider(height: 1);
+                      return _cartao(context, itens[index - 2]);
+                    },
                   ),
                 );
               },
