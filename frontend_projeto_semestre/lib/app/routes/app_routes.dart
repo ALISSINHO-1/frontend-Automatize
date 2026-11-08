@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '/core/auth/auth_guard.dart';
 import '/features/admin/presentation/pages/admin_panel_page.dart';
+import '/features/admin/presentation/pages/clientes_page.dart';
 import '/features/admin/presentation/widgets/admin_guard.dart';
 import '/features/chat/chat_page.dart';
 import '/features/home/presentation/pages/login_screen.dart';
@@ -16,6 +17,7 @@ abstract final class AppRoutes {
   static const String demandDetails = '/demand-details';
   static const String demandList = '/demand-list';
   static const String admin = '/admin';
+  static const String clientes = '/clientes';
   static const String chat = '/chat';
 
   static final Map<String, WidgetBuilder> routes = {
@@ -27,6 +29,8 @@ abstract final class AppRoutes {
 
     // Rota protegida: exige sessão e perfil ADMIN (GET /auth/me).
     admin: (_) => const AuthGuard(child: AdminGuard(child: AdminPanelPage())),
+
+    clientes: (_) => const AuthGuard(child: ClientesPage()),
 
     chat: (_) => const AuthGuard(child: ChatPage()),
 
