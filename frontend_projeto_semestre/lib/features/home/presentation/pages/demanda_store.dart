@@ -14,6 +14,7 @@ class DemandaItem {
   final double progresso;
   final bool progressoInformado;
   final DateTime? createdAt;
+  final String? responsavelId;
   final DateTime? dataInicio;
   final DateTime? dataPrevisao;
   final DateTime? dataConclusao;
@@ -27,6 +28,7 @@ class DemandaItem {
     required this.progresso,
     this.progressoInformado = true,
     this.createdAt,
+    this.responsavelId,
     this.dataInicio,
     this.dataPrevisao,
     this.dataConclusao,
@@ -43,6 +45,7 @@ class DemandaItem {
       progresso: pedido.percentualProgresso,
       progressoInformado: pedido.progressoInformado,
       createdAt: pedido.createdAt,
+      responsavelId: pedido.responsavelId,
       dataInicio: pedido.dataInicio,
       dataPrevisao: pedido.dataPrevisao,
       dataConclusao: pedido.dataConclusao,
@@ -177,6 +180,11 @@ class DemandaStore extends ChangeNotifier {
 
   Future<void> atualizarPrevisao(String id, DateTime? data) async {
     await _service.atualizarPrevisao(id, data);
+    await carregarDemandas();
+  }
+
+  Future<void> moverNoQuadro(String id, String origem, String destino) async {
+    await _service.moverNoQuadro(id, origem, destino);
     await carregarDemandas();
   }
 

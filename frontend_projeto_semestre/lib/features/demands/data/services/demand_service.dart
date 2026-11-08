@@ -119,6 +119,25 @@ class DemandService {
     _verificarStatus(resposta, esperado: 204, operacao: 'atualizar previsão');
   }
 
+  Future<void> moverNoQuadro(String id, String origem, String destino) async {
+    final resposta = await _executar(
+      () => _client.post(
+        AppConfig.apiUri(
+          '${ApiPaths.demandas}/${Uri.encodeComponent(id)}/quadro/movimentos',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'origem': origem, 'destino': destino}),
+      ),
+    );
+    if (resposta.statusCode == 409 || resposta.statusCode == 503) {
+      throw DemandServiceException(
+        _detalheFastApi(resposta) ?? 'Não foi possível mover a demanda.',
+        statusCode: resposta.statusCode,
+      );
+    }
+    _verificarStatus(resposta, esperado: 200, operacao: 'mover demanda');
+  }
+
   String _dataIso(DateTime data) => data.toIso8601String().split('T').first;
 
   // Trata falhas de comunicação e timeout.

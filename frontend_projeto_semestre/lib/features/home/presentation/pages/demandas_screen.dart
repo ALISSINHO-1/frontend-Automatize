@@ -85,6 +85,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
   }
 
   _Visualizacao _visualizacao = _Visualizacao.lista;
+  bool _movendoDemanda = false;
 
   String _filtroStatus = 'Todos os estados';
   static const List<String> _estados = [
@@ -138,6 +139,25 @@ class _DemandasScreenState extends State<DemandasScreen> {
         return AutomatizeColors.success;
       default:
         return AutomatizeColors.muted;
+    }
+  }
+
+  Future<void> _moverNoQuadro(
+    DemandaItem demanda,
+    String origem,
+    String destino,
+  ) async {
+    if (_movendoDemanda) return;
+    setState(() => _movendoDemanda = true);
+    try {
+      await _store.moverNoQuadro(demanda.id, origem, destino);
+    } catch (erro) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$erro')));
+      await _carregarDemandas();
+    } finally {
+      if (mounted) setState(() => _movendoDemanda = false);
     }
   }
 
@@ -407,10 +427,11 @@ class _DemandasScreenState extends State<DemandasScreen> {
   @override
   Widget build(BuildContext context) => FutureBuilder<UsuarioAtualModel?>(
     future: _usuario,
-    builder: (context, snapshot) => _pagina(snapshot.data?.perfil),
+    builder: (context, snapshot) => _pagina(snapshot.data),
   );
 
-  Widget _pagina(String? perfil) {
+  Widget _pagina(UsuarioAtualModel? usuario) {
+    final perfil = usuario?.perfil;
     final demandasVisiveis = _demandasFiltradas;
     return MainLayout(
       selectedIndex: 1,
@@ -508,6 +529,8 @@ class _DemandasScreenState extends State<DemandasScreen> {
                             rotuloEstado: _rotuloEstado,
                             corEstado: _corStatus,
                             abrir: _visualizarDemanda,
+                            tecnicoId: perfil == 'TECNICO' ? usuario?.id : null,
+                            mover: _movendoDemanda ? null : _moverNoQuadro,
                           ),
                           _Visualizacao.calendario => CalendarioDemandas(
                             demandas: demandasVisiveis,

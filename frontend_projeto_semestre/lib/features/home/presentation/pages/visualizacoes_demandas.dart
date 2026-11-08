@@ -17,6 +17,8 @@ class QuadroDemandas extends StatelessWidget {
     required this.rotuloEstado,
     required this.corEstado,
     required this.abrir,
+    this.tecnicoId,
+    this.mover,
   });
 
   final List<DemandaItem> demandas;
@@ -24,6 +26,27 @@ class QuadroDemandas extends StatelessWidget {
   final String Function(String) rotuloEstado;
   final Color Function(String) corEstado;
   final ValueChanged<DemandaItem> abrir;
+  final String? tecnicoId;
+  final void Function(DemandaItem, String, String)? mover;
+
+  static const _transicoes = {
+    'Planejamento': (
+      origem: 'PLANEAMENTO',
+      destino: 'EXECUCAO',
+      coluna: 'Execução',
+    ),
+    'Execução': (
+      origem: 'EXECUCAO',
+      destino: 'HOMOLOGACAO',
+      coluna: 'Homologação',
+    ),
+  };
+
+  bool _podeMover(DemandaItem demanda) =>
+      mover != null &&
+      tecnicoId != null &&
+      demanda.responsavelId == tecnicoId &&
+      _transicoes.containsKey(rotuloEstado(demanda.estado));
 
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
@@ -34,46 +57,105 @@ class QuadroDemandas extends StatelessWidget {
         for (final estado in estados)
           SizedBox(
             width: 265,
-            child: Card(
-              color: AutomatizeColors.panel,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ListTile(
-                    title: Text(
+            child: DragTarget<DemandaItem>(
+              onWillAcceptWithDetails: (dados) =>
+                  _podeMover(dados.data) &&
+                  _transicoes[rotuloEstado(dados.data.estado)]?.coluna ==
                       estado,
-                      style: TextStyle(color: corEstado(estado)),
-                    ),
-                    trailing: Text(
-                      '${demandas.where((d) => rotuloEstado(d.estado) == estado).length}',
-                    ),
+              onAcceptWithDetails: (dados) => _avancar(dados.data),
+              builder: (context, candidatos, _) {
+                final itens = demandas
+                    .where((d) => rotuloEstado(d.estado) == estado)
+                    .toList();
+                return Card(
+                  color: candidatos.isEmpty
+                      ? AutomatizeColors.panel
+                      : AutomatizeColors.panelLight,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ListTile(
+                        title: Text(
+                          estado,
+                          style: TextStyle(color: corEstado(estado)),
+                        ),
+                        trailing: Text('${itens.length}'),
+                      ),
+                      const Divider(height: 1),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: itens.length,
+                          itemBuilder: (context, index) =>
+                              _cartao(context, itens[index]),
+                        ),
+                      ),
+                    ],
                   ),
-                  const Divider(height: 1),
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        for (final demanda in demandas.where(
-                          (d) => rotuloEstado(d.estado) == estado,
-                        ))
-                          ListTile(
-                            title: Text(demanda.titulo),
-                            subtitle: Text(
-                              demanda.dataPrevisao == null
-                                  ? demanda.codigo
-                                  : '${demanda.codigo} · ${MaterialLocalizations.of(context).formatCompactDate(demanda.dataPrevisao!)}',
-                            ),
-                            onTap: () => abrir(demanda),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
       ],
     ),
   );
+
+  void _avancar(DemandaItem demanda) {
+    if (!_podeMover(demanda)) return;
+    final transicao = _transicoes[rotuloEstado(demanda.estado)]!;
+    mover!(demanda, transicao.origem, transicao.destino);
+  }
+
+  Widget _cartao(BuildContext context, DemandaItem demanda) {
+    final podeMover = _podeMover(demanda);
+    final tile = ListTile(
+      title: Text(demanda.titulo),
+      subtitle: Text(
+        demanda.dataPrevisao == null
+            ? demanda.codigo
+            : '${demanda.codigo} · ${MaterialLocalizations.of(context).formatCompactDate(demanda.dataPrevisao!)}',
+      ),
+      onTap: () => abrir(demanda),
+      trailing: podeMover
+          ? IconButton(
+              tooltip:
+                  'Avançar para ${_transicoes[rotuloEstado(demanda.estado)]!.coluna}',
+              onPressed: () => _avancar(demanda),
+              icon: const Icon(Icons.arrow_forward),
+            )
+          : null,
+    );
+    if (!podeMover) return tile;
+    final feedback = Material(
+      color: AutomatizeColors.panelLight,
+      borderRadius: BorderRadius.circular(12),
+      elevation: 6,
+      child: SizedBox(
+        width: 245,
+        child: ListTile(
+          title: Text(demanda.titulo),
+          subtitle: Text(demanda.codigo),
+        ),
+      ),
+    );
+    final child = Opacity(opacity: 0.4, child: tile);
+    if (Theme.of(context).platform == TargetPlatform.android ||
+        Theme.of(context).platform == TargetPlatform.iOS) {
+      return LongPressDraggable<DemandaItem>(
+        data: demanda,
+        feedback: feedback,
+        childWhenDragging: child,
+        maxSimultaneousDrags: 1,
+        child: tile,
+      );
+    }
+    return Draggable<DemandaItem>(
+      data: demanda,
+      feedback: feedback,
+      childWhenDragging: child,
+      maxSimultaneousDrags: 1,
+      child: tile,
+    );
+  }
 }
 
 class CalendarioDemandas extends StatefulWidget {
