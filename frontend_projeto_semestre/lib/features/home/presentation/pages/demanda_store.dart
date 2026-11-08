@@ -14,6 +14,9 @@ class DemandaItem {
   final double progresso;
   final bool progressoInformado;
   final DateTime? createdAt;
+  final DateTime? dataInicio;
+  final DateTime? dataPrevisao;
+  final DateTime? dataConclusao;
 
   const DemandaItem({
     required this.id,
@@ -24,6 +27,9 @@ class DemandaItem {
     required this.progresso,
     this.progressoInformado = true,
     this.createdAt,
+    this.dataInicio,
+    this.dataPrevisao,
+    this.dataConclusao,
   });
 
   // Converte os dados recebidos da API para a interface.
@@ -37,6 +43,9 @@ class DemandaItem {
       progresso: pedido.percentualProgresso,
       progressoInformado: pedido.progressoInformado,
       createdAt: pedido.createdAt,
+      dataInicio: pedido.dataInicio,
+      dataPrevisao: pedido.dataPrevisao,
+      dataConclusao: pedido.dataConclusao,
     );
   }
 }
@@ -163,6 +172,11 @@ class DemandaStore extends ChangeNotifier {
 
     if (tokenAtual != token) return;
 
+    await carregarDemandas();
+  }
+
+  Future<void> atualizarPrevisao(String id, DateTime? data) async {
+    await _service.atualizarPrevisao(id, data);
     await carregarDemandas();
   }
 

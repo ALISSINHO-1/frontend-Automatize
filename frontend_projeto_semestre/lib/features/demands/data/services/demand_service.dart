@@ -81,7 +81,11 @@ class DemandService {
   }
 
   // Cadastra uma nova demanda na API.
-  Future<void> criarDemanda(String titulo, String descricao) async {
+  Future<void> criarDemanda(
+    String titulo,
+    String descricao, {
+    DateTime? dataPrevisao,
+  }) async {
     final resposta = await _executar(
       () => _client.post(
         AppConfig.apiUri(ApiPaths.demandas),
@@ -89,12 +93,33 @@ class DemandService {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'titulo': titulo, 'descricao': descricao}),
+        body: jsonEncode({
+          'titulo': titulo,
+          'descricao': descricao,
+          if (dataPrevisao != null) 'data_previsao': _dataIso(dataPrevisao),
+        }),
       ),
     );
 
     _verificarStatus(resposta, esperado: 201, operacao: 'criar demanda');
   }
+
+  Future<void> atualizarPrevisao(String id, DateTime? data) async {
+    final resposta = await _executar(
+      () => _client.patch(
+        AppConfig.apiUri(
+          '${ApiPaths.demandas}/${Uri.encodeComponent(id)}/previsao',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'data_previsao': data == null ? null : _dataIso(data),
+        }),
+      ),
+    );
+    _verificarStatus(resposta, esperado: 204, operacao: 'atualizar previsão');
+  }
+
+  String _dataIso(DateTime data) => data.toIso8601String().split('T').first;
 
   // Trata falhas de comunicação e timeout.
   Future<http.Response> _executar(
