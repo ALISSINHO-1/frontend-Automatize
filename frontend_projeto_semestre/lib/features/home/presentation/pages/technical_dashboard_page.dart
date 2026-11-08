@@ -1,39 +1,51 @@
-
 import 'package:flutter/material.dart';
 
-import '../../../../app/routes/app_routes.dart';
+import '../widgets/technical_navigation.dart';
 import '../../../../core/theme/redesign_colors.dart';
+import '../../../demands/data/services/demand_service.dart';
 import '../../../demands/presentation/widgets/demand_status_dashboard.dart';
-import '../../../demands/data/models/pedido_model.dart';
-import '../../../demands/data/mock/demand_mock_data.dart';
 import '../widgets/admin_sidebar.dart';
 
-class TechnicalDashboardPage extends StatelessWidget {
+class TechnicalDashboardPage extends StatefulWidget {
   const TechnicalDashboardPage({super.key});
 
-  // Dados fictícios para demonstração visual.
-  // A integração com a API será feita posteriormente.
-  static Map<String, int> calcularContagens(List<PedidoModel> demandas) {
-    final contagens = {
-      'PLANEJAMENTO': 0,
-      'EXECUCAO': 0,
-      'HOMOLOGACAO': 0,
-      'CONCLUIDO': 0,
+  @override
+  State<TechnicalDashboardPage> createState() => _TechnicalDashboardPageState();
+}
+
+class _TechnicalDashboardPageState extends State<TechnicalDashboardPage> {
+  final DemandService _service = DemandService();
+
+  late Future<DemandIndicators> _futureIndicadores;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureIndicadores = _service.buscarIndicadores();
+  }
+
+  @override
+  void dispose() {
+    _service.dispose();
+    super.dispose();
+  }
+
+  void _atualizarIndicadores() {
+    setState(() {
+      _futureIndicadores = _service.buscarIndicadores();
+    });
+  }
+
+  Map<String, int> _normalizarContagens(DemandIndicators indicadores) {
+    final porStatus = indicadores.porStatus;
+
+    return {
+      'PLANEJAMENTO':
+          (porStatus['PLANEJAMENTO'] ?? 0) + (porStatus['PLANEAMENTO'] ?? 0),
+      'EXECUCAO': porStatus['EXECUCAO'] ?? 0,
+      'HOMOLOGACAO': porStatus['HOMOLOGACAO'] ?? 0,
+      'CONCLUIDO': porStatus['CONCLUIDO'] ?? 0,
     };
-
-    final idsProcessados = <String>{};
-
-    for (final demanda in demandas) {
-      if (!idsProcessados.add(demanda.id)) continue;
-
-      final status = demanda.status.trim().toUpperCase();
-
-      if (contagens.containsKey(status)) {
-        contagens[status] = contagens[status]! + 1;
-      }
-    }
-
-    return contagens;
   }
 
   @override
@@ -64,13 +76,26 @@ class TechnicalDashboardPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Cabeçalho do dashboard.
-                      Text(
-                        'Visão geral das demandas',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          color: RedesignColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Visão geral das demandas',
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                color: RedesignColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: _atualizarIndicadores,
+                            tooltip: 'Atualizar indicadores',
+                            icon: const Icon(
+                              Icons.refresh_rounded,
+                              color: RedesignColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 12),
@@ -85,26 +110,98 @@ class TechnicalDashboardPage extends StatelessWidget {
 
                       const SizedBox(height: 32),
 
-                      // Indicadores de status.
-                      DemandStatusDashboard(
-                        contagens: calcularContagens(
-                          DemandMockData.demandas,
-                        ),
-                      ),
+                      FutureBuilder<DemandIndicators>(
+                        future: _futureIndicadores,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState !=
+                              ConnectionState.done) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 60),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: RedesignColors.purple,
+                                ),
+                              ),
+                            );
+                          }
 
-                      const SizedBox(height: 12),
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 32,
+                                ),
+                                child: Column(
+                                  children: [
+                                    const Icon(
+                                      Icons.cloud_off_outlined,
+                                      color: RedesignColors.textSecondary,
+                                      size: 42,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Não foi possível carregar os indicadores.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: RedesignColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '${snapshot.error}',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: RedesignColors.textSecondary,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    OutlinedButton.icon(
+                                      onPressed: _atualizarIndicadores,
+                                      icon: const Icon(Icons.refresh),
+                                      label: const Text('Tentar novamente'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
 
-                      const Text(
-                        'Dados de demonstração. Integração com a API pendente.',
-                        style: TextStyle(
-                          color: RedesignColors.textSecondary,
-                          fontSize: 12,
-                        ),
+                          final indicadores = snapshot.data;
+
+                          if (indicadores == null) {
+                            return const Center(
+                              child: Text(
+                                'Nenhum indicador disponível.',
+                                style: TextStyle(
+                                  color: RedesignColors.textSecondary,
+                                ),
+                              ),
+                            );
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              DemandStatusDashboard(
+                                contagens: _normalizarContagens(indicadores),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Total de demandas: ${indicadores.total}',
+                                style: const TextStyle(
+                                  color: RedesignColors.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
 
                       const SizedBox(height: 28),
 
-                      // Card de gerenciamento.
                       const _GerenciamentoDemandasCard(),
                     ],
                   ),
@@ -211,20 +308,16 @@ class _GerenciamentoDemandasCardState
               final botao = _BotaoVerDemandas(
                 onPressed: () {
                   Navigator.pushNamed(
-                    context,
-                    AppRoutes.demandList,
-                  );
+                  context,
+                  TechnicalRoutes.demandList,
+                );
                 },
               );
 
               if (compacto) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    conteudo,
-                    const SizedBox(height: 20),
-                    botao,
-                  ],
+                  children: [conteudo, const SizedBox(height: 20), botao],
                 );
               }
 
@@ -246,9 +339,7 @@ class _GerenciamentoDemandasCardState
 class _BotaoVerDemandas extends StatefulWidget {
   final VoidCallback onPressed;
 
-  const _BotaoVerDemandas({
-    required this.onPressed,
-  });
+  const _BotaoVerDemandas({required this.onPressed});
 
   @override
   State<_BotaoVerDemandas> createState() => _BotaoVerDemandasState();
@@ -274,10 +365,7 @@ class _BotaoVerDemandasState extends State<_BotaoVerDemandas> {
             child: Ink(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    RedesignColors.purple,
-                    Color(0xFF4938F5),
-                  ],
+                  colors: [RedesignColors.purple, Color(0xFF4938F5)],
                 ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
@@ -291,18 +379,11 @@ class _BotaoVerDemandasState extends State<_BotaoVerDemandas> {
                 ],
               ),
               child: const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 14,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.list_alt_rounded,
-                      size: 18,
-                      color: Colors.white,
-                    ),
+                    Icon(Icons.list_alt_rounded, size: 18, color: Colors.white),
                     SizedBox(width: 10),
                     Text(
                       'Ver demandas',

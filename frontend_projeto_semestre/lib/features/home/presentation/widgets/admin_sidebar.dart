@@ -1,8 +1,11 @@
-
 import 'package:flutter/material.dart';
 
+import '../../../../app/app.dart';
+import '../../../../core/auth/current_user_session.dart';
+import '../../../../core/storage/local_storage_service.dart';
 import '../../../../core/theme/redesign_colors.dart';
 
+import 'admin_search_controller.dart';
 import 'technical_navigation.dart';
 
 class AdminSidebar extends StatelessWidget {
@@ -18,29 +21,28 @@ class AdminSidebar extends StatelessWidget {
       builder: (context, child) {
         final rotaAtual = adminNavigationController.currentRoute;
 
-        final emDemandas = rotaAtual == TechnicalRoutes.demandList ||
+        final emDemandas =
+            rotaAtual == TechnicalRoutes.demandList ||
             rotaAtual == TechnicalRoutes.demandDetails;
 
         final emHistorico = rotaAtual == TechnicalRoutes.demandHistory;
+
         final emAnexos = rotaAtual == TechnicalRoutes.demandAttachments;
 
         final selectedIndex = emAnexos
             ? 3
             : emHistorico
-                ? 2
-                : emDemandas
-                    ? 1
-                    : rotaAtual == TechnicalRoutes.home
-                        ? 0
-                        : -1;
+            ? 2
+            : emDemandas
+            ? 1
+            : rotaAtual == TechnicalRoutes.home
+            ? 0
+            : -1;
 
         return Container(
           width: 250,
           color: RedesignColors.sidebar,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 28,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -74,16 +76,16 @@ class AdminSidebar extends StatelessWidget {
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 350),
                         curve: Curves.easeInOutCubic,
-                        top: selectedIndex *
-                            (_itemHeight + _itemSpacing),
+                        top: selectedIndex * (_itemHeight + _itemSpacing),
                         left: 0,
                         right: 0,
                         height: _itemHeight,
                         child: IgnorePointer(
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              color: RedesignColors.purple
-                                  .withValues(alpha: 0.16),
+                              color: RedesignColors.purple.withValues(
+                                alpha: 0.16,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
@@ -114,7 +116,8 @@ class AdminSidebar extends StatelessWidget {
                           Icons.folder_outlined,
                           'Anexos',
                           selected: selectedIndex == 3,
-                          onTap: () => _navegar(TechnicalRoutes.demandAttachments),
+                          onTap: () =>
+                              _navegar(TechnicalRoutes.demandAttachments),
                         ),
                       ],
                     ),
@@ -123,42 +126,59 @@ class AdminSidebar extends StatelessWidget {
               ),
 
               const Spacer(),
+
               const Divider(color: RedesignColors.border),
+
               const SizedBox(height: 16),
 
-              const Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: RedesignColors.purple,
-                    child: Icon(
-                      Icons.person_outline,
-                      color: Colors.white,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Administrador',
-                          style: TextStyle(
-                            color: RedesignColors.textPrimary,
+              ListenableBuilder(
+                listenable: currentUserSession,
+                builder: (context, _) {
+                  return Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: RedesignColors.purple,
+                        child: Text(
+                          currentUserSession.initials,
+                          style: const TextStyle(
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
+                            fontSize: 12,
                           ),
                         ),
-                        Text(
-                          'Ambiente demonstrativo',
-                          style: TextStyle(
-                            color: RedesignColors.textSecondary,
-                            fontSize: 11,
-                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              currentUserSession.displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: RedesignColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              currentUserSession.roleLabel,
+                              style: const TextStyle(
+                                color: RedesignColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                ],
+                      ),
+                    ],
+                  );
+                },
               ),
+
+              const SizedBox(height: 18),
+
+              _menuItem(Icons.logout_rounded, 'Sair', onTap: _sair),
             ],
           ),
         );
@@ -166,8 +186,29 @@ class AdminSidebar extends StatelessWidget {
     );
   }
 
+  Future<void> _sair() async {
+    // Remove o token da autenticação.
+    await LocalStorageService.removeToken();
+
+    // Limpa os dados do usuário autenticado.
+    currentUserSession.clear();
+
+    // Remove a pesquisa deixada pela conta anterior.
+    adminSearchController.limparBusca();
+
+    // Reinicia o estado da navegação.
+    adminNavigationController.setRoute('/login');
+
+    // Volta ao login e remove as páginas anteriores.
+    final navigator = appNavigatorKey.currentState;
+
+    if (navigator == null) return;
+
+    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+  }
+
   void _navegar(String rota) {
-    final navigator = adminNavigatorKey.currentState;
+    final navigator = appNavigatorKey.currentState;
 
     if (navigator == null) return;
 
@@ -175,10 +216,7 @@ class AdminSidebar extends StatelessWidget {
       return;
     }
 
-    navigator.pushNamedAndRemoveUntil(
-      rota,
-      (route) => false,
-    );
+    navigator.pushNamedAndRemoveUntil(rota, (route) => false);
   }
 
   Widget _menuItem(
@@ -195,9 +233,7 @@ class AdminSidebar extends StatelessWidget {
           child: ListTile(
             onTap: onTap,
             dense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             leading: Icon(
               icon,
               color: selected
@@ -210,8 +246,7 @@ class AdminSidebar extends StatelessWidget {
                 color: selected
                     ? RedesignColors.textPrimary
                     : RedesignColors.textSecondary,
-                fontWeight:
-                    selected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
@@ -224,10 +259,7 @@ class AdminSidebar extends StatelessWidget {
 class SidebarMenuItem extends StatefulWidget {
   final Widget child;
 
-  const SidebarMenuItem({
-    super.key,
-    required this.child,
-  });
+  const SidebarMenuItem({super.key, required this.child});
 
   @override
   State<SidebarMenuItem> createState() => _SidebarMenuItemState();
@@ -240,8 +272,12 @@ class _SidebarMenuItemState extends State<SidebarMenuItem> {
   Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
+      onEnter: (_) {
+        setState(() => isHovered = true);
+      },
+      onExit: (_) {
+        setState(() => isHovered = false);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,

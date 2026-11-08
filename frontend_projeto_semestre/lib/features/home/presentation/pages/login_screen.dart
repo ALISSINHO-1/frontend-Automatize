@@ -11,6 +11,10 @@ import '../../../../core/storage/local_storage_service.dart';
 
 import '../../../../app/routes/app_routes.dart';
 
+import '../../data/current_user_service.dart';
+
+import '../../../../core/auth/current_user_session.dart';
+
 class LoginScreen extends StatefulWidget {
   // Permite injetar um cliente falso nos testes de login.
   final http.Client? client;
@@ -76,12 +80,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _carregando = true);
 
-    // /auth/login é uma chamada pública. Não deve receber um Bearer antigo.
     final client = widget.client ?? http.Client();
 
     try {
-      // Impede que um login inválido reutilize uma sessão anterior.
       await LocalStorageService.removeToken();
+      currentUserSession.clear();
 
       final response = await client
           .post(
@@ -101,17 +104,42 @@ class _LoginScreenState extends State<LoginScreen> {
             : null;
 
         if (token is! String || token.trim().isEmpty) {
-          _mostrarErro('Resposta do servidor inválida: token não encontrado.');
+          _mostrarErro('Resposta inválida: token não encontrado.');
           return;
         }
 
-        // JWT apenas em memória, conforme a estratégia de sessão escolhida.
-        await LocalStorageService.saveToken(token);
+        final currentUserService = CurrentUserService(client: client);
+
+        final user = await currentUserService.fetchCurrentUser(token);
+
         if (!mounted) return;
 
-        // Remove o login e as demais telas do histórico de navegação.
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+        String destination;
+
+        switch (user.role) {
+          case CurrentUserRole.tecnico:
+            destination = '/tecnico';
+            break;
+
+          case CurrentUserRole.cliente:
+            destination = AppRoutes.home;
+            break;
+
+          case CurrentUserRole.admin:
+            _mostrarErro(
+              'O painel administrativo ainda não está integrado nesta versão.',
+            );
+            return;
+        }
+
+        await LocalStorageService.saveToken(token);
+        currentUserSession.setUser(user);
+
+        if (!mounted) return;
+
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(destination, (route) => false);
       } else if (response.statusCode == 400 || response.statusCode == 401) {
         _mostrarErro('E-mail ou senha incorretos.');
       } else if (response.statusCode == 403) {
@@ -121,6 +149,8 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         _mostrarErro('Erro no servidor (código ${response.statusCode}).');
       }
+    } on CurrentUserException catch (error) {
+      _mostrarErro(error.message);
     } on TimeoutException {
       _mostrarErro('A conexão demorou demais. Tente novamente.');
     } on http.ClientException {
@@ -133,6 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (widget.client == null) {
         client.close();
       }
+
       if (mounted) {
         setState(() => _carregando = false);
       }

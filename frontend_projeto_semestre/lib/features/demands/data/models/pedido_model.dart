@@ -30,7 +30,7 @@ class PedidoModel {
       titulo: _textoObrigatorio(json, 'titulo'),
       descricao: _textoOpcional(json['descricao']) ?? '',
       status: _textoObrigatorio(json, 'status'),
-      percentualProgresso: _percentualObrigatorio(json),
+      percentualProgresso: _parsePercentual(json['percentual_progresso']),
       clienteId: _textoObrigatorio(json, 'cliente_id'),
       responsavelId: _textoOpcional(json['responsavel_id']),
       createdAt: _parseDate(json['created_at'] ?? json['data_criacao']),
@@ -56,20 +56,29 @@ class PedidoModel {
     throw const FormatException('Campo de texto opcional inválido na API.');
   }
 
-  static double _percentualObrigatorio(Map<String, dynamic> json) {
-    final valor = json['percentual_progresso'];
-    final percentual = valor is num
-        ? valor.toDouble()
-        : valor is String
-        ? double.tryParse(valor)
-        : null;
+  static double _parsePercentual(Object? valor) {
+    if (valor == null) {
+      throw const FormatException(
+        'Campo percentual_progresso ausente ou nulo na API.',
+      );
+    }
+
+    final double? percentual;
+
+    if (valor is num) {
+      percentual = valor.toDouble();
+    } else if (valor is String) {
+      percentual = double.tryParse(valor);
+    } else {
+      percentual = null;
+    }
 
     if (percentual == null ||
         !percentual.isFinite ||
         percentual < 0 ||
         percentual > 100) {
       throw const FormatException(
-        'Campo percentual_progresso ausente ou inválido na API.',
+        'Campo percentual_progresso inválido na API.',
       );
     }
 
