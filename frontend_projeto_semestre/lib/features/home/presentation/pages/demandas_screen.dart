@@ -135,150 +135,177 @@ class _DemandasScreenState extends State<DemandasScreen> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        final cor = _corStatus(demanda.estado);
-        return AlertDialog(
-          backgroundColor: AutomatizeColors.panel,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-            side: const BorderSide(color: AutomatizeColors.border),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-          contentPadding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
-          title: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AutomatizeColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: const Icon(
-                  Icons.assignment_outlined,
-                  color: AutomatizeColors.cyan,
-                ),
+        // A janela observa a lista da sessão atual, sem reutilizar
+        // o objeto de uma sessão anterior.
+        return ListenableBuilder(
+          listenable: _store,
+          builder: (context, _) {
+            DemandaItem? demandaAtual;
+            for (final item in _store.demandas) {
+              if (item.id == demanda.id) {
+                demandaAtual = item;
+                break;
+              }
+            }
+
+            if (demandaAtual == null) {
+              // Oculta os dados imediatamente e fecha o diálogo
+              // assim que a árvore de widgets terminar este frame.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!dialogContext.mounted) return;
+                if (ModalRoute.of(dialogContext)?.isCurrent == true) {
+                  Navigator.of(dialogContext).pop();
+                }
+              });
+              return const SizedBox.shrink();
+            }
+
+            final cor = _corStatus(demandaAtual.estado);
+            return AlertDialog(
+              backgroundColor: AutomatizeColors.panel,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+                side: const BorderSide(color: AutomatizeColors.border),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Detalhes da demanda',
-                      style: TextStyle(
-                        color: AutomatizeColors.text,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    SizedBox(height: 3),
-                    Text(
-                      'Informações e andamento',
-                      style: TextStyle(
-                        color: AutomatizeColors.muted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          content: SizedBox(
-            width: 460,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              contentPadding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
+              title: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(15),
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
-                      color: AutomatizeColors.panelLight,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AutomatizeColors.border),
+                      color: AutomatizeColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(13),
                     ),
+                    child: const Icon(
+                      Icons.assignment_outlined,
+                      color: AutomatizeColors.cyan,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _detailLine('Código', demanda.codigo),
-                        const SizedBox(height: 14),
-                        _detailLine('Título', demanda.titulo),
-                        const SizedBox(height: 14),
-                        _detailLine(
-                          'Descrição',
-                          demanda.descricao.isEmpty
-                              ? 'Nenhuma descrição informada.'
-                              : demanda.descricao,
+                        Text(
+                          'Detalhes da demanda',
+                          style: TextStyle(
+                            color: AutomatizeColors.text,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'Informações e andamento',
+                          style: TextStyle(
+                            color: AutomatizeColors.muted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.normal,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'ESTADO ATUAL',
-                    style: TextStyle(
-                      color: AutomatizeColors.muted,
-                      fontSize: 10,
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 9),
-                  _StatusChip(
-                    status: _rotuloEstado(demanda.estado),
-                    color: cor,
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ],
+              ),
+              content: SizedBox(
+                width: 460,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Progresso da demanda',
-                        style: TextStyle(
-                          color: AutomatizeColors.text,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                      Container(
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: AutomatizeColors.panelLight,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AutomatizeColors.border),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _detailLine('Código', demandaAtual.codigo),
+                            const SizedBox(height: 14),
+                            _detailLine('Título', demandaAtual.titulo),
+                            const SizedBox(height: 14),
+                            _detailLine(
+                              'Descrição',
+                              demandaAtual.descricao.isEmpty
+                                  ? 'Nenhuma descrição informada.'
+                                  : demandaAtual.descricao,
+                            ),
+                          ],
                         ),
                       ),
-                      Text(
-                        _formatarProgresso(demanda),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'ESTADO ATUAL',
                         style: TextStyle(
-                          color: cor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
+                          color: AutomatizeColors.muted,
+                          fontSize: 10,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w800,
                         ),
+                      ),
+                      const SizedBox(height: 9),
+                      _StatusChip(
+                        status: _rotuloEstado(demandaAtual.estado),
+                        color: cor,
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Progresso da demanda',
+                            style: TextStyle(
+                              color: AutomatizeColors.text,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            _formatarProgresso(demanda),
+                            style: TextStyle(
+                              color: cor,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 9),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: _barraProgresso(demanda, cor, altura: 9),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 9),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: _barraProgresso(demanda, cor, altura: 9),
+                ),
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+              actions: [
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AutomatizeColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-          actions: [
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AutomatizeColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Entendi'),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(11),
-                ),
-              ),
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Entendi'),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );

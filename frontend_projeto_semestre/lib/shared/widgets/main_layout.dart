@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/storage/local_storage_service.dart';
+import '../../features/admin/data/services/usuario_atual_store.dart';
 import '../../features/admin/presentation/widgets/admin_guard.dart';
+import '../../features/home/presentation/pages/demanda_store.dart';
 
 /// Paleta visual compartilhada pelas telas do Automatize.
 
@@ -27,7 +29,6 @@ class MainLayout extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int>? onDestinationSelected;
   final VoidCallback? onLogout;
-
   const MainLayout({
     super.key,
     required this.child,
@@ -38,11 +39,9 @@ class MainLayout extends StatelessWidget {
 
   /// Item administrativo disponível somente para ADMIN.
   static const int indiceAdmin = 3;
-
   // Aliases mantidos para não quebrar as telas existentes.
   static const Color sidebarColor = AutomatizeColors.sidebar;
   static const Color activeColor = AutomatizeColors.primary;
-
   Future<void> _confirmarSaida(BuildContext context) async {
     final confirmou = await showDialog<bool>(
       context: context,
@@ -97,15 +96,18 @@ class MainLayout extends StatelessWidget {
       ),
     );
     if (confirmou != true || !context.mounted) return;
-
     // Encerra a sessão antes de iniciar a navegação.
     await LocalStorageService.removeToken();
+
+    // SCRUM-116: limpa dados vinculados ao usuário anterior.
+    UsuarioAtualStore.instance.limparSessao();
+    DemandaStore.instance.limpar();
+
     if (!context.mounted) return;
     if (onLogout != null) {
       onLogout!();
       return;
     }
-
     // Mantém o logout funcional mesmo sem um callback na tela.
     Navigator.of(
       context,
@@ -389,7 +391,6 @@ class MainLayout extends StatelessWidget {
 
 class _BrandIcon extends StatelessWidget {
   const _BrandIcon();
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -421,7 +422,6 @@ class _BrandIcon extends StatelessWidget {
 
 class _BrandName extends StatelessWidget {
   const _BrandName();
-
   @override
   Widget build(BuildContext context) {
     return const Column(
@@ -452,7 +452,6 @@ class _BrandName extends StatelessWidget {
 
 class _UserAvatar extends StatelessWidget {
   const _UserAvatar();
-
   @override
   Widget build(BuildContext context) {
     return Stack(
