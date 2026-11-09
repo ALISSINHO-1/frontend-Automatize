@@ -41,6 +41,7 @@ class MainLayout extends StatefulWidget {
   static const int indiceAdmin = 3;
   static const int _indiceChat = 4;
   static const int indiceClientes = 5;
+  static const int indiceTecnico = 6;
 
   // Aliases mantidos para não quebrar as telas existentes.
   static const Color sidebarColor = AutomatizeColors.sidebar;
@@ -132,6 +133,10 @@ class _MainLayoutState extends State<MainLayout> {
     }
     if (index == MainLayout.indiceClientes) {
       Navigator.of(context).pushNamed(AppRoutes.clientes);
+      return;
+    }
+    if (index == MainLayout.indiceTecnico) {
+      Navigator.of(context).pushNamed(AppRoutes.tecnico);
       return;
     }
     if (index == MainLayout.indiceAdmin) {
@@ -249,6 +254,14 @@ class _MainLayoutState extends State<MainLayout> {
                               index: MainLayout.indiceClientes,
                               icon: Icons.people_outline,
                               label: 'Clientes',
+                            ),
+                          if (usuario?.perfil == 'TECNICO')
+                            _navigationItem(
+                              context,
+                              compact: compact,
+                              index: MainLayout.indiceTecnico,
+                              icon: Icons.engineering_outlined,
+                              label: 'Área técnica',
                             ),
                           if (usuario?.isAdmin == true)
                             _navigationItem(

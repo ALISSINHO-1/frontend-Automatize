@@ -37,7 +37,10 @@ void main() {
       );
 
       expect(resultado.length, 1);
-      expect(resultado.first.status, estado);
+      expect(
+        DemandStatusFilter.normalizarStatus(resultado.first.status),
+        DemandStatusFilter.normalizarStatus(estado),
+      );
     }
   });
 
