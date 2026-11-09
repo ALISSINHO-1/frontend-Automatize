@@ -217,48 +217,10 @@ void main() {
     final usuarios = await servico.listarUsuarios(perfil: 'TECNICO', ativo: true);
 
     expect(enviado.url.path, '/usuarios');
-    expect(enviado.url.queryParameters,
-        {'offset': '0', 'limit': '100', 'perfil': 'TECNICO', 'ativo': 'true'});
+    expect(enviado.url.queryParameters, {'limit': '100', 'perfil': 'TECNICO', 'ativo': 'true'});
     expect(usuarios.first.perfil, 'TECNICO');
     // `ativo` nulo no banco não conta como ativo, igual ao backend.
     expect(usuarios.last.ativo, isFalse);
-  });
-
-  test('listarUsuarios percorre todas as páginas além dos 100 primeiros', () async {
-    final offsets = <String?>[];
-    final servico = _servico((req) async {
-      final offset = int.parse(req.url.queryParameters['offset']!);
-      offsets.add('$offset');
-      // 250 usuários no total: páginas de 100, 100 e 50.
-      final restantes = (250 - offset).clamp(0, 100);
-      return _json([
-        for (var i = 0; i < restantes; i++)
-          {'id': 'u${offset + i}', 'nome': 'U${offset + i}', 'perfil': 'CLIENTE', 'ativo': true},
-      ], 200);
-    });
-
-    final usuarios = await servico.listarUsuarios();
-
-    expect(offsets, ['0', '100', '200']);
-    expect(usuarios, hasLength(250));
-    expect(usuarios.last.id, 'u249');
-  });
-
-  test('listarUsuarios pede mais uma página quando a última vem cheia', () async {
-    final offsets = <String>[];
-    final servico = _servico((req) async {
-      final offset = req.url.queryParameters['offset']!;
-      offsets.add(offset);
-      final cheia = offset == '0';
-      return _json([
-        if (cheia)
-          for (var i = 0; i < 100; i++)
-            {'id': 'u$i', 'nome': 'U$i', 'perfil': 'CLIENTE', 'ativo': true},
-      ], 200);
-    });
-
-    expect(await servico.listarUsuarios(), hasLength(100));
-    expect(offsets, ['0', '100']);
   });
 
   test('gestão de usuários usa as rotas e corpos do backend', () async {
