@@ -600,7 +600,7 @@ class _ClientesPageState extends State<ClientesPage> {
         borderRadius: BorderRadius.circular(14),
         onTap: () => _detalhes(cliente, usuario),
         child: Padding(
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -616,6 +616,8 @@ class _ClientesPageState extends State<ClientesPage> {
                       children: [
                         Text(
                           cliente.conta.nome,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -633,10 +635,12 @@ class _ClientesPageState extends State<ClientesPage> {
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     cliente.conta.email,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: AutomatizeColors.muted),
                   ),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Wrap(
                 spacing: 16,
                 runSpacing: 6,
@@ -659,6 +663,7 @@ class _ClientesPageState extends State<ClientesPage> {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
+            columnSpacing: 20,
             sortColumnIndex: _coluna,
             sortAscending: _crescente,
             headingRowColor: const WidgetStatePropertyAll(Color(0xFF19263C)),
@@ -715,20 +720,32 @@ class _ClientesPageState extends State<ClientesPage> {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        DropdownButton<String>(
-          isExpanded: true,
-          value: selecionado.conta.id,
-          items: [
-            for (final cliente in clientes)
-              DropdownMenuItem(
-                value: cliente.conta.id,
-                child: Text(
-                  cliente.conta.nome,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          onChanged: (clienteId) => setState(() => _clienteQuadro = clienteId),
+        InputDecorator(
+          decoration: const InputDecoration(
+            labelText: 'Cliente',
+            prefixIcon: Icon(Icons.business_outlined),
+            isDense: true,
+            border: OutlineInputBorder(),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              isDense: true,
+              value: selecionado.conta.id,
+              items: [
+                for (final cliente in clientes)
+                  DropdownMenuItem(
+                    value: cliente.conta.id,
+                    child: Text(
+                      cliente.conta.nome,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+              onChanged: (clienteId) =>
+                  setState(() => _clienteQuadro = clienteId),
+            ),
+          ),
         ),
         const SizedBox(height: 8),
         if (demandas.isEmpty) const Text('Nenhuma demanda para este cliente.'),

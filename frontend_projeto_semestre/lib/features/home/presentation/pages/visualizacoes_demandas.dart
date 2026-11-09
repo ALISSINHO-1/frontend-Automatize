@@ -53,6 +53,7 @@ class QuadroDemandas extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, medidas) {
+      if (estados.isEmpty) return const SizedBox.shrink();
       final largura = (medidas.maxWidth / estados.length)
           .clamp(245.0, 340.0)
           .toDouble();
@@ -89,7 +90,7 @@ class QuadroDemandas extends StatelessWidget {
           side: BorderSide(color: cor.withValues(alpha: .32)),
         ),
         child: ListView.builder(
-          itemCount: itens.length + 2,
+          itemCount: itens.isEmpty ? 3 : itens.length + 2,
           itemBuilder: (context, index) {
             if (index == 0) {
               return ListTile(
@@ -112,6 +113,14 @@ class QuadroDemandas extends StatelessWidget {
               );
             }
             if (index == 1) return const Divider(height: 1);
+            if (itens.isEmpty) {
+              return const ListTile(
+                title: Text(
+                  'Nenhuma demanda',
+                  style: TextStyle(color: AutomatizeColors.muted, fontSize: 12),
+                ),
+              );
+            }
             return _cartao(context, itens[index - 2]);
           },
         ),
@@ -127,7 +136,11 @@ class QuadroDemandas extends StatelessWidget {
 
   Widget _cartao(BuildContext context, DemandaItem demanda) {
     final podeMover = _podeMover(demanda);
-    final nome = nomeResponsavel?.call(demanda.responsavelId);
+    final nome =
+        nomeResponsavel?.call(demanda.responsavelId) ??
+        (demanda.responsavelId == null ? null : 'Técnico atribuído');
+    final cor = corEstado(rotuloEstado(demanda.estado));
+    final progresso = demanda.progresso.clamp(0.0, 100.0);
     final prazo = demanda.dataPrevisao;
     final tile = Card(
       margin: const EdgeInsets.fromLTRB(8, 9, 8, 0),
@@ -188,17 +201,25 @@ class QuadroDemandas extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 11),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  minHeight: 5,
-                  value: demanda.progressoInformado
-                      ? (demanda.progresso / 100).clamp(0, 1)
-                      : 0,
-                  backgroundColor: AutomatizeColors.background,
+              if (demanda.progressoInformado) ...[
+                const SizedBox(height: 10),
+                Text(
+                  '${progresso.toStringAsFixed(1).replaceAll('.', ',')}%',
+                  style: const TextStyle(
+                    color: AutomatizeColors.muted,
+                    fontSize: 11,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 5),
+                LinearProgressIndicator(
+                  minHeight: 5,
+                  value: progresso / 100,
+                  color: cor,
+                  backgroundColor: AutomatizeColors.background,
+                  borderRadius: BorderRadius.circular(10),
+                  semanticsLabel: 'Progresso',
+                ),
+              ],
             ],
           ),
         ),
@@ -292,142 +313,159 @@ class _CalendarioDemandasState extends State<CalendarioDemandas> {
     final deslocamento = primeiro.weekday % 7;
     final totalDias = DateUtils.getDaysInMonth(_dia.year, _dia.month);
     final doDia = eventos[_dia] ?? const [];
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 980),
-          child: Card(
-            color: AutomatizeColors.panel,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
+    return LayoutBuilder(
+      builder: (context, area) {
+        final compacto = area.maxWidth < 480;
+        return SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 980),
+              child: Card(
+                color: AutomatizeColors.panel,
+                child: Padding(
+                  padding: EdgeInsets.all(compacto ? 8 : 20),
+                  child: Column(
                     children: [
-                      IconButton(
-                        tooltip: 'Mês anterior',
-                        onPressed: () => _mudarMes(-1),
-                        icon: const Icon(Icons.chevron_left),
-                      ),
-                      Expanded(
-                        child: Text(
-                          '${_meses[_dia.month - 1][0].toUpperCase()}${_meses[_dia.month - 1].substring(1)} ${_dia.year}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
+                      Row(
+                        children: [
+                          IconButton(
+                            tooltip: 'Mês anterior',
+                            onPressed: () => _mudarMes(-1),
+                            icon: const Icon(Icons.chevron_left),
                           ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Próximo mês',
-                        onPressed: () => _mudarMes(1),
-                        icon: const Icon(Icons.chevron_right),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      for (final diaSemana in _diasSemana)
-                        Expanded(
-                          child: Text(
-                            diaSemana,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AutomatizeColors.muted,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 7,
-                          mainAxisExtent: 62,
-                        ),
-                    itemCount: deslocamento + totalDias,
-                    itemBuilder: (context, index) {
-                      if (index < deslocamento) return const SizedBox.shrink();
-                      final dia = DateTime(
-                        _dia.year,
-                        _dia.month,
-                        index - deslocamento + 1,
-                      );
-                      final total = eventos[dia]?.length ?? 0;
-                      final hoje = DateUtils.isSameDay(dia, DateTime.now());
-                      final selecionado = DateUtils.isSameDay(dia, _dia);
-                      return Tooltip(
-                        message:
-                            '${idioma.formatCompactDate(dia)} · $total evento(s)',
-                        child: InkWell(
-                          onTap: () => setState(() => _dia = dia),
-                          child: Container(
-                            margin: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              color: selecionado
-                                  ? AutomatizeColors.primary.withValues(
-                                      alpha: .22,
-                                    )
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: hoje
-                                    ? AutomatizeColors.cyan
-                                    : selecionado
-                                    ? AutomatizeColors.primary
-                                    : Colors.transparent,
+                          Expanded(
+                            child: Text(
+                              '${_meses[_dia.month - 1][0].toUpperCase()}${_meses[_dia.month - 1].substring(1)} ${_dia.year}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
                               ),
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '${dia.day}',
-                                  style: TextStyle(
-                                    fontWeight: hoje || selecionado
-                                        ? FontWeight.w800
-                                        : FontWeight.w500,
+                          ),
+                          IconButton(
+                            tooltip: 'Próximo mês',
+                            onPressed: () => _mudarMes(1),
+                            icon: const Icon(Icons.chevron_right),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          for (final diaSemana in _diasSemana)
+                            Expanded(
+                              child: Text(
+                                diaSemana,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AutomatizeColors.muted,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          mainAxisExtent: compacto ? 48 : 62,
+                        ),
+                        itemCount: deslocamento + totalDias,
+                        itemBuilder: (context, index) {
+                          if (index < deslocamento)
+                            return const SizedBox.shrink();
+                          final dia = DateTime(
+                            _dia.year,
+                            _dia.month,
+                            index - deslocamento + 1,
+                          );
+                          final total = eventos[dia]?.length ?? 0;
+                          final hoje = DateUtils.isSameDay(dia, DateTime.now());
+                          final selecionado = DateUtils.isSameDay(dia, _dia);
+                          return Tooltip(
+                            message:
+                                '${idioma.formatCompactDate(dia)} · $total evento(s)',
+                            child: InkWell(
+                              onTap: () => setState(() => _dia = dia),
+                              child: Container(
+                                margin: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  color: selecionado
+                                      ? AutomatizeColors.primary.withValues(
+                                          alpha: .22,
+                                        )
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: hoje
+                                        ? AutomatizeColors.cyan
+                                        : selecionado
+                                        ? AutomatizeColors.primary
+                                        : Colors.transparent,
                                   ),
                                 ),
-                                if (total > 0)
-                                  Text(
-                                    '$total',
-                                    style: const TextStyle(
-                                      color: AutomatizeColors.cyan,
-                                      fontSize: 10,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '${dia.day}',
+                                      style: TextStyle(
+                                        fontWeight: hoje || selecionado
+                                            ? FontWeight.w800
+                                            : FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                              ],
+                                    if (total > 0)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AutomatizeColors.cyan
+                                              .withValues(alpha: .14),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          total > 9 ? '9+' : '$total',
+                                          style: const TextStyle(
+                                            color: AutomatizeColors.cyan,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(title: Text(idioma.formatCompactDate(_dia))),
-                  if (doDia.isEmpty)
-                    const ListTile(
-                      subtitle: Text('Sem marcos registrados neste dia.'),
-                    ),
-                  for (final evento in doDia)
-                    ListTile(
-                      title: Text(evento.demanda.titulo),
-                      subtitle: Text(
-                        '${evento.rotulo} · ${evento.demanda.codigo}',
+                          );
+                        },
                       ),
-                      onTap: () => widget.abrir(evento.demanda),
-                    ),
-                ],
+                      const Divider(),
+                      ListTile(title: Text(idioma.formatCompactDate(_dia))),
+                      if (doDia.isEmpty)
+                        const ListTile(
+                          subtitle: Text('Sem marcos registrados neste dia.'),
+                        ),
+                      for (final evento in doDia)
+                        ListTile(
+                          title: Text(evento.demanda.titulo),
+                          subtitle: Text(
+                            '${evento.rotulo} · ${evento.demanda.codigo}',
+                          ),
+                          onTap: () => widget.abrir(evento.demanda),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
