@@ -261,8 +261,7 @@ class _PainelScreenState extends State<PainelScreen> {
       builder: (context, constraints) {
         const gap = 16.0;
         const larguraMinima = 205.0;
-        final colunas = ((constraints.maxWidth + gap) /
-                (larguraMinima + gap))
+        final colunas = ((constraints.maxWidth + gap) / (larguraMinima + gap))
             .floor()
             .clamp(1, 5)
             .toInt();
@@ -348,6 +347,8 @@ class _PainelScreenState extends State<PainelScreen> {
               children: [
                 Text(
                   demanda.titulo,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: _corTexto,
@@ -356,6 +357,8 @@ class _PainelScreenState extends State<PainelScreen> {
                 const SizedBox(height: 5),
                 Text(
                   demanda.codigo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 12, color: _corSecundaria),
                 ),
                 const SizedBox(height: 10),

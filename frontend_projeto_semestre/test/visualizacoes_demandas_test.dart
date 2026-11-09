@@ -43,10 +43,16 @@ void main() {
     expect(find.text('Planejamento'), findsOneWidget);
     expect(find.text('Integração com a API'), findsOneWidget);
     expect(find.text('DEM-001'), findsOneWidget);
+    expect(find.text('Técnico atribuído'), findsOneWidget);
+    expect(find.text('50,0%'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
   });
 
-  testWidgets('calendário usa dias da semana em português', (tester) async {
+  testWidgets('calendário cabe em tela estreita e permite trocar de mês', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(280, 580));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       app(CalendarioDemandas(demandas: const [demanda], abrir: (_) {})),
     );
@@ -55,5 +61,15 @@ void main() {
     expect(find.text('Seg'), findsOneWidget);
     expect(find.text('Sáb'), findsOneWidget);
     expect(find.text('Sem marcos registrados neste dia.'), findsOneWidget);
+    final data = MaterialLocalizations.of(
+      tester.element(find.byType(CalendarioDemandas)),
+    ).formatCompactDate(DateTime.now());
+    expect(find.text(data), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Próximo mês'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(data), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
