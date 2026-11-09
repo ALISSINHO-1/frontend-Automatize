@@ -53,6 +53,9 @@ class UsuarioAtualStore extends ValueNotifier<UsuarioAtualModel?> {
     value = null;
   }
 
+  /// Limpa dados da sessão anterior no logout e na troca de usuário.
+  void limparSessao() => _limpar();
+
   @visibleForTesting
   void reiniciar() {
     _limpar();

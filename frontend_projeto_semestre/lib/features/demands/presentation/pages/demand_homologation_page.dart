@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../data/models/pedido_model.dart';
+import '../../data/services/homologacao_cliente_service.dart';
 import '../widgets/demand_homologation_card.dart';
 
 class DemandHomologationPage extends StatefulWidget {
@@ -12,77 +14,252 @@ class DemandHomologationPage extends StatefulWidget {
 }
 
 class _DemandHomologationPageState extends State<DemandHomologationPage> {
+  final _versaoController = TextEditingController();
+  final _declaracaoController = TextEditingController();
+  final _motivoController = TextEditingController();
+
+  final HomologacaoClienteService _service = HomologacaoClienteService();
+
   bool concordou = false;
   bool processando = false;
-  
-  String? responsavelAceite;
-   DateTime? dataHoraAceite;
+  bool consultando = true;
+  bool decisaoRegistrada = false;
+  bool resultadoIncerto = false;
 
-  Future<void> _aprovar() async {
-    if (!concordou || processando) return;
+  String? statusAtual;
+  String? erroConsulta;
+  String? erroOperacao;
 
-    setState(() => processando = true);
+  bool get _podeDecidir =>
+      statusAtual == 'HOMOLOGACAO' &&
+      !processando &&
+      !consultando &&
+      !decisaoRegistrada &&
+      !resultadoIncerto;
 
-    try {
+  bool get _podeAprovar =>
+      _podeDecidir &&
+      concordou &&
+      _versaoController.text.trim().isNotEmpty &&
+      _versaoController.text.trim().length <= 50 &&
+      _declaracaoController.text.trim().length >= 10;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _atualizarStatus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _versaoController.dispose();
+    _declaracaoController.dispose();
+    _motivoController.dispose();
+    _service.dispose();
+
+    super.dispose();
+  }
+
+  // Consulta o status real, sem confiar apenas no pedido
+  // recebido pela navegação.
+  Future<void> _atualizarStatus() async {
     if (!mounted) return;
 
-        setState(() {
-          responsavelAceite = 'Cliente demonstrativo';
-          dataHoraAceite = DateTime.now();
-        });
+    setState(() {
+      consultando = true;
+      erroConsulta = null;
+      statusAtual = null;
+    });
 
-  ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Aprovação demonstrativa. Aguardando integração com a API.',
-          ),
-        ),
-      );
+    try {
+      final dados = await _service.consultar(widget.pedido.id);
+
+      if (!mounted) return;
+
+      final status = dados['status']?.toString().trim().toUpperCase();
+
+      if (status == null || status.isEmpty) {
+        throw const FormatException('A API não informou o estado da demanda.');
+      }
+
+      setState(() {
+        statusAtual = status;
+      });
+    } catch (erro) {
+      if (!mounted) return;
+
+      setState(() {
+        erroConsulta = erro.toString();
+      });
     } finally {
       if (mounted) {
-        setState(() => processando = false);
+        setState(() {
+          consultando = false;
+        });
       }
     }
   }
 
-  Future<void> _solicitarAjustes() async {
-    final controller = TextEditingController();
+  Future<bool> _confirmar({
+    required String titulo,
+    required String mensagem,
+    required String acao,
+  }) async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(titulo),
+          content: Text(mensagem),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(acao),
+            ),
+          ],
+        );
+      },
+    );
 
-    final observacao = await showDialog<String>(
+    return confirmado == true;
+  }
+
+  Future<void> _registrarDecisao(Future<void> Function() enviar) async {
+    if (!_podeDecidir) return;
+
+    setState(() {
+      processando = true;
+      erroOperacao = null;
+    });
+
+    try {
+      await enviar();
+
+      if (!mounted) return;
+
+      setState(() {
+        decisaoRegistrada = true;
+      });
+
+      // Após o POST, consulta o estado persistido.
+      await _atualizarStatus();
+    } on HomologacaoClienteException catch (erro) {
+      if (!mounted) return;
+
+      setState(() {
+        erroOperacao = erro.mensagem;
+        resultadoIncerto = erro.resultadoIncerto;
+      });
+
+      // Uma demanda pode ter mudado de estado
+      // enquanto o cliente confirmava.
+      if (erro.statusCode == 409) {
+        await _atualizarStatus();
+      }
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        erroOperacao =
+            'Não foi possível confirmar o resultado. '
+            'Consulte o estado da demanda antes '
+            'de tentar novamente.';
+
+        // Evita novo envio após uma falha inesperada
+        // cujo resultado pode ser desconhecido.
+        resultadoIncerto = true;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          processando = false;
+        });
+      }
+    }
+  }
+
+  // POST /demandas/{id}/aceite
+  Future<void> _aprovar() async {
+    if (!_podeAprovar) return;
+
+    final versao = _versaoController.text.trim();
+    final declaracao = _declaracaoController.text.trim();
+
+    final confirmado = await _confirmar(
+      titulo: 'Confirmar aprovação',
+      mensagem:
+          'Você confirma o aceite formal da versão '
+          '$versao desta entrega? '
+          'Esta decisão será registrada na API.',
+      acao: 'Aprovar entrega',
+    );
+
+    if (!mounted || !confirmado || !_podeAprovar) {
+      return;
+    }
+
+    await _registrarDecisao(
+      () => _service.aprovar(
+        id: widget.pedido.id,
+        versaoEntregavel: versao,
+        declaracaoAceite: declaracao,
+      ),
+    );
+  }
+
+  // POST /demandas/{id}/rejeicao
+  Future<void> _solicitarAjustes() async {
+    if (!_podeDecidir) return;
+
+    _motivoController.clear();
+
+    final motivo = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, atualizar) {
-            final valido = controller.text.trim().length >= 10;
+          builder: (context, atualizarDialogo) {
+            final valido = _motivoController.text.trim().length >= 10;
 
             return AlertDialog(
               title: const Text('Solicitar ajustes'),
               content: SizedBox(
                 width: 420,
                 child: TextField(
-                  controller: controller,
+                  controller: _motivoController,
                   maxLines: 5,
                   maxLength: 500,
-                  onChanged: (_) => atualizar(() {}),
+                  onChanged: (_) {
+                    atualizarDialogo(() {});
+                  },
                   decoration: const InputDecoration(
-                    labelText: 'Descreva o ajuste necessário',
-                    hintText: 'Informe o que precisa ser corrigido...',
-                    border: OutlineInputBorder(),
+                    labelText: 'Motivo da rejeição',
+                    hintText: 'Explique a inconformidade encontrada...',
                     helperText: 'Mínimo de 10 caracteres',
+                    border: OutlineInputBorder(),
                   ),
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancelar'),
                 ),
                 FilledButton(
                   onPressed: valido
-                      ? () =>
-                            Navigator.pop(dialogContext, controller.text.trim())
+                      ? () => Navigator.of(
+                          dialogContext,
+                        ).pop(_motivoController.text.trim())
                       : null,
-                  child: const Text('Enviar solicitação'),
+                  child: const Text('Continuar'),
                 ),
               ],
             );
@@ -91,17 +268,30 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
       },
     );
 
-    controller.dispose();
+    if (!mounted || motivo == null || !_podeDecidir) {
+      return;
+    }
 
-    if (!mounted || observacao == null) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Solicitação demonstrativa. Nenhuma alteração foi enviada à API.',
-        ),
-      ),
+    final confirmado = await _confirmar(
+      titulo: 'Confirmar solicitação de ajustes',
+      mensagem:
+          'Deseja registrar a rejeição desta entrega '
+          'com o motivo informado? '
+          'A decisão será enviada à API.',
+      acao: 'Solicitar ajustes',
     );
+
+    if (!mounted || !confirmado || !_podeDecidir) {
+      return;
+    }
+
+    await _registrarDecisao(
+      () => _service.rejeitar(id: widget.pedido.id, motivo: motivo),
+    );
+  }
+
+  void _voltar() {
+    Navigator.of(context).pop(decisaoRegistrada);
   }
 
   @override
@@ -114,6 +304,18 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
         title: const Text('Homologação da entrega'),
         backgroundColor: const Color(0xFF181C24),
         foregroundColor: const Color(0xFFDFE2EE),
+        leading: IconButton(
+          tooltip: 'Voltar ao acompanhamento',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _voltar,
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Atualizar estado',
+            icon: const Icon(Icons.refresh),
+            onPressed: processando || consultando ? null : _atualizarStatus,
+          ),
+        ],
       ),
       body: Center(
         child: ConstrainedBox(
@@ -122,126 +324,247 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
             padding: const EdgeInsets.all(24),
             children: [
               Text(
-                '${pedido.codigoIdentificador ?? pedido.id} • ${pedido.titulo}',
+                '${pedido.codigoIdentificador ?? pedido.id} '
+                '• ${pedido.titulo}',
                 style: const TextStyle(
                   color: Color(0xFFDFE2EE),
                   fontSize: 25,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 12),
+
               const Text(
-                'Confira a entrega antes de registrar sua avaliação.',
+                'Confira a entrega antes de registrar '
+                'sua avaliação.',
                 style: TextStyle(color: Color(0xFFC2C6D6)),
               ),
+
               const SizedBox(height: 24),
+
+              // Estado consultado diretamente na API.
               Card(
                 color: const Color(0xFF181C24),
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Entrega aguardando sua avaliação',
+                        'Estado atual da demanda',
                         style: TextStyle(
-                          color: Color(0xFFDFE2EE),
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        pedido.descricao,
-                        style: const TextStyle(color: Color(0xFFC2C6D6)),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Versão da entrega: não informada',
-                        style: TextStyle(color: Color(0xFFC2C6D6)),
-                      ),
-                      const SizedBox(height: 12),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        value: concordou,
-                        onChanged: (valor) {
-                          setState(() => concordou = valor ?? false);
-                        },
-                        title: const Text(
-                          'Li e concordo com a entrega',
-                          style: TextStyle(color: Color(0xFFDFE2EE)),
+
+                      if (consultando) const LinearProgressIndicator(),
+
+                      if (!consultando && statusAtual != null)
+                        Text(
+                          statusAtual!,
+                          style: const TextStyle(
+                            color: Colors.lightBlueAccent,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        controlAffinity: ListTileControlAffinity.leading,
-                      ),
+
+                      if (erroConsulta != null)
+                        Text(
+                          erroConsulta!,
+                          style: const TextStyle(color: Colors.orangeAccent),
+                        ),
+
+                      if (!consultando &&
+                          !decisaoRegistrada &&
+                          statusAtual != null &&
+                          statusAtual != 'HOMOLOGACAO')
+                        const Padding(
+                          padding: EdgeInsets.only(top: 10),
+                          child: Text(
+                            'A demanda não está em homologação. '
+                            'Nenhuma decisão pode ser enviada.',
+                          ),
+                        ),
                     ],
                   ),
                 ),
               ),
+
               const SizedBox(height: 16),
-              DemandHomologationCard(
-                status: pedido.status,
-                onAprovar: concordou && !processando ? _aprovar : null,
-                onReprovar: processando ? null : _solicitarAjustes,
-              ),
-                            if (dataHoraAceite != null) ...[
+
+              // Dados necessários para o aceite formal.
+              if (_podeDecidir) ...[
                 Card(
                   color: const Color(0xFF181C24),
                   child: Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: Colors.greenAccent,
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Aceite registrado (demonstração)',
-                              softWrap: true,
-                              style: TextStyle(
-                                color: Color(0xFFDFE2EE),
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Responsável: ${responsavelAceite ?? "Não informado"}',
-                          style: const TextStyle(
-                            color: Color(0xFFC2C6D6),
+                        const Text(
+                          'Aprovação formal',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
+
+                        const SizedBox(height: 12),
+
                         Text(
-                          'Data e hora: '
-                          '${dataHoraAceite!.day.toString().padLeft(2, '0')}/'
-                          '${dataHoraAceite!.month.toString().padLeft(2, '0')}/'
-                          '${dataHoraAceite!.year} às '
-                          '${dataHoraAceite!.hour.toString().padLeft(2, '0')}:'
-                          '${dataHoraAceite!.minute.toString().padLeft(2, '0')}',
-                          style: const TextStyle(
-                            color: Color(0xFFC2C6D6),
+                          pedido.descricao,
+                          style: const TextStyle(color: Color(0xFFC2C6D6)),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        TextField(
+                          controller: _versaoController,
+                          maxLength: 50,
+                          onChanged: (_) => setState(() {}),
+                          decoration: const InputDecoration(
+                            labelText: 'Versão do entregável',
+                            hintText: 'Ex.: v1.0',
+                            helperText: 'Informe a versão real entregue.',
+                            border: OutlineInputBorder(),
                           ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        TextField(
+                          controller: _declaracaoController,
+                          minLines: 2,
+                          maxLines: 4,
+                          onChanged: (_) => setState(() {}),
+                          decoration: const InputDecoration(
+                            labelText: 'Declaração de aceite',
+                            hintText:
+                                'Declaro que conferi e aprovo '
+                                'a entrega informada.',
+                            helperText: 'Mínimo de 10 caracteres',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: concordou,
+                          onChanged: (valor) {
+                            setState(() {
+                              concordou = valor ?? false;
+                            });
+                          },
+                          title: const Text(
+                            'Li, conferi e concordo com '
+                            'a entrega informada.',
+                          ),
+                          controlAffinity: ListTileControlAffinity.leading,
                         ),
                       ],
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 16),
               ],
-              const SizedBox(height: 16),
-              const Text(
-                'Modo demonstrativo: nenhuma aprovação ou solicitação '
-                'será registrada até a integração com a API.',
-                style: TextStyle(color: Color(0xFF8C909F)),
-              ),
+
+              if (statusAtual == 'HOMOLOGACAO' &&
+                  !decisaoRegistrada &&
+                  !resultadoIncerto)
+                DemandHomologationCard(
+                  status: statusAtual!,
+                  onAprovar: _podeAprovar ? _aprovar : null,
+                  onReprovar: _podeDecidir ? _solicitarAjustes : null,
+                ),
+
+              if (processando) ...[
+                const SizedBox(height: 16),
+                const Center(child: CircularProgressIndicator()),
+                const SizedBox(height: 8),
+                const Center(child: Text('Registrando decisão na API...')),
+              ],
+
+              if (erroOperacao != null) ...[
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      erroOperacao!,
+                      style: const TextStyle(color: Colors.orangeAccent),
+                    ),
+                  ),
+                ),
+              ],
+
+              // Esta mensagem só aparece se o POST
+              // recebeu a confirmação de sucesso da API.
+              if (decisaoRegistrada) ...[
+                const SizedBox(height: 16),
+
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.greenAccent),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Decisão registrada pela API',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Text(
+                          statusAtual == null
+                              ? 'A decisão foi registrada, '
+                                    'mas não foi possível consultar '
+                                    'o estado atualizado.'
+                              : 'Estado retornado após a decisão: '
+                                    '$statusAtual',
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        FilledButton.icon(
+                          onPressed: _voltar,
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('Voltar ao acompanhamento'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              if (resultadoIncerto) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'O envio não pôde ser confirmado. '
+                  'Para evitar duplicidade, esta tela '
+                  'não permitirá repetir a decisão. '
+                  'Consulte o estado atualizado.',
+                  style: TextStyle(color: Colors.orangeAccent),
+                ),
+              ],
             ],
           ),
         ),
