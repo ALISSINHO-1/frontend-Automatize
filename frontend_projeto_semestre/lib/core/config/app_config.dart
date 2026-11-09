@@ -17,6 +17,12 @@ abstract final class AppConfig {
     defaultValue: false,
   );
 
+  // Sitekey publico. O segredo Turnstile fica SOMENTE no Render.
+  static const String turnstileSiteKey = String.fromEnvironment(
+    'TURNSTILE_SITE_KEY',
+    defaultValue: '',
+  );
+
   static Uri apiUri([String path = '']) {
     final normalizedBase = apiBaseUrl.endsWith('/')
         ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)

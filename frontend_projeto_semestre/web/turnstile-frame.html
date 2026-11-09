@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<style>
+  html, body { margin: 0; background: transparent; overflow: hidden; }
+  #turnstile { display: flex; align-items: center; justify-content: center; min-height: 70px; }
+</style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+</head>
+<body>
+<div id="turnstile"></div>
+<script>
+(function () {
+  'use strict';
+  const p = new URLSearchParams(window.location.search);
+  const instance = p.get('instance') || '';
+  const sitekey = p.get('sitekey') || '';
+  function notify(token) {
+    window.parent.postMessage(JSON.stringify({
+      kind: 'automatize-turnstile', instance: instance, token: token || null
+    }), window.location.origin);
+  }
+  function render() {
+    if (!sitekey) { notify(null); return; }
+    if (!window.turnstile) { setTimeout(render, 150); return; }
+    window.turnstile.render('#turnstile', {
+      sitekey: sitekey,
+      theme: 'dark',
+      size: 'flexible',
+      callback: notify,
+      'expired-callback': function () { notify(null); },
+      'error-callback': function () { notify(null); }
+    });
+  }
+  render();
+})();
+</script>
+</body>
+</html>
