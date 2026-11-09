@@ -62,6 +62,15 @@ class AguardandoVinculoScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Color(0xFF9DB1C8), height: 1.6)),
+                  if (!confirmado) ...[
+                    const SizedBox(height: 10),
+                    TextButton.icon(
+                      onPressed: () => Navigator.of(context).pushNamed(
+                        AppRoutes.reenviarConfirmacao),
+                      icon: const Icon(Icons.mark_email_unread_outlined),
+                      label: const Text('Reenviar confirmação'),
+                    ),
+                  ],
                   const SizedBox(height: 26),
                   OutlinedButton.icon(
                     onPressed: () => _sair(context),

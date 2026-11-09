@@ -35,6 +35,7 @@ abstract final class AppRoutes {
   static const String verificarEmail = '/verificar-email';
   static const String redefinirSenha = '/redefinir-senha';
   static const String esqueciSenha = '/esqueci-senha';
+  static const String reenviarConfirmacao = '/reenviar-email';
   static const String ambientes = '/ambientes';
   static const String home = '/home';
   static const String painel = '/painel';
@@ -57,6 +58,7 @@ abstract final class AppRoutes {
     login: (_) => const LoginScreen(),
     cadastro: (_) => const CadastroScreen(),
     esqueciSenha: (_) => const EsqueciSenhaScreen(),
+    reenviarConfirmacao: (_) => const EsqueciSenhaScreen(reenviarConfirmacao: true),
     // Tela sem informacoes privadas: um cadastro PENDENTE nao passa no AuthGuard.
     cadastroPendente: (context) {
       final data = ModalRoute.of(context)?.settings.arguments;

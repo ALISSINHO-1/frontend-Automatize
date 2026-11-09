@@ -9,7 +9,8 @@ import '../../widgets/turnstile_challenge.dart';
 
 /// Solicita link de reset sem revelar a existencia da conta.
 class EsqueciSenhaScreen extends StatefulWidget {
-  const EsqueciSenhaScreen({super.key, this.client});
+  const EsqueciSenhaScreen({super.key, this.client, this.reenviarConfirmacao = false});
+  final bool reenviarConfirmacao;
   final http.Client? client;
   @override
   State<EsqueciSenhaScreen> createState() => _EsqueciSenhaScreenState();
@@ -31,7 +32,9 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
 
   Future<void> _solicitar() async {
     if (_enviando) return;
-    if (!AppConfig.passwordRecoveryEnabled || AppConfig.turnstileSiteKey.isEmpty) {
+    if (!(widget.reenviarConfirmacao
+        ? AppConfig.publicSignupEnabled : AppConfig.passwordRecoveryEnabled)
+        || AppConfig.turnstileSiteKey.isEmpty) {
       setState(() => _erro = 'A recuperação está temporariamente indisponível.');
       return;
     }
@@ -47,7 +50,8 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
     final client = widget.client ?? http.Client();
     try {
       final response = await client.post(
-        AppConfig.apiUri('/auth/senha/solicitar'),
+        AppConfig.apiUri(widget.reenviarConfirmacao
+            ? '/auth/verificacao/reenviar' : '/auth/senha/solicitar'),
         headers: const {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': _email.text.trim().toLowerCase(),
@@ -78,7 +82,7 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFF07172A),
     appBar: AppBar(backgroundColor: const Color(0xFF07172A),
-        title: const Text('Recuperar senha')),
+        title: Text(widget.reenviarConfirmacao ? 'Reenviar confirmação' : 'Recuperar senha')),
     body: Center(
       child: SingleChildScrollView(
         child: ConstrainedBox(
@@ -92,13 +96,16 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
                 const Icon(Icons.mark_email_read_outlined,
                     color: Color(0xFF21B7FF), size: 58),
                 const SizedBox(height: 20),
-                Text(_concluido ? 'Confira seu e-mail' : 'Esqueceu sua senha?',
+                Text(_concluido ? 'Confira seu e-mail'
+                    : (widget.reenviarConfirmacao ? 'Confirmar sua conta' : 'Esqueceu sua senha?'),
                   style: const TextStyle(
                     color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 14),
                 Text(_concluido
                     ? 'Se existir uma conta com esse endereço, você receberá um link seguro.'
-                    : 'Informe seu e-mail e conclua a verificação para solicitar um link de redefinição.',
+                    : (widget.reenviarConfirmacao
+                       ? 'Informe seu e-mail e conclua o desafio para solicitar uma nova confirmação.'
+                       : 'Informe seu e-mail e conclua a verificação para solicitar um link de redefinição.'),
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Color(0xFF9DB1C8), height: 1.5)),
                 if (!_concluido) ...[
