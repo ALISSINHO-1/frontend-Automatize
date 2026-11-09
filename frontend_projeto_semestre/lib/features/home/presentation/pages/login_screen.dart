@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -107,6 +108,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // JWT apenas em memória, conforme a estratégia de sessão escolhida.
         await LocalStorageService.saveToken(token);
+        // Login aceito: avisa o navegador para oferecer salvar e-mail e senha.
+        TextInput.finishAutofillContext();
         if (!mounted) return;
 
         // Remove o login e as demais telas do histórico de navegação.
@@ -197,14 +200,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: _painelApresentacao(),
                                 ),
 
-                                Expanded(flex: 9, child: _formulario()),
+                                Expanded(
+                                  flex: 9,
+                                  child: AutofillGroup(child: _formulario()),
+                                ),
                               ],
                             )
                           : Column(
                               children: [
                                 _painelApresentacao(compacto: true),
 
-                                _formulario(),
+                                AutofillGroup(child: _formulario()),
                               ],
                             ),
                     ),
@@ -543,6 +549,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
               keyboardType: TextInputType.emailAddress,
 
+              // Sem as dicas, o navegador adivinha os campos: preenche só a
+              // tela (o Flutter não recebe o valor) ou nem oferece salvar.
+              autofillHints: const [AutofillHints.username, AutofillHints.email],
+
               textInputAction: TextInputAction.next,
 
               style: const TextStyle(color: _texto, fontSize: 13),
@@ -588,6 +598,8 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _senhaController,
 
               obscureText: _ocultarSenha,
+
+              autofillHints: const [AutofillHints.password],
 
               textInputAction: TextInputAction.done,
 
