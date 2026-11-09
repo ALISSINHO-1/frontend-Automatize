@@ -249,8 +249,11 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
           ),
         ],
       ),
-      Row(
-        mainAxisSize: MainAxisSize.min,
+      // Wrap e não Row: no celular os botões descem de linha em vez de cortar.
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           IconButton(
             tooltip: 'Atualizar',
@@ -258,7 +261,6 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
             color: AutomatizeColors.muted,
             icon: const Icon(Icons.refresh_rounded),
           ),
-          const SizedBox(width: 8),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: AutomatizeColors.text,
@@ -272,7 +274,6 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
             icon: const Icon(Icons.group_rounded),
             label: const Text('Usuários'),
           ),
-          const SizedBox(width: 8),
           FilledButton.icon(
             style: FilledButton.styleFrom(
               backgroundColor: AdminStyle.destaque,
@@ -536,6 +537,9 @@ class _ItemDemanda extends StatelessWidget {
     final cor = AdminStyle.corEstado(pedido.status);
     // Concluída é imutável no backend (409): só sobra abrir os detalhes.
     final concluida = AdminStyle.normalizar(pedido.status) == 'CONCLUIDO';
+    // No celular o ícone e o selo na mesma linha espremiam o título letra por
+    // letra: em tela estreita o ícone sai e o selo desce para junto do texto.
+    final estreito = MediaQuery.sizeOf(context).width < 640;
     return Material(
       color: AdminStyle.fundo,
       borderRadius: BorderRadius.circular(14),
@@ -550,20 +554,26 @@ class _ItemDemanda extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: cor.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
+              if (!estreito) ...[
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: cor.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.assignment_rounded, color: cor),
                 ),
-                child: Icon(Icons.assignment_rounded, color: cor),
-              ),
-              const SizedBox(width: 16),
+                const SizedBox(width: 16),
+              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (estreito) ...[
+                      EstadoChip(pedido.status),
+                      const SizedBox(height: 8),
+                    ],
                     Text(pedido.titulo, style: AdminStyle.tituloCard),
                     const SizedBox(height: 4),
                     Text(
@@ -598,8 +608,10 @@ class _ItemDemanda extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              EstadoChip(pedido.status),
+              if (!estreito) ...[
+                const SizedBox(width: 12),
+                EstadoChip(pedido.status),
+              ],
               PopupMenuButton<String>(
                 tooltip: 'Ações da demanda',
                 enabled: !ocupado,
