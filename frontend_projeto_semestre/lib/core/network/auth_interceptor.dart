@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 import '../storage/local_storage_service.dart';
 import '../../features/home/presentation/pages/login_screen.dart';
+import '../../features/home/presentation/pages/demanda_store.dart';
+import '../../features/admin/data/services/usuario_atual_store.dart';
 
 class AuthInterceptorClient extends http.BaseClient {
   final http.Client _inner;
@@ -19,6 +22,7 @@ class AuthInterceptorClient extends http.BaseClient {
     String? token;
 
     if (isLogin) {
+      // O login não pode reutilizar um Bearer antigo.
       request.headers.remove('Authorization');
     } else {
       token = await LocalStorageService.getToken();
@@ -30,10 +34,23 @@ class AuthInterceptorClient extends http.BaseClient {
 
     final response = await _inner.send(request);
 
-    if (!isLogin && response.statusCode == 401) {
+    // SCRUM-116:
+    // Trata somente respostas 401 de requisições
+    // autenticadas com um token realmente utilizado.
+    if (!isLogin &&
+        response.statusCode == 401 &&
+        token != null &&
+        token.isNotEmpty) {
+      // Invalida somente se o token ainda pertence
+      // à sessão atual.
       final precisaRedirecionar = LocalStorageService.invalidarSeAtual(token);
 
       if (precisaRedirecionar) {
+        // Limpa o perfil e as demandas da sessão expirada.
+        UsuarioAtualStore.instance.limparSessao();
+        DemandaStore.instance.limpar();
+
+        // Redireciona uma única vez ao login.
         _redirecionarParaLogin();
       }
     }
@@ -56,7 +73,7 @@ class AuthInterceptorClient extends http.BaseClient {
           return;
         }
 
-        // Limpa o histórico de navegação.
+        // Remove as telas anteriores do histórico.
         navigator.pushAndRemoveUntil(
           MaterialPageRoute<void>(
             settings: const RouteSettings(name: '/login'),

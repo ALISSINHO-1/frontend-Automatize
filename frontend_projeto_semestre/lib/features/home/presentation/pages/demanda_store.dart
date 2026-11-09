@@ -53,13 +53,16 @@ class DemandaItem {
   }
 }
 
-// Gerencia o carregamento e o estado das demandas.
 class DemandaStore extends ChangeNotifier {
-  DemandaStore._();
+  DemandaStore._() : _service = DemandService();
 
+  @visibleForTesting
+  DemandaStore.forTesting(DemandService service) : _service = service;
+
+  // Instância compartilhada pelas telas do Automatize.
   static final DemandaStore instance = DemandaStore._();
 
-  final DemandService _service = DemandService();
+  final DemandService _service;
 
   List<DemandaItem> _demandas = [];
 

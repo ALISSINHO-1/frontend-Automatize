@@ -193,6 +193,14 @@ class _DemandasScreenState extends State<DemandasScreen> {
   Future<void> _visualizarDemanda(DemandaItem demanda) async {
     final perfil = (await _usuario)?.perfil;
     if (!mounted) return;
+    if (perfil == 'CLIENTE') {
+      await Navigator.of(context).pushNamed(
+        AppRoutes.clienteDetalhes,
+        arguments: demanda.id,
+      );
+      if (mounted) await _carregarDemandas();
+      return;
+    }
     final podeEditar =
         (perfil == 'ADMIN' || perfil == 'CLIENTE') &&
         _rotuloEstado(demanda.estado) != 'Concluído';

@@ -1,6 +1,8 @@
 import 'demand_homologation_page.dart';
 import 'demand_attachments_page.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/auth/auth_guard.dart';
+import '../../../../core/auth/cliente_guard.dart';
 import '../../data/models/pedido_model.dart';
 import '../widgets/demand_history_timeline.dart';
 
@@ -241,23 +243,29 @@ class DemandDetailsPage extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton.icon(
-                      onPressed: pedido == null ? null : () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => DemandAttachmentsPage(
-                              pedido: pedido!,
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.attach_file),
-                      label: const Text('Abrir anexos'),
+                      alignment: Alignment.centerLeft,
+                      child: FilledButton.icon(
+                        onPressed: pedido == null
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => AuthGuard(
+                                      child: ClienteGuard(
+                                        child: DemandAttachmentsPage(
+                                          pedido: pedido!,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.attach_file),
+                        label: const Text('Abrir anexos'),
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
                     DemandHistoryTimeline(
                       historico: [
@@ -290,9 +298,14 @@ class DemandDetailsPage extends StatelessWidget {
                         child: FilledButton.icon(
                           onPressed: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    DemandHomologationPage(pedido: pedido!),
+                              MaterialPageRoute<void>(
+                                builder: (_) => AuthGuard(
+                                  child: ClienteGuard(
+                                    child: DemandHomologationPage(
+                                      pedido: pedido!,
+                                    ),
+                                  ),
+                                ),
                               ),
                             );
                           },
