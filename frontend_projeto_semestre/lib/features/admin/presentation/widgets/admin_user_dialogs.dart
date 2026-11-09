@@ -22,13 +22,17 @@ class NovoUsuarioResult {
 /// Cadastro de usuário pelo ADMIN. A senha inicial é definida aqui e
 /// repassada à pessoa; o backend só guarda o hash.
 class UsuarioFormDialog extends StatefulWidget {
-  const UsuarioFormDialog({super.key});
+  const UsuarioFormDialog({super.key, this.perfilFixo});
 
-  static Future<NovoUsuarioResult?> show(BuildContext context) =>
-      showDialog<NovoUsuarioResult>(
-        context: context,
-        builder: (_) => const UsuarioFormDialog(),
-      );
+  final String? perfilFixo;
+
+  static Future<NovoUsuarioResult?> show(
+    BuildContext context, {
+    String? perfilFixo,
+  }) => showDialog<NovoUsuarioResult>(
+    context: context,
+    builder: (_) => UsuarioFormDialog(perfilFixo: perfilFixo),
+  );
 
   @override
   State<UsuarioFormDialog> createState() => _UsuarioFormDialogState();
@@ -57,7 +61,7 @@ class _UsuarioFormDialogState extends State<UsuarioFormDialog> {
         nome: _nome.text.trim(),
         email: _email.text.trim(),
         senha: _senha.text,
-        perfil: _perfil!,
+        perfil: widget.perfilFixo ?? _perfil!,
       ),
     );
   }
@@ -76,7 +80,10 @@ class _UsuarioFormDialogState extends State<UsuarioFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Novo usuário'),
+      scrollable: true,
+      title: Text(
+        widget.perfilFixo == 'CLIENTE' ? 'Novo cliente' : 'Novo usuário',
+      ),
       content: SizedBox(
         width: 440,
         child: Form(
@@ -120,20 +127,21 @@ class _UsuarioFormDialogState extends State<UsuarioFormDialog> {
                     ? 'A senha deve ter no mínimo $tamanhoMinimoSenha caracteres.'
                     : null,
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Perfil'),
-                items: [
-                  for (final perfil in UsuarioModel.perfis)
-                    DropdownMenuItem(
-                      value: perfil,
-                      child: Text(UsuarioModel.rotuloPerfil(perfil)),
-                    ),
-                ],
-                onChanged: (perfil) => _perfil = perfil,
-                validator: (perfil) =>
-                    perfil == null ? 'Selecione o perfil.' : null,
-              ),
+              if (widget.perfilFixo == null) const SizedBox(height: 12),
+              if (widget.perfilFixo == null)
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'Perfil'),
+                  items: [
+                    for (final perfil in UsuarioModel.perfis)
+                      DropdownMenuItem(
+                        value: perfil,
+                        child: Text(UsuarioModel.rotuloPerfil(perfil)),
+                      ),
+                  ],
+                  onChanged: (perfil) => _perfil = perfil,
+                  validator: (perfil) =>
+                      perfil == null ? 'Selecione o perfil.' : null,
+                ),
             ],
           ),
         ),

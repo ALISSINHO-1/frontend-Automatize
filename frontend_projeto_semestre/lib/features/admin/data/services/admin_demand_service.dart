@@ -109,29 +109,42 @@ class AdminDemandService {
 
   // --- Usuários e perfis (SCRUM-99/100): rotas exclusivas do ADMIN ---
 
-  /// O backend pagina em no máximo 100 por chamada; para a escala do projeto
-  /// uma página basta (seletores e tela de usuários).
-  Future<List<UsuarioModel>> listarUsuarios({
+  Future<List<UsuarioModel>> listarUsuarios({String? perfil, bool? ativo}) =>
+      _listarUsuarios(ApiPaths.usuarios, perfil: perfil, ativo: ativo);
+
+  Future<List<UsuarioModel>> listarClientesVinculados() =>
+      _listarUsuarios('${ApiPaths.usuarios}/clientes');
+
+  Future<List<UsuarioModel>> _listarUsuarios(
+    String path, {
     String? perfil,
     bool? ativo,
   }) async {
-    final query = Uri(
-      queryParameters: {
-        'limit': '100',
-        'perfil': ?perfil,
-        if (ativo != null) 'ativo': '$ativo',
-      },
-    ).query;
-    final data = await _json('GET', '${ApiPaths.usuarios}?$query');
-    if (data is! List) {
-      throw const FormatException('A API não retornou a lista de usuários.');
-    }
-    return data.map((item) {
-      if (item is! Map<String, dynamic>) {
-        throw const FormatException('A API retornou um usuário inválido.');
+    const tamanhoPagina = 100;
+    final usuarios = <UsuarioModel>[];
+    while (true) {
+      final query = Uri(
+        queryParameters: {
+          'limit': '$tamanhoPagina',
+          if (usuarios.isNotEmpty) 'offset': '${usuarios.length}',
+          'perfil': ?perfil,
+          if (ativo != null) 'ativo': '$ativo',
+        },
+      ).query;
+      final data = await _json('GET', '$path?$query');
+      if (data is! List) {
+        throw const FormatException('A API não retornou a lista de usuários.');
       }
-      return UsuarioModel.fromJson(item);
-    }).toList();
+      usuarios.addAll(
+        data.map((item) {
+          if (item is! Map<String, dynamic>) {
+            throw const FormatException('A API retornou um usuário inválido.');
+          }
+          return UsuarioModel.fromJson(item);
+        }),
+      );
+      if (data.length < tamanhoPagina) return usuarios;
+    }
   }
 
   Future<UsuarioModel> criarUsuario({

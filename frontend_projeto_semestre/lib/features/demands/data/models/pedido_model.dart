@@ -15,6 +15,9 @@ class PedidoModel {
   final String? responsavelId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final DateTime? dataInicio;
+  final DateTime? dataPrevisao;
+  final DateTime? dataConclusao;
 
   const PedidoModel({
     required this.id,
@@ -28,6 +31,9 @@ class PedidoModel {
     this.responsavelId,
     this.createdAt,
     this.updatedAt,
+    this.dataInicio,
+    this.dataPrevisao,
+    this.dataConclusao,
   });
 
   // Converte o JSON da FastAPI para o modelo Flutter.
@@ -54,6 +60,9 @@ class PedidoModel {
       responsavelId: _textoOpcional(json['responsavel_id']),
       createdAt: _parseDate(json['created_at'] ?? json['data_criacao']),
       updatedAt: _parseDate(json['updated_at']),
+      dataInicio: _parseDate(json['data_inicio'])?.toLocal(),
+      dataPrevisao: _parseDate(json['data_previsao']),
+      dataConclusao: _parseDate(json['data_conclusao'])?.toLocal(),
     );
   }
 

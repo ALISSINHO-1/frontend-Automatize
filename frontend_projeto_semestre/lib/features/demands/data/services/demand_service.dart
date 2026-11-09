@@ -81,7 +81,11 @@ class DemandService {
   }
 
   // Cadastra uma nova demanda na API.
-  Future<void> criarDemanda(String titulo, String descricao) async {
+  Future<void> criarDemanda(
+    String titulo,
+    String descricao, {
+    DateTime? dataPrevisao,
+  }) async {
     final resposta = await _executar(
       () => _client.post(
         AppConfig.apiUri(ApiPaths.demandas),
@@ -89,12 +93,92 @@ class DemandService {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'titulo': titulo, 'descricao': descricao}),
+        body: jsonEncode({
+          'titulo': titulo,
+          'descricao': descricao,
+          if (dataPrevisao != null) 'data_previsao': _dataIso(dataPrevisao),
+        }),
       ),
     );
 
     _verificarStatus(resposta, esperado: 201, operacao: 'criar demanda');
   }
+
+  Future<void> atualizarPrevisao(String id, DateTime? data) async {
+    final resposta = await _executar(
+      () => _client.patch(
+        AppConfig.apiUri(
+          '${ApiPaths.demandas}/${Uri.encodeComponent(id)}/previsao',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'data_previsao': data == null ? null : _dataIso(data),
+        }),
+      ),
+    );
+    _verificarStatus(resposta, esperado: 204, operacao: 'atualizar previsão');
+  }
+
+  Future<void> moverNoQuadro(String id, String origem, String destino) async {
+    final resposta = await _executar(
+      () => _client.post(
+        AppConfig.apiUri(
+          '${ApiPaths.demandas}/${Uri.encodeComponent(id)}/quadro/movimentos',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'origem': origem, 'destino': destino}),
+      ),
+    );
+    if (resposta.statusCode == 409 || resposta.statusCode == 503) {
+      throw DemandServiceException(
+        _detalheFastApi(resposta) ?? 'Não foi possível mover a demanda.',
+        statusCode: resposta.statusCode,
+      );
+    }
+    _verificarStatus(resposta, esperado: 200, operacao: 'mover demanda');
+  }
+
+  Uri _tarefasUri(String demandaId, [String? tarefaId]) => AppConfig.apiUri(
+    '${ApiPaths.demandas}/${Uri.encodeComponent(demandaId)}/etapas'
+    '${tarefaId == null ? '' : '/${Uri.encodeComponent(tarefaId)}/conclusao'}',
+  );
+
+  Future<List<({String id, String descricao, bool concluida})>> listarTarefas(
+    String demandaId,
+  ) async {
+    final resposta = await _executar(() => _client.get(_tarefasUri(demandaId)));
+    _verificarStatus(resposta, esperado: 200, operacao: 'carregar tarefas');
+    final dados = jsonDecode(utf8.decode(resposta.bodyBytes)) as List;
+    return dados
+        .map(
+          (tarefa) => (
+            id: tarefa['id'] as String,
+            descricao: tarefa['descricao'] as String,
+            concluida: tarefa['concluida'] as bool,
+          ),
+        )
+        .toList();
+  }
+
+  Future<void> criarTarefa(String demandaId, String descricao) async {
+    final resposta = await _executar(
+      () => _client.post(
+        _tarefasUri(demandaId),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'descricao': descricao}),
+      ),
+    );
+    _verificarStatus(resposta, esperado: 201, operacao: 'criar tarefa');
+  }
+
+  Future<void> concluirTarefa(String demandaId, String tarefaId) async {
+    final resposta = await _executar(
+      () => _client.post(_tarefasUri(demandaId, tarefaId)),
+    );
+    _verificarStatus(resposta, esperado: 200, operacao: 'concluir tarefa');
+  }
+
+  String _dataIso(DateTime data) => data.toIso8601String().split('T').first;
 
   // Trata falhas de comunicação e timeout.
   Future<http.Response> _executar(
@@ -127,6 +211,8 @@ class DemandService {
       401 => 'Sua sessão expirou. Faça login novamente.',
       403 => 'Você não tem permissão para realizar esta operação.',
       404 => 'O recurso solicitado não foi encontrado.',
+      409 =>
+        detalhe ?? 'A demanda ou a tarefa mudou. Atualize e tente novamente.',
       422 =>
         detalhe == null
             ? 'Os dados enviados não foram aceitos pela API.'

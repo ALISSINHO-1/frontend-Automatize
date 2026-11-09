@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/storage/local_storage_service.dart';
 import '../../../../shared/widgets/main_layout.dart';
+import '../../../admin/data/models/usuario_atual_model.dart';
+import '../../../admin/data/services/usuario_atual_store.dart';
+import '../../../demands/presentation/pages/demand_tasks_page.dart';
 import 'demanda_store.dart';
 import 'nova_demanda_screen.dart';
-import 'painel_screen.dart';
+import 'visualizacoes_demandas.dart';
+
+enum _Visualizacao { lista, quadro, calendario }
 
 class DemandasScreen extends StatefulWidget {
   const DemandasScreen({super.key});
@@ -15,6 +21,8 @@ class DemandasScreen extends StatefulWidget {
 class _DemandasScreenState extends State<DemandasScreen> {
   final TextEditingController _buscaController = TextEditingController();
   final DemandaStore _store = DemandaStore.instance;
+  late final Future<UsuarioAtualModel?> _usuario = UsuarioAtualStore.instance
+      .carregar();
   List<DemandaItem> get _demandas => _store.demandas;
   bool get _carregando => _store.carregando;
   String? get _erro => _store.erro;
@@ -76,6 +84,9 @@ class _DemandasScreenState extends State<DemandasScreen> {
     if (criado == true) await _carregarDemandas();
   }
 
+  _Visualizacao _visualizacao = _Visualizacao.lista;
+  bool _movendoDemanda = false;
+
   String _filtroStatus = 'Todos os estados';
   static const List<String> _estados = [
     'Planejamento',
@@ -131,7 +142,60 @@ class _DemandasScreenState extends State<DemandasScreen> {
     }
   }
 
-  void _visualizarDemanda(DemandaItem demanda) {
+  Future<void> _moverNoQuadro(
+    DemandaItem demanda,
+    String origem,
+    String destino,
+  ) async {
+    if (_movendoDemanda) return;
+    setState(() => _movendoDemanda = true);
+    try {
+      await _store.moverNoQuadro(demanda.id, origem, destino);
+    } catch (erro) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$erro')));
+      await _carregarDemandas();
+    } finally {
+      if (mounted) setState(() => _movendoDemanda = false);
+    }
+  }
+
+  Future<void> _editarPrevisao(DemandaItem demanda) async {
+    final primeira = DateTime(1900);
+    final ultima = DateTime(2200, 12, 31);
+    final atual = demanda.dataPrevisao;
+    final data = await showDatePicker(
+      context: context,
+      initialDate:
+          atual == null || atual.isBefore(primeira) || atual.isAfter(ultima)
+          ? DateTime.now()
+          : atual,
+      firstDate: primeira,
+      lastDate: ultima,
+    );
+    if (!mounted || data == null) return;
+    await _salvarPrevisao(demanda, data);
+  }
+
+  Future<void> _salvarPrevisao(DemandaItem demanda, DateTime? data) async {
+    try {
+      await _store.atualizarPrevisao(demanda.id, data);
+    } catch (erro) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$erro')));
+    }
+  }
+
+  Future<void> _visualizarDemanda(DemandaItem demanda) async {
+    final perfil = (await _usuario)?.perfil;
+    if (!mounted) return;
+    final podeEditar =
+        (perfil == 'ADMIN' || perfil == 'CLIENTE') &&
+        _rotuloEstado(demanda.estado) != 'Concluído';
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -215,6 +279,42 @@ class _DemandasScreenState extends State<DemandasScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 24,
+                    runSpacing: 12,
+                    children: [
+                      for (final evento in datasDaDemanda(demanda))
+                        _detailLine(
+                          evento.rotulo,
+                          evento.data == null
+                              ? 'Sem data'
+                              : MaterialLocalizations.of(
+                                  context,
+                                ).formatCompactDate(evento.data!),
+                        ),
+                    ],
+                  ),
+                  if (podeEditar)
+                    Wrap(
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop();
+                            _editarPrevisao(demanda);
+                          },
+                          child: const Text('Alterar previsão'),
+                        ),
+                        if (demanda.dataPrevisao != null)
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop();
+                              _salvarPrevisao(demanda, null);
+                            },
+                            child: const Text('Remover previsão'),
+                          ),
+                      ],
+                    ),
                   const SizedBox(height: 20),
                   const Text(
                     'ESTADO ATUAL',
@@ -263,6 +363,25 @@ class _DemandasScreenState extends State<DemandasScreen> {
           ),
           actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
           actions: [
+            TextButton.icon(
+              onPressed: () async {
+                final usuario = await _usuario;
+                if (!dialogContext.mounted) return;
+                await Navigator.of(dialogContext).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => DemandTasksPage(
+                      demandaId: demanda.id,
+                      titulo: demanda.titulo,
+                      status: demanda.estado,
+                      usuario: usuario,
+                    ),
+                  ),
+                );
+                if (mounted) await _carregarDemandas();
+              },
+              icon: const Icon(Icons.checklist),
+              label: const Text('Tarefas'),
+            ),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: AutomatizeColors.primary,
@@ -312,9 +431,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
   }
 
   void _navegarParaPainel() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const PainelScreen()),
-    );
+    Navigator.of(context).pushReplacementNamed(AppRoutes.painel);
   }
 
   Future<void> _sair() async {
@@ -328,7 +445,13 @@ class _DemandasScreenState extends State<DemandasScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => FutureBuilder<UsuarioAtualModel?>(
+    future: _usuario,
+    builder: (context, snapshot) => _pagina(snapshot.data),
+  );
+
+  Widget _pagina(UsuarioAtualModel? usuario) {
+    final perfil = usuario?.perfil;
     final demandasVisiveis = _demandasFiltradas;
     return MainLayout(
       selectedIndex: 1,
@@ -344,7 +467,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _pageHeader(),
+                _pageHeader(perfil),
                 const SizedBox(height: 23),
                 Wrap(
                   spacing: 14,
@@ -353,7 +476,9 @@ class _DemandasScreenState extends State<DemandasScreen> {
                     _summaryCard(
                       title: 'Total de demandas',
                       value: _demandas.length.toString(),
-                      subtitle: 'Vinculadas ao seu projeto',
+                      subtitle: perfil == 'TECNICO'
+                          ? 'Atribuídas a você'
+                          : 'Visíveis para sua conta',
                       icon: Icons.view_list_rounded,
                       color: AutomatizeColors.cyan,
                     ),
@@ -388,7 +513,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
                   ],
                 ),
                 const SizedBox(height: 22),
-                _buildFilters(),
+                _buildFilters(perfil),
                 const SizedBox(height: 17),
                 Expanded(
                   child: _carregando
@@ -414,7 +539,24 @@ class _DemandasScreenState extends State<DemandasScreen> {
                             ],
                           ),
                         )
-                      : _buildDemandasTable(demandasVisiveis),
+                      : switch (_visualizacao) {
+                          _Visualizacao.lista => _buildDemandasTable(
+                            demandasVisiveis,
+                          ),
+                          _Visualizacao.quadro => QuadroDemandas(
+                            demandas: demandasVisiveis,
+                            estados: _estados,
+                            rotuloEstado: _rotuloEstado,
+                            corEstado: _corStatus,
+                            abrir: _visualizarDemanda,
+                            tecnicoId: perfil == 'TECNICO' ? usuario?.id : null,
+                            mover: _movendoDemanda ? null : _moverNoQuadro,
+                          ),
+                          _Visualizacao.calendario => CalendarioDemandas(
+                            demandas: demandasVisiveis,
+                            abrir: _visualizarDemanda,
+                          ),
+                        },
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -453,7 +595,25 @@ class _DemandasScreenState extends State<DemandasScreen> {
     );
   }
 
-  Widget _pageHeader() {
+  Widget _pageHeader(String? perfil) {
+    final (titulo, subtitulo, area) = switch (perfil) {
+      'TECNICO' => (
+        'Demandas atribuídas',
+        'Acompanhe as demandas sob sua responsabilidade.',
+        'Área técnica',
+      ),
+      'ADMIN' => (
+        'Demandas',
+        'Acompanhe o andamento das demandas cadastradas.',
+        'Área administrativa',
+      ),
+      'CLIENTE' => (
+        'Minhas demandas',
+        'Acompanhe o andamento e as atualizações do seu projeto.',
+        'Área do cliente',
+      ),
+      _ => ('Demandas', 'Acompanhe o andamento das demandas.', 'Área da conta'),
+    };
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -474,13 +634,13 @@ class _DemandasScreenState extends State<DemandasScreen> {
           ),
         ),
         const SizedBox(width: 15),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Minhas demandas',
-                style: TextStyle(
+                titulo,
+                style: const TextStyle(
                   color: AutomatizeColors.text,
                   fontSize: 25,
                   height: 1.15,
@@ -488,10 +648,10 @@ class _DemandasScreenState extends State<DemandasScreen> {
                   letterSpacing: -0.6,
                 ),
               ),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Text(
-                'Acompanhe o andamento e as atualizações do seu projeto.',
-                style: TextStyle(
+                subtitulo,
+                style: const TextStyle(
                   color: AutomatizeColors.muted,
                   fontSize: 12,
                   height: 1.35,
@@ -508,18 +668,18 @@ class _DemandasScreenState extends State<DemandasScreen> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AutomatizeColors.border),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.verified_user_outlined,
                 size: 15,
                 color: AutomatizeColors.success,
               ),
-              SizedBox(width: 7),
+              const SizedBox(width: 7),
               Text(
-                'Área do cliente',
-                style: TextStyle(
+                area,
+                style: const TextStyle(
                   color: AutomatizeColors.muted,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -611,17 +771,28 @@ class _DemandasScreenState extends State<DemandasScreen> {
     );
   }
 
-  Widget _buildFilters() {
+  Widget _buildFilters(String? perfil) {
     return Wrap(
       spacing: 11,
       runSpacing: 10,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        FilledButton.icon(
-          onPressed: _carregando ? null : _abrirCadastro,
-          icon: const Icon(Icons.add),
-          label: const Text('Nova demanda'),
-        ),
+        for (final (modo, rotulo) in const [
+          (_Visualizacao.lista, 'Lista'),
+          (_Visualizacao.quadro, 'Quadro'),
+          (_Visualizacao.calendario, 'Calendário'),
+        ])
+          ChoiceChip(
+            label: Text(rotulo),
+            selected: _visualizacao == modo,
+            onSelected: (_) => setState(() => _visualizacao = modo),
+          ),
+        if (perfil == 'CLIENTE')
+          FilledButton.icon(
+            onPressed: _carregando ? null : _abrirCadastro,
+            icon: const Icon(Icons.add),
+            label: const Text('Nova demanda'),
+          ),
         IconButton(
           tooltip: 'Atualizar demandas',
           onPressed: _carregando ? null : _carregarDemandas,
@@ -866,6 +1037,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
                                   DataColumn(label: _TableHeader('DEMANDA')),
                                   DataColumn(label: _TableHeader('ESTADO')),
                                   DataColumn(label: _TableHeader('PROGRESSO')),
+                                  DataColumn(label: _TableHeader('DATAS')),
                                   DataColumn(label: _TableHeader('')),
                                 ],
                                 rows: demandas.map((demanda) {
@@ -985,6 +1157,26 @@ class _DemandasScreenState extends State<DemandasScreen> {
                                               ),
                                             ],
                                           ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            for (final evento in datasDaDemanda(
+                                              demanda,
+                                            ))
+                                              Text(
+                                                '${evento.rotulo}: ${evento.data == null ? '—' : MaterialLocalizations.of(context).formatCompactDate(evento.data!)}',
+                                                style: const TextStyle(
+                                                  color: AutomatizeColors.muted,
+                                                  fontSize: 10,
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
                                       DataCell(
