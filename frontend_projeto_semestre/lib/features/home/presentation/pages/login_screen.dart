@@ -774,6 +774,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
               ),
             ),
+            if (AppConfig.passwordRecoveryEnabled) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.esqueciSenha),
+                child: const Text('Esqueci minha senha'),
+              ),
+            ],
             if (AppConfig.publicSignupEnabled) ...[
               const SizedBox(height: 12),
               TextButton.icon(

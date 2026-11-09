@@ -14,6 +14,7 @@ import '/features/admin/presentation/widgets/admin_guard.dart';
 import '/features/chat/chat_page.dart';
 import '/features/home/presentation/pages/login_screen.dart';
 import '/features/onboarding/presentation/pages/cadastro_screen.dart';
+import '/features/onboarding/presentation/pages/esqueci_senha_screen.dart';
 import '/features/onboarding/presentation/pages/aguardando_vinculo_screen.dart';
 import '/features/onboarding/presentation/pages/ambientes_screen.dart';
 import '/features/home/presentation/pages/home_page.dart';
@@ -33,6 +34,7 @@ abstract final class AppRoutes {
   static const String cadastroPendente = '/cadastro/pendente';
   static const String verificarEmail = '/verificar-email';
   static const String redefinirSenha = '/redefinir-senha';
+  static const String esqueciSenha = '/esqueci-senha';
   static const String ambientes = '/ambientes';
   static const String home = '/home';
   static const String painel = '/painel';
@@ -54,6 +56,7 @@ abstract final class AppRoutes {
     home: (_) => const HomePage(),
     login: (_) => const LoginScreen(),
     cadastro: (_) => const CadastroScreen(),
+    esqueciSenha: (_) => const EsqueciSenhaScreen(),
     // Tela sem informacoes privadas: um cadastro PENDENTE nao passa no AuthGuard.
     cadastroPendente: (context) {
       final data = ModalRoute.of(context)?.settings.arguments;
