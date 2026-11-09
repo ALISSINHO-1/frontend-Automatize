@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../app/routes/app_routes.dart';
+import '../../shared/widgets/main_layout.dart';
 import '../admin/data/models/usuario_atual_model.dart';
 import '../admin/data/services/usuario_atual_store.dart';
 import '../demands/data/models/pedido_model.dart';
@@ -19,6 +21,8 @@ class _ChatPageState extends State<ChatPage> {
   final _demandas = DemandService();
   final _chat = ChatService();
   bool _assumindo = false;
+  PedidoModel? _demandaSelecionada;
+  ChatCanal? _canalSelecionado;
   late var _dados = _carregar();
 
   Future<
@@ -64,8 +68,9 @@ class _ChatPageState extends State<ChatPage> {
       _assumindo = false;
       _dados = _carregar();
     });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(mensagem)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   @override
@@ -76,135 +81,382 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Chat'),
-      actions: [
-        IconButton(
-          onPressed: _assumindo ? null : _atualizar,
-          tooltip: 'Atualizar demandas',
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    ),
-    body: FutureBuilder(
-      future: _dados,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(
-            child: TextButton(
-              onPressed: _atualizar,
-              child: const Text('Falha ao carregar o chat. Tentar novamente'),
-            ),
-          );
-        }
-        final dados = snapshot.data!;
-        final usuario = dados.usuario;
-        final canais = usuario == null
-            ? <ChatCanal>[]
-            : ChatCanal.paraUsuario(usuario);
-        if (usuario == null || canais.isEmpty) {
-          return const Center(child: Text('Nenhuma conversa disponível.'));
-        }
-        final tecnico = usuario.perfil == 'TECNICO';
-        final fila = dados.fila;
-        if (!tecnico && dados.demandas.isEmpty) {
-          return const Center(child: Text('Nenhuma conversa disponível.'));
-        }
-        return ListView(
-          children: [
-            if (tecnico) ...[
-              const ListTile(
-                title: Text('Fila de atendimento'),
-                subtitle: Text(
-                  'Assuma uma demanda para liberar o chat com o cliente.',
-                ),
+  Widget build(BuildContext context) => MainLayout(
+    selectedIndex: 4,
+    onDestinationSelected: (index) {
+      if (index == 0) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.painel);
+      }
+      if (index == 1) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.demandas);
+      }
+    },
+    child: Scaffold(
+      backgroundColor: AutomatizeColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 26, 28, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AutomatizeColors.primary.withValues(alpha: .14),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: AutomatizeColors.border),
+                    ),
+                    child: const Icon(
+                      Icons.forum_rounded,
+                      color: AutomatizeColors.cyan,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Conversas',
+                          style: TextStyle(
+                            color: AutomatizeColors.text,
+                            fontSize: 27,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Acompanhe as conversas vinculadas às demandas.',
+                          style: TextStyle(color: AutomatizeColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton.outlined(
+                    onPressed: _assumindo ? null : _atualizar,
+                    tooltip: 'Atualizar conversas',
+                    icon: const Icon(Icons.refresh_rounded),
+                  ),
+                ],
               ),
-              if (fila == null)
-                ListTile(
-                  title: const Text('Não foi possível carregar a fila.'),
-                  trailing: TextButton(
-                    onPressed: _atualizar,
-                    child: const Text('Tentar novamente'),
-                  ),
-                )
-              else if (fila.isEmpty)
-                const ListTile(
-                  title: Text('Nenhuma demanda disponível na fila.'),
-                ),
-              for (final demanda in fila ?? const <DemandaNaFila>[])
-                ListTile(
-                  title: Text(demanda.titulo),
-                  subtitle: Text(demanda.codigo),
-                  trailing: FilledButton(
-                    onPressed: _assumindo ? null : () => _assumir(demanda),
-                    child: const Text('Assumir'),
-                  ),
-                ),
-              const Divider(),
-              const ListTile(title: Text('Minhas conversas')),
-              if (dados.demandas.isEmpty)
-                const ListTile(title: Text('Nenhuma conversa disponível.')),
+              const SizedBox(height: 22),
+              Expanded(child: _conteudo()),
             ],
-            for (final demanda in dados.demandas)
-              _conversa(context, demanda, usuario, canais),
-          ],
-        );
-      },
+          ),
+        ),
+      ),
     ),
   );
 
-  Widget _conversa(
-    BuildContext context,
-    PedidoModel demanda,
-    UsuarioAtualModel usuario,
-    List<ChatCanal> canais,
-  ) {
-    final temTecnico = demanda.responsavelId != null;
-    return ExpansionTile(
-      title: Text(demanda.titulo),
-      subtitle: Text(
-        temTecnico
-            ? demanda.codigoIdentificador ?? 'Escolha um canal'
-            : 'Aguardando técnico responsável',
+  Widget _conteudo() => FutureBuilder(
+    future: _dados,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (snapshot.hasError) {
+        return Center(
+          child: TextButton(
+            onPressed: _atualizar,
+            child: const Text('Falha ao carregar o chat. Tentar novamente'),
+          ),
+        );
+      }
+      final dados = snapshot.data!;
+      final usuario = dados.usuario;
+      final canais = usuario == null
+          ? <ChatCanal>[]
+          : ChatCanal.paraUsuario(usuario);
+      if (usuario == null || canais.isEmpty) {
+        return const Center(child: Text('Nenhuma conversa disponível.'));
+      }
+      final tecnico = usuario.perfil == 'TECNICO';
+      final fila = dados.fila;
+      if (!tecnico && dados.demandas.isEmpty) {
+        return const Center(child: Text('Nenhuma conversa disponível.'));
+      }
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final compacto = constraints.maxWidth < 760;
+          final lista = _listaConversas(
+            usuario: usuario,
+            canais: canais,
+            demandas: dados.demandas,
+            tecnico: tecnico,
+            fila: fila,
+            compacto: compacto,
+          );
+          if (compacto) return lista;
+          return Container(
+            decoration: BoxDecoration(
+              color: AutomatizeColors.panel,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AutomatizeColors.border),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Row(
+              children: [
+                SizedBox(width: 340, child: lista),
+                const VerticalDivider(width: 1),
+                Expanded(
+                  child:
+                      _demandaSelecionada == null || _canalSelecionado == null
+                      ? const _ChatEmptyState()
+                      : _ConversaPage(
+                          key: ValueKey(
+                            '${_demandaSelecionada!.id}-${_canalSelecionado!.name}',
+                          ),
+                          demanda: _demandaSelecionada!,
+                          canal: _canalSelecionado!,
+                          usuario: usuario,
+                          embedded: true,
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+
+  Widget _listaConversas({
+    required UsuarioAtualModel usuario,
+    required List<ChatCanal> canais,
+    required List<PedidoModel> demandas,
+    required bool tecnico,
+    required List<DemandaNaFila>? fila,
+    required bool compacto,
+  }) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: compacto ? AutomatizeColors.panel : AutomatizeColors.sidebar,
+        borderRadius: compacto ? BorderRadius.circular(18) : BorderRadius.zero,
+        border: compacto ? Border.all(color: AutomatizeColors.border) : null,
       ),
-      leading: const Icon(Icons.forum_outlined),
-      children: [
-        for (final canal in canais)
-          ListTile(
-            enabled: temTecnico,
-            title: Text(canal.titulo),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: !temTecnico
-                ? null
-                : () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => _ConversaPage(
-                        demanda: demanda,
-                        canal: canal,
-                        usuario: usuario,
-                      ),
+      child: ListView(
+        padding: const EdgeInsets.all(14),
+        children: [
+          if (tecnico) ...[
+            const _ChatSectionTitle(
+              title: 'Fila de atendimento',
+              subtitle: 'Demandas disponíveis para assumir',
+            ),
+            if (fila == null)
+              _ChatNotice(
+                text: 'Não foi possível carregar a fila.',
+                action: TextButton(
+                  onPressed: _atualizar,
+                  child: const Text('Tentar novamente'),
+                ),
+              )
+            else if (fila.isEmpty)
+              const _ChatNotice(text: 'Nenhuma demanda disponível na fila.')
+            else
+              for (final demanda in fila)
+                Card(
+                  color: AutomatizeColors.panelLight,
+                  child: ListTile(
+                    dense: true,
+                    title: Text(
+                      demanda.titulo,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(demanda.codigo),
+                    trailing: IconButton.filledTonal(
+                      onPressed: _assumindo ? null : () => _assumir(demanda),
+                      tooltip: 'Assumir demanda',
+                      icon: const Icon(Icons.person_add_alt_1_rounded),
                     ),
                   ),
+                ),
+            const SizedBox(height: 18),
+          ],
+          const _ChatSectionTitle(
+            title: 'Minhas conversas',
+            subtitle: 'Canais vinculados às demandas',
           ),
-      ],
+          if (demandas.isEmpty)
+            const _ChatNotice(text: 'Nenhuma conversa disponível.'),
+          for (final demanda in demandas)
+            for (final canal in canais)
+              _conversaItem(
+                demanda: demanda,
+                canal: canal,
+                usuario: usuario,
+                compacto: compacto,
+              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _conversaItem({
+    required PedidoModel demanda,
+    required ChatCanal canal,
+    required UsuarioAtualModel usuario,
+    required bool compacto,
+  }) {
+    final temTecnico = demanda.responsavelId != null;
+    final selecionada =
+        _demandaSelecionada?.id == demanda.id && _canalSelecionado == canal;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: selecionada
+            ? AutomatizeColors.primary.withValues(alpha: .2)
+            : AutomatizeColors.panel,
+        borderRadius: BorderRadius.circular(13),
+        child: ListTile(
+          enabled: temTecnico,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(13),
+            side: BorderSide(
+              color: selecionada
+                  ? AutomatizeColors.primary
+                  : AutomatizeColors.border,
+            ),
+          ),
+          leading: CircleAvatar(
+            backgroundColor: AutomatizeColors.primary.withValues(alpha: .15),
+            child: Icon(
+              canal == ChatCanal.cliente
+                  ? Icons.support_agent_rounded
+                  : Icons.admin_panel_settings_outlined,
+              color: AutomatizeColors.cyan,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            demanda.titulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            temTecnico
+                ? '${demanda.codigoIdentificador ?? demanda.id} · ${canal.titulo}'
+                : 'Aguardando técnico responsável',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: !temTecnico
+              ? null
+              : () {
+                  if (compacto) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => _ConversaPage(
+                          demanda: demanda,
+                          canal: canal,
+                          usuario: usuario,
+                        ),
+                      ),
+                    );
+                  } else {
+                    setState(() {
+                      _demandaSelecionada = demanda;
+                      _canalSelecionado = canal;
+                    });
+                  }
+                },
+        ),
+      ),
     );
   }
 }
 
+class _ChatSectionTitle extends StatelessWidget {
+  const _ChatSectionTitle({required this.title, required this.subtitle});
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(4, 2, 4, 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: const TextStyle(color: AutomatizeColors.muted, fontSize: 11),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ChatNotice extends StatelessWidget {
+  const _ChatNotice({required this.text, this.action});
+  final String text;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AutomatizeColors.background.withValues(alpha: .45),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AutomatizeColors.border),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.info_outline, color: AutomatizeColors.muted, size: 18),
+        const SizedBox(width: 9),
+        Expanded(child: Text(text)),
+        ?action,
+      ],
+    ),
+  );
+}
+
+class _ChatEmptyState extends StatelessWidget {
+  const _ChatEmptyState();
+
+  @override
+  Widget build(BuildContext context) => const Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.mark_chat_unread_outlined,
+          size: 54,
+          color: AutomatizeColors.muted,
+        ),
+        SizedBox(height: 16),
+        Text(
+          'Selecione uma conversa',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+        SizedBox(height: 6),
+        Text(
+          'As mensagens aparecerão aqui.',
+          style: TextStyle(color: AutomatizeColors.muted),
+        ),
+      ],
+    ),
+  );
+}
+
 class _ConversaPage extends StatefulWidget {
   const _ConversaPage({
+    super.key,
     required this.demanda,
     required this.canal,
     required this.usuario,
+    this.embedded = false,
   });
 
   final PedidoModel demanda;
   final ChatCanal canal;
   final UsuarioAtualModel usuario;
+  final bool embedded;
 
   @override
   State<_ConversaPage> createState() => _ConversaPageState();
@@ -303,61 +555,130 @@ class _ConversaPageState extends State<_ConversaPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(widget.canal.titulo),
-      actions: [
-        IconButton(
-          onPressed: _carregando || _enviando ? null : () => _carregar(),
-          tooltip: 'Atualizar mensagens',
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    ),
-    body: SafeArea(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(widget.demanda.titulo, textAlign: TextAlign.center),
-          ),
-          if (_erro != null)
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(_erro!, textAlign: TextAlign.center),
-            ),
-          Expanded(child: _historico(context)),
-          if (!_acessoEncerrado && _mensagens != null)
-            Padding(
-              padding: const EdgeInsets.all(12),
+  Widget build(BuildContext context) {
+    final conteudo = SafeArea(
+      child: DecoratedBox(
+        decoration: const BoxDecoration(color: AutomatizeColors.background),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: const BoxDecoration(
+                color: AutomatizeColors.panel,
+                border: Border(
+                  bottom: BorderSide(color: AutomatizeColors.border),
+                ),
+              ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _texto,
-                      readOnly: _enviando,
-                      minLines: 1,
-                      maxLines: 4,
-                      maxLength: 2000,
-                      decoration: const InputDecoration(
-                        labelText: 'Mensagem',
-                        border: OutlineInputBorder(),
-                      ),
+                  CircleAvatar(
+                    backgroundColor: AutomatizeColors.primary.withValues(
+                      alpha: .16,
+                    ),
+                    child: const Icon(
+                      Icons.forum_rounded,
+                      color: AutomatizeColors.cyan,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: _enviando || _carregando ? null : _enviar,
-                    tooltip: 'Enviar mensagem',
-                    icon: const Icon(Icons.send),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.demanda.titulo,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${widget.demanda.codigoIdentificador ?? widget.demanda.id} · ${widget.canal.titulo}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AutomatizeColors.muted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _carregando || _enviando
+                        ? null
+                        : () => _carregar(),
+                    tooltip: 'Atualizar mensagens',
+                    icon: const Icon(Icons.refresh_rounded),
                   ),
                 ],
               ),
             ),
-        ],
+            if (_erro != null)
+              Container(
+                width: double.infinity,
+                color: AutomatizeColors.danger.withValues(alpha: .12),
+                padding: const EdgeInsets.all(10),
+                child: Text(
+                  _erro!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFFFFA0AA)),
+                ),
+              ),
+            Expanded(child: _historico(context)),
+            if (!_acessoEncerrado && _mensagens != null)
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                decoration: const BoxDecoration(
+                  color: AutomatizeColors.panel,
+                  border: Border(
+                    top: BorderSide(color: AutomatizeColors.border),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _texto,
+                        readOnly: _enviando,
+                        minLines: 1,
+                        maxLines: 4,
+                        maxLength: 2000,
+                        decoration: InputDecoration(
+                          hintText: 'Escreva uma mensagem...',
+                          counterText: '',
+                          filled: true,
+                          fillColor: AutomatizeColors.background,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AutomatizeColors.border,
+                            ),
+                          ),
+                        ),
+                        onSubmitted: (_) => _enviar(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filled(
+                      onPressed: _enviando || _carregando ? null : _enviar,
+                      tooltip: 'Enviar mensagem',
+                      icon: const Icon(Icons.send),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+    if (widget.embedded) return conteudo;
+    return Scaffold(
+      backgroundColor: AutomatizeColors.background,
+      appBar: AppBar(title: const Text('Conversa')),
+      body: conteudo,
+    );
+  }
 
   Widget _historico(BuildContext context) {
     final mensagens = _mensagens;
@@ -369,10 +690,9 @@ class _ConversaPageState extends State<_ConversaPage> {
     if (mensagens.isEmpty) {
       return const Center(child: Text('Ainda não há mensagens.'));
     }
-    final cores = Theme.of(context).colorScheme;
     return ListView.builder(
       reverse: true,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       itemCount: mensagens.length + (_antesDe == null ? 0 : 1),
       itemBuilder: (context, index) {
         if (index == mensagens.length) {
@@ -392,8 +712,24 @@ class _ConversaPageState extends State<_ConversaPage> {
         );
         return Align(
           alignment: minha ? Alignment.centerRight : Alignment.centerLeft,
-          child: Card(
-            color: minha ? cores.primaryContainer : cores.surfaceContainerHigh,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 9),
+            decoration: BoxDecoration(
+              color: minha
+                  ? AutomatizeColors.primary.withValues(alpha: .28)
+                  : AutomatizeColors.panelLight,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(14),
+                topRight: const Radius.circular(14),
+                bottomLeft: Radius.circular(minha ? 14 : 3),
+                bottomRight: Radius.circular(minha ? 3 : 14),
+              ),
+              border: Border.all(
+                color: minha
+                    ? AutomatizeColors.primary
+                    : AutomatizeColors.border,
+              ),
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 520),
               child: Padding(

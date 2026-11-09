@@ -8,7 +8,6 @@ import '../../../admin/data/services/usuario_atual_store.dart';
 import '../../../demands/presentation/pages/demand_tasks_page.dart';
 import 'demanda_store.dart';
 import 'nova_demanda_screen.dart';
-import 'painel_screen.dart';
 import 'visualizacoes_demandas.dart';
 
 enum _Visualizacao { lista, quadro, calendario }
@@ -154,8 +153,9 @@ class _DemandasScreenState extends State<DemandasScreen> {
       await _store.moverNoQuadro(demanda.id, origem, destino);
     } catch (erro) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$erro')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$erro')));
       await _carregarDemandas();
     } finally {
       if (mounted) setState(() => _movendoDemanda = false);
@@ -184,8 +184,9 @@ class _DemandasScreenState extends State<DemandasScreen> {
       await _store.atualizarPrevisao(demanda.id, data);
     } catch (erro) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$erro')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$erro')));
     }
   }
 
@@ -288,8 +289,9 @@ class _DemandasScreenState extends State<DemandasScreen> {
                           evento.rotulo,
                           evento.data == null
                               ? 'Sem data'
-                              : MaterialLocalizations.of(context)
-                                    .formatCompactDate(evento.data!),
+                              : MaterialLocalizations.of(
+                                  context,
+                                ).formatCompactDate(evento.data!),
                         ),
                     ],
                   ),
@@ -429,9 +431,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
   }
 
   void _navegarParaPainel() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const PainelScreen()),
-    );
+    Navigator.of(context).pushReplacementNamed(AppRoutes.painel);
   }
 
   Future<void> _sair() async {
