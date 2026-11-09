@@ -15,8 +15,8 @@ class HomePage extends StatelessWidget {
   static const verde = Color(0xFF2FD3A1);
   static const roxo = Color(0xFFB784FF);
 
-  void _abrirDemandas(BuildContext context) {
-    Navigator.of(context).pushNamed(AppRoutes.demandas);
+  void _abrirLogin(BuildContext context) {
+    Navigator.of(context).pushNamed(AppRoutes.login);
   }
 
   @override
@@ -118,13 +118,8 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(width: 20),
         ],
-        IconButton(
-          onPressed: () => Navigator.of(context).pushNamed(AppRoutes.chat),
-          tooltip: 'Chat',
-          icon: const Icon(Icons.forum_outlined),
-        ),
         OutlinedButton.icon(
-          onPressed: () => _abrirDemandas(context),
+          onPressed: () => _abrirLogin(context),
           style: OutlinedButton.styleFrom(
             foregroundColor: texto,
             side: const BorderSide(color: borda),
@@ -133,9 +128,9 @@ class HomePage extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          icon: const Icon(Icons.assignment_outlined, size: 18),
-          label: Text(
-            largo ? 'Minhas demandas' : 'Demandas',
+          icon: const Icon(Icons.login_rounded, size: 18),
+          label: const Text(
+            'Entrar',
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
           ),
         ),
@@ -197,7 +192,7 @@ class HomePage extends StatelessWidget {
           runSpacing: 12,
           children: [
             FilledButton.icon(
-              onPressed: () => _abrirDemandas(context),
+              onPressed: () => _abrirLogin(context),
               style: FilledButton.styleFrom(
                 backgroundColor: azul,
                 foregroundColor: Colors.white,
@@ -211,7 +206,7 @@ class HomePage extends StatelessWidget {
               ),
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
               label: const Text(
-                'Ver lista de demandas',
+                'Entrar na plataforma',
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
               ),
             ),
@@ -418,10 +413,10 @@ class HomePage extends StatelessWidget {
             FilledButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                _abrirDemandas(context);
+                _abrirLogin(context);
               },
               style: FilledButton.styleFrom(backgroundColor: azul),
-              child: const Text('Ver demandas'),
+              child: const Text('Ir para o login'),
             ),
           ],
         );

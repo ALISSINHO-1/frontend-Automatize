@@ -5,20 +5,19 @@ import 'package:frontend_projeto_semestre/features/home/presentation/pages/login
 import 'package:frontend_projeto_semestre/features/home/presentation/pages/home_page.dart';
 
 void main() {
-  testWidgets('A aplicação inicia exibindo a tela de login', (
-    WidgetTester tester,
+  testWidgets('a aplicação inicia pela landing pública e abre o login', (
+    tester,
   ) async {
     await tester.pumpWidget(const FaculdadeApp());
+    await tester.pumpAndSettle();
 
-    await tester.pump();
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(LoginScreen), findsNothing);
 
-    // Verifica se a aplicação iniciou.
-    expect(find.byType(MaterialApp), findsOneWidget);
+    await tester.tap(find.text('Entrar'));
+    await tester.pumpAndSettle();
 
-    // Verifica se a tela de login está presente.
     expect(find.byType(LoginScreen), findsOneWidget);
-
-    // Verifica os campos do formulário de login.
     expect(find.byType(TextFormField), findsWidgets);
   });
 

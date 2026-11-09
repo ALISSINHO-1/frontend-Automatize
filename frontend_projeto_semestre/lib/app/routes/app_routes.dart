@@ -14,6 +14,7 @@ import '/features/demands/presentation/pages/demand_list_page.dart';
 import '/features/demands/data/models/pedido_model.dart';
 
 abstract final class AppRoutes {
+  static const String landing = '/';
   static const String login = '/login';
   static const String home = '/home';
   static const String painel = '/painel';
@@ -25,11 +26,10 @@ abstract final class AppRoutes {
   static const String chat = '/chat';
 
   static final Map<String, WidgetBuilder> routes = {
-    // Rota pública: login.
+    // Rotas públicas: apresentação e login.
+    landing: (_) => const HomePage(),
+    home: (_) => const HomePage(),
     login: (_) => const LoginScreen(),
-
-    // Rota protegida: Home do cliente.
-    home: (_) => const AuthGuard(child: HomePage()),
 
     // Rotas próprias evitam que a navegação lateral volte à apresentação.
     painel: (_) => const AuthGuard(child: PainelScreen()),
