@@ -1,10 +1,14 @@
-
 import 'package:flutter/material.dart';
 
+import '../../../../app/routes/app_routes.dart';
+import '../../data/models/pedido_model.dart';
 import '../../data/services/cliente_demanda_detalhes_service.dart';
 
 /// SCRUM-112: detalhes, histórico e etapas somente leitura.
-/// Esta página deve ser protegida por AuthGuard e ClienteGuard.
+/// SCRUM-113: acesso à avaliação formal da entrega.
+///
+/// A rota deve usar AuthGuard e ClienteGuard.
+/// A API valida a propriedade e o estado da demanda.
 class ClienteDemandaDetalhesPage extends StatefulWidget {
   const ClienteDemandaDetalhesPage({
     super.key,
@@ -31,16 +35,13 @@ class _ClienteDemandaDetalhesPageState
     super.initState();
 
     _ownsService = widget.service == null;
-    _service =
-        widget.service ?? ClienteDemandaDetalhesService();
+    _service = widget.service ?? ClienteDemandaDetalhesService();
 
     _dados = _service.carregar(widget.demandaId);
   }
 
   @override
-  void didUpdateWidget(
-    covariant ClienteDemandaDetalhesPage oldWidget,
-  ) {
+  void didUpdateWidget(covariant ClienteDemandaDetalhesPage oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.service != oldWidget.service ||
@@ -50,8 +51,7 @@ class _ClienteDemandaDetalhesPageState
       }
 
       _ownsService = widget.service == null;
-      _service =
-          widget.service ?? ClienteDemandaDetalhesService();
+      _service = widget.service ?? ClienteDemandaDetalhesService();
 
       _dados = _service.carregar(widget.demandaId);
     }
@@ -72,12 +72,8 @@ class _ClienteDemandaDetalhesPageState
     });
   }
 
-  static String _texto(
-    Object? value, {
-    String vazio = 'Não informado',
-  }) {
+  static String _texto(Object? value, {String vazio = 'Não informado'}) {
     final text = value?.toString().trim() ?? '';
-
     return text.isEmpty ? vazio : text;
   }
 
@@ -110,6 +106,55 @@ class _ClienteDemandaDetalhesPageState
     return number?.clamp(0.0, 100.0).toDouble();
   }
 
+  bool _emHomologacao(Map<String, dynamic> demanda) {
+    return demanda['status']?.toString().trim().toUpperCase() == 'HOMOLOGACAO';
+  }
+
+  /// Abre a homologação com um PedidoModel, conforme
+  /// o construtor existente de DemandHomologationPage.
+  Future<void> _abrirHomologacao(Map<String, dynamic> dadosDemanda) async {
+    late final PedidoModel pedido;
+
+    try {
+      final dados = Map<String, dynamic>.from(dadosDemanda);
+
+      // A API pode retornar o percentual como texto decimal.
+      // Normaliza o valor para manter compatibilidade
+      // com modelos que esperam um número.
+      final progresso = dados['percentual_progresso'];
+
+      if (progresso is String) {
+        dados['percentual_progresso'] = double.tryParse(progresso);
+      }
+
+      pedido = PedidoModel.fromJson(dados);
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível preparar os dados '
+            'da demanda para avaliação.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    final resultado = await Navigator.of(
+      context,
+    ).pushNamed<bool>(AppRoutes.clienteHomologacao, arguments: pedido);
+
+    if (!mounted) return;
+
+    if (resultado == true) {
+      _recarregar();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,11 +172,8 @@ class _ClienteDemandaDetalhesPageState
       body: FutureBuilder<ClienteDemandaDetalhes>(
         future: _dados,
         builder: (context, snapshot) {
-          if (snapshot.connectionState !=
-              ConnectionState.done) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -141,15 +183,9 @@ class _ClienteDemandaDetalhesPageState
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.lock_outline,
-                      size: 42,
-                    ),
+                    const Icon(Icons.lock_outline, size: 42),
                     const SizedBox(height: 12),
-                    Text(
-                      '${snapshot.error}',
-                      textAlign: TextAlign.center,
-                    ),
+                    Text('${snapshot.error}', textAlign: TextAlign.center),
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: _recarregar,
@@ -164,11 +200,7 @@ class _ClienteDemandaDetalhesPageState
           final dados = snapshot.data;
 
           if (dados == null) {
-            return const Center(
-              child: Text(
-                'Nenhuma informação disponível.',
-              ),
-            );
+            return const Center(child: Text('Nenhuma informação disponível.'));
           }
 
           return _conteudo(dados);
@@ -180,9 +212,7 @@ class _ClienteDemandaDetalhesPageState
   Widget _conteudo(ClienteDemandaDetalhes dados) {
     final d = dados.demanda;
 
-    final valorProgresso = _progresso(
-      d['percentual_progresso'],
-    );
+    final valorProgresso = _progresso(d['percentual_progresso']);
 
     final percentual = valorProgresso == null
         ? 'Não informado'
@@ -190,10 +220,9 @@ class _ClienteDemandaDetalhesPageState
 
     final etapas = [...dados.etapas]
       ..sort(
-        (a, b) =>
-            ((a['ordem'] as num?)?.toInt() ?? 0).compareTo(
-              (b['ordem'] as num?)?.toInt() ?? 0,
-            ),
+        (a, b) => ((a['ordem'] as num?)?.toInt() ?? 0).compareTo(
+          (b['ordem'] as num?)?.toInt() ?? 0,
+        ),
       );
 
     return Center(
@@ -204,113 +233,85 @@ class _ClienteDemandaDetalhesPageState
           children: [
             Text(
               _texto(d['titulo']),
-              style:
-                  Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
+
             const SizedBox(height: 8),
-            Text(
-              'Código: ${_texto(d['codigo_identificador'])}',
-            ),
+
+            Text('Código: ${_texto(d['codigo_identificador'])}'),
+
             const SizedBox(height: 16),
 
-            _bloco(
-              'Detalhes da demanda',
-              [
-                _linha(
-                  'Descrição',
-                  _texto(
-                    d['descricao'],
-                    vazio: 'Sem descrição',
-                  ),
-                ),
-                _linha(
-                  'Estado',
-                  _texto(d['status']),
-                ),
-                _linha(
-                  'Responsável (ID)',
-                  _texto(d['responsavel_id']),
-                ),
-                _linha(
-                  'Criada em',
-                  _data(d['created_at']),
-                ),
-                _linha(
-                  'Atualizada em',
-                  _data(d['updated_at']),
-                ),
-                _linha(
-                  'Iniciada em',
-                  _data(d['data_inicio']),
-                ),
-                _linha(
-                  'Previsão',
-                  _texto(d['data_previsao']),
-                ),
-                _linha(
-                  'Concluída em',
-                  _data(d['data_conclusao']),
-                ),
-              ],
-            ),
+            // Detalhes obtidos da API.
+            _bloco('Detalhes da demanda', [
+              _linha(
+                'Descrição',
+                _texto(d['descricao'], vazio: 'Sem descrição'),
+              ),
+              _linha('Estado', _texto(d['status'])),
+              _linha('Responsável (ID)', _texto(d['responsavel_id'])),
+              _linha('Criada em', _data(d['created_at'])),
+              _linha('Atualizada em', _data(d['updated_at'])),
+              _linha('Iniciada em', _data(d['data_inicio'])),
+              _linha('Previsão', _texto(d['data_previsao'])),
+              _linha('Concluída em', _data(d['data_conclusao'])),
+            ]),
 
-            _bloco(
-              'Progresso informado pela API',
-              [
-                Text(percentual),
-                const SizedBox(height: 10),
-                if (valorProgresso != null)
-                  LinearProgressIndicator(
-                    value: valorProgresso / 100,
-                  ),
-              ],
-            ),
+            // SCRUM-113: o botão só aparece para
+            // demandas em homologação.
+            if (_emHomologacao(d))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: FilledButton.icon(
+                  onPressed: () => _abrirHomologacao(d),
+                  icon: const Icon(Icons.fact_check_outlined),
+                  label: const Text('Avaliar entrega'),
+                ),
+              ),
 
-            _bloco(
-              'Etapas do atendimento (somente leitura)',
-              [
-                if (etapas.isEmpty)
-                  const Text(
-                    'Nenhuma etapa registrada.',
-                  ),
+            // Progresso real do backend.
+            _bloco('Progresso informado pela API', [
+              Text(percentual),
+              const SizedBox(height: 10),
+              if (valorProgresso != null)
+                LinearProgressIndicator(value: valorProgresso / 100),
+            ]),
 
-                for (final etapa in etapas)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      etapa['concluida'] == true
-                          ? Icons.check_circle_outline
-                          : Icons.pending_outlined,
-                    ),
-                    title: Text(
-                      _texto(etapa['descricao']),
-                    ),
-                    subtitle: Text(
-                      etapa['concluida'] == true
-                          ? 'Concluída em '
+            // Etapas somente leitura.
+            _bloco('Etapas do atendimento (somente leitura)', [
+              if (etapas.isEmpty) const Text('Nenhuma etapa registrada.'),
+
+              for (final etapa in etapas)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    etapa['concluida'] == true
+                        ? Icons.check_circle_outline
+                        : Icons.pending_outlined,
+                  ),
+                  title: Text(_texto(etapa['descricao'])),
+                  subtitle: Text(
+                    etapa['concluida'] == true
+                        ? 'Concluída em '
                               '${_data(etapa['concluida_em'])}'
-                          : 'Pendente',
-                    ),
+                        : 'Pendente',
                   ),
-              ],
-            ),
+                ),
+            ]),
 
+            // Histórico real da API.
             _bloco(
               'Histórico e registros de aceite '
               '(somente leitura)',
               [
                 if (dados.historico.isEmpty)
-                  const Text(
-                    'Nenhum registro no histórico.',
-                  ),
+                  const Text('Nenhum registro no histórico.'),
 
                 for (final evento in dados.historico)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.history),
-                    title: Text(
-                      _texto(evento['acao']),
-                    ),
+                    title: Text(_texto(evento['acao'])),
                     subtitle: Text(
                       'Registrado em '
                       '${_data(evento['created_at'])}',
@@ -318,9 +319,11 @@ class _ClienteDemandaDetalhesPageState
                   ),
 
                 const SizedBox(height: 8),
+
                 const Text(
-                  'Nenhuma ação de aprovação ou rejeição '
-                  'é executada nesta página.',
+                  'O histórico é somente leitura. '
+                  'A aprovação ou rejeição é realizada '
+                  'na tela de avaliação.',
                 ),
               ],
             ),
@@ -330,10 +333,7 @@ class _ClienteDemandaDetalhesPageState
     );
   }
 
-  Widget _bloco(
-    String titulo,
-    List<Widget> conteudo,
-  ) {
+  Widget _bloco(String titulo, List<Widget> conteudo) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -341,11 +341,7 @@ class _ClienteDemandaDetalhesPageState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              titulo,
-              style:
-                  Theme.of(context).textTheme.titleLarge,
-            ),
+            Text(titulo, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             ...conteudo,
           ],
@@ -354,10 +350,7 @@ class _ClienteDemandaDetalhesPageState
     );
   }
 
-  Widget _linha(
-    String label,
-    String valor,
-  ) {
+  Widget _linha(String label, String valor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text('$label: $valor'),
