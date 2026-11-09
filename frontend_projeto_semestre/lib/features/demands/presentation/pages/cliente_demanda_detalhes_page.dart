@@ -4,11 +4,6 @@ import '../../../../app/routes/app_routes.dart';
 import '../../data/models/pedido_model.dart';
 import '../../data/services/cliente_demanda_detalhes_service.dart';
 
-/// SCRUM-112: detalhes, histórico e etapas somente leitura.
-/// SCRUM-113: acesso à avaliação formal da entrega.
-///
-/// A rota deve usar AuthGuard e ClienteGuard.
-/// A API valida a propriedade e o estado da demanda.
 class ClienteDemandaDetalhesPage extends StatefulWidget {
   const ClienteDemandaDetalhesPage({
     super.key,
@@ -66,15 +61,18 @@ class _ClienteDemandaDetalhesPageState
     super.dispose();
   }
 
+  // Atualiza os dados da demanda diretamente pela API.
   void _recarregar() {
+    if (!mounted) return;
+
     setState(() {
       _dados = _service.carregar(widget.demandaId);
     });
   }
 
   static String _texto(Object? value, {String vazio = 'Não informado'}) {
-    final text = value?.toString().trim() ?? '';
-    return text.isEmpty ? vazio : text;
+    final texto = value?.toString().trim() ?? '';
+    return texto.isEmpty ? vazio : texto;
   }
 
   static String _data(Object? value) {
@@ -82,18 +80,20 @@ class _ClienteDemandaDetalhesPageState
       return 'Não informada';
     }
 
-    final date = DateTime.tryParse(value.toString());
+    final data = DateTime.tryParse(value.toString());
 
-    if (date == null) {
+    if (data == null) {
       return 'Não informada';
     }
 
-    final local = date.toLocal();
+    final local = data.toLocal();
 
-    String p(int n) => n.toString().padLeft(2, '0');
+    String doisDigitos(int n) => n.toString().padLeft(2, '0');
 
-    return '${p(local.day)}/${p(local.month)}/${local.year} '
-        '${p(local.hour)}:${p(local.minute)}';
+    return '${doisDigitos(local.day)}/'
+        '${doisDigitos(local.month)}/${local.year} '
+        '${doisDigitos(local.hour)}:'
+        '${doisDigitos(local.minute)}';
   }
 
   static double? _progresso(Object? value) {
@@ -101,26 +101,25 @@ class _ClienteDemandaDetalhesPageState
       return null;
     }
 
-    final number = double.tryParse(value.toString());
+    final numero = double.tryParse(value.toString());
 
-    return number?.clamp(0.0, 100.0).toDouble();
+    return numero?.clamp(0.0, 100.0).toDouble();
   }
 
+  // Identifica demandas que podem apresentar
+  // o botão de avaliação da entrega.
   bool _emHomologacao(Map<String, dynamic> demanda) {
     return demanda['status']?.toString().trim().toUpperCase() == 'HOMOLOGACAO';
   }
 
-  /// Abre a homologação com um PedidoModel, conforme
-  /// o construtor existente de DemandHomologationPage.
+  // SCRUM-113:
+  // Abre a homologação com um PedidoModel.
   Future<void> _abrirHomologacao(Map<String, dynamic> dadosDemanda) async {
     late final PedidoModel pedido;
 
     try {
       final dados = Map<String, dynamic>.from(dadosDemanda);
 
-      // A API pode retornar o percentual como texto decimal.
-      // Normaliza o valor para manter compatibilidade
-      // com modelos que esperam um número.
       final progresso = dados['percentual_progresso'];
 
       if (progresso is String) {
@@ -139,6 +138,7 @@ class _ClienteDemandaDetalhesPageState
           ),
         ),
       );
+
       return;
     }
 
@@ -153,6 +153,20 @@ class _ClienteDemandaDetalhesPageState
     if (resultado == true) {
       _recarregar();
     }
+  }
+
+  // SCRUM-114:
+  // Abre as ocorrências da demanda selecionada.
+  // Ao retornar, consulta novamente os dados da API.
+  Future<void> _abrirOcorrencias() async {
+    await Navigator.of(context).pushNamed<void>(
+      AppRoutes.clienteOcorrencias,
+      arguments: widget.demandaId,
+    );
+
+    if (!mounted) return;
+
+    _recarregar();
   }
 
   @override
@@ -172,10 +186,12 @@ class _ClienteDemandaDetalhesPageState
       body: FutureBuilder<ClienteDemandaDetalhes>(
         future: _dados,
         builder: (context, snapshot) {
+          // Estado de carregamento.
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
 
+          // Tratamento de erros da API.
           if (snapshot.hasError) {
             return Center(
               child: Padding(
@@ -210,9 +226,9 @@ class _ClienteDemandaDetalhesPageState
   }
 
   Widget _conteudo(ClienteDemandaDetalhes dados) {
-    final d = dados.demanda;
+    final demanda = dados.demanda;
 
-    final valorProgresso = _progresso(d['percentual_progresso']);
+    final valorProgresso = _progresso(demanda['percentual_progresso']);
 
     final percentual = valorProgresso == null
         ? 'Não informado'
@@ -231,45 +247,61 @@ class _ClienteDemandaDetalhesPageState
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            // Título da demanda.
             Text(
-              _texto(d['titulo']),
+              _texto(demanda['titulo']),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
 
             const SizedBox(height: 8),
 
-            Text('Código: ${_texto(d['codigo_identificador'])}'),
+            Text(
+              'Código: '
+              '${_texto(demanda['codigo_identificador'])}',
+            ),
 
             const SizedBox(height: 16),
 
-            // Detalhes obtidos da API.
+            // SCRUM-112:
+            // Informações recebidas da API.
             _bloco('Detalhes da demanda', [
               _linha(
                 'Descrição',
-                _texto(d['descricao'], vazio: 'Sem descrição'),
+                _texto(demanda['descricao'], vazio: 'Sem descrição'),
               ),
-              _linha('Estado', _texto(d['status'])),
-              _linha('Responsável (ID)', _texto(d['responsavel_id'])),
-              _linha('Criada em', _data(d['created_at'])),
-              _linha('Atualizada em', _data(d['updated_at'])),
-              _linha('Iniciada em', _data(d['data_inicio'])),
-              _linha('Previsão', _texto(d['data_previsao'])),
-              _linha('Concluída em', _data(d['data_conclusao'])),
+              _linha('Estado', _texto(demanda['status'])),
+              _linha('Responsável (ID)', _texto(demanda['responsavel_id'])),
+              _linha('Criada em', _data(demanda['created_at'])),
+              _linha('Atualizada em', _data(demanda['updated_at'])),
+              _linha('Iniciada em', _data(demanda['data_inicio'])),
+              _linha('Previsão', _texto(demanda['data_previsao'])),
+              _linha('Concluída em', _data(demanda['data_conclusao'])),
             ]),
 
-            // SCRUM-113: o botão só aparece para
-            // demandas em homologação.
-            if (_emHomologacao(d))
+            // SCRUM-113:
+            // A avaliação aparece somente em homologação.
+            if (_emHomologacao(demanda))
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: FilledButton.icon(
-                  onPressed: () => _abrirHomologacao(d),
+                  onPressed: () => _abrirHomologacao(demanda),
                   icon: const Icon(Icons.fact_check_outlined),
                   label: const Text('Avaliar entrega'),
                 ),
               ),
 
-            // Progresso real do backend.
+            // SCRUM-114:
+            // Botão de abertura e acompanhamento.
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: OutlinedButton.icon(
+                onPressed: _abrirOcorrencias,
+                icon: const Icon(Icons.report_problem_outlined),
+                label: const Text('Ocorrências da demanda'),
+              ),
+            ),
+
+            // Progresso real informado pela API.
             _bloco('Progresso informado pela API', [
               Text(percentual),
               const SizedBox(height: 10),
@@ -299,7 +331,7 @@ class _ClienteDemandaDetalhesPageState
                 ),
             ]),
 
-            // Histórico real da API.
+            // Histórico da demanda.
             _bloco(
               'Histórico e registros de aceite '
               '(somente leitura)',
@@ -322,8 +354,8 @@ class _ClienteDemandaDetalhesPageState
 
                 const Text(
                   'O histórico é somente leitura. '
-                  'A aprovação ou rejeição é realizada '
-                  'na tela de avaliação.',
+                  'A aprovação e a rejeição são '
+                  'realizadas na tela de avaliação.',
                 ),
               ],
             ),

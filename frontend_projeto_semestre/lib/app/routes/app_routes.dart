@@ -11,6 +11,7 @@ import '/features/home/presentation/pages/home_page.dart';
 
 import '/features/demands/data/models/pedido_model.dart';
 import '/features/demands/presentation/pages/cliente_demanda_detalhes_page.dart';
+import '/features/demands/presentation/pages/cliente_ocorrencias_page.dart';
 import '/features/demands/presentation/pages/demand_details_page.dart';
 import '/features/demands/presentation/pages/demand_homologation_page.dart';
 import '/features/demands/presentation/pages/demand_list_page.dart';
@@ -26,21 +27,23 @@ abstract final class AppRoutes {
 
   static const String clienteHomologacao = '/cliente/demandas/homologacao';
 
+  static const String clienteOcorrencias = '/cliente/demandas/ocorrencias';
+
   static final Map<String, WidgetBuilder> routes = {
-    // LOGIN: rota pública.
+    // Rota pública: login.
     login: (_) => const LoginScreen(),
 
-    // CLIENTE: página principal.
+    // Portal do CLIENTE.
     home: (_) => const AuthGuard(child: ClienteGuard(child: HomePage())),
 
-    // ADMIN: painel administrativo.
+    // Portal administrativo.
     admin: (_) => const AuthGuard(child: AdminGuard(child: AdminPanelPage())),
 
-    // CLIENTE: listagem de demandas.
+    // Lista de demandas do CLIENTE.
     demandList: (_) =>
         const AuthGuard(child: ClienteGuard(child: DemandListPage())),
 
-    // CLIENTE: página antiga de detalhes.
+    // Rota antiga de detalhes, preservada.
     demandDetails: (context) {
       final arguments = ModalRoute.of(context)?.settings.arguments;
 
@@ -67,7 +70,6 @@ abstract final class AppRoutes {
       );
     },
 
-    // SCRUM-112: acompanhamento real da demanda.
     clienteDetalhes: (context) {
       final arguments = ModalRoute.of(context)?.settings.arguments;
 
@@ -82,10 +84,6 @@ abstract final class AppRoutes {
       );
     },
 
-    // SCRUM-113: homologação da entrega.
-    //
-    // A versão atual de DemandHomologationPage
-    // exige um PedidoModel pelo parâmetro "pedido".
     clienteHomologacao: (context) {
       final arguments = ModalRoute.of(context)?.settings.arguments;
 
@@ -93,6 +91,20 @@ abstract final class AppRoutes {
         child: ClienteGuard(
           child: arguments is PedidoModel
               ? DemandHomologationPage(pedido: arguments)
+              : const Scaffold(
+                  body: Center(child: Text('Demanda não selecionada.')),
+                ),
+        ),
+      );
+    },
+
+    clienteOcorrencias: (context) {
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+
+      return AuthGuard(
+        child: ClienteGuard(
+          child: arguments is String && arguments.trim().isNotEmpty
+              ? ClienteOcorrenciasPage(demandaId: arguments)
               : const Scaffold(
                   body: Center(child: Text('Demanda não selecionada.')),
                 ),
