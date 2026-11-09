@@ -68,8 +68,9 @@ class _ChatPageState extends State<ChatPage> {
       _assumindo = false;
       _dados = _carregar();
     });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(mensagem)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   @override
@@ -762,8 +763,9 @@ class _ConversaPageState extends State<_ConversaPage> {
                   children: [
                     Text(
                       '${minha ? 'Você' : mensagem.autorNome} · $data $hora',
-                      style: Theme.of(context).textTheme.labelMedium
-                          ?.copyWith(color: AutomatizeColors.muted),
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: AutomatizeColors.muted,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     SelectableText(

@@ -153,8 +153,9 @@ class _DemandasScreenState extends State<DemandasScreen> {
       await _store.moverNoQuadro(demanda.id, origem, destino);
     } catch (erro) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$erro')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$erro')));
       await _carregarDemandas();
     } finally {
       if (mounted) setState(() => _movendoDemanda = false);
@@ -183,8 +184,9 @@ class _DemandasScreenState extends State<DemandasScreen> {
       await _store.atualizarPrevisao(demanda.id, data);
     } catch (erro) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$erro')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$erro')));
     }
   }
 
@@ -287,8 +289,9 @@ class _DemandasScreenState extends State<DemandasScreen> {
                           evento.rotulo,
                           evento.data == null
                               ? 'Sem data'
-                              : MaterialLocalizations.of(context)
-                                    .formatCompactDate(evento.data!),
+                              : MaterialLocalizations.of(
+                                  context,
+                                ).formatCompactDate(evento.data!),
                         ),
                     ],
                   ),
