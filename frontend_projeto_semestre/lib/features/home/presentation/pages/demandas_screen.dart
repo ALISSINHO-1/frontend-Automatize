@@ -268,7 +268,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
                             ),
                           ),
                           Text(
-                            _formatarProgresso(demanda),
+                            _formatarProgresso(demandaAtual),
                             style: TextStyle(
                               color: cor,
                               fontSize: 13,
@@ -280,7 +280,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
                       const SizedBox(height: 9),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: _barraProgresso(demanda, cor, altura: 9),
+                        child: _barraProgresso(demandaAtual, cor, altura: 9),
                       ),
                     ],
                   ),
@@ -288,6 +288,19 @@ class _DemandasScreenState extends State<DemandasScreen> {
               ),
               actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
               actions: [
+                // SCRUM-112: consulta os detalhes reais da API.
+                OutlinedButton.icon(
+                  onPressed: () {
+                    final navigator = Navigator.of(dialogContext);
+                    navigator.pop();
+                    navigator.pushNamed(
+                      AppRoutes.clienteDetalhes,
+                      arguments: demandaAtual!.id,
+                    );
+                  },
+                  icon: const Icon(Icons.timeline),
+                  label: const Text('Acompanhamento completo'),
+                ),
                 FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: AutomatizeColors.primary,
