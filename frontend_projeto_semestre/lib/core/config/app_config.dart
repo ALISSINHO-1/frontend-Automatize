@@ -18,6 +18,10 @@ abstract final class AppConfig {
   );
 
   // Sitekey publico. O segredo Turnstile fica SOMENTE no Render.
+  static const bool passwordRecoveryEnabled = bool.fromEnvironment(
+    'ENABLE_PASSWORD_RECOVERY', defaultValue: false,
+  );
+
   static const String turnstileSiteKey = String.fromEnvironment(
     'TURNSTILE_SITE_KEY',
     defaultValue: '',
