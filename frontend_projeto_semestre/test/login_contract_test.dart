@@ -24,6 +24,12 @@ void main() {
         routes: {
           AppRoutes.painel: (_) =>
               const Scaffold(body: Text('Área autenticada')),
+          AppRoutes.cadastroPendente: (_) =>
+              const Scaffold(body: Text('Cadastro pendente')),
+          AppRoutes.admin: (_) =>
+              const Scaffold(body: Text('Área administrativa')),
+          AppRoutes.tecnico: (_) =>
+              const Scaffold(body: Text('Área técnica')),
         },
       ),
     );
@@ -41,15 +47,23 @@ void main() {
     tester,
   ) async {
     final client = MockClient((request) async {
-      expect(request.method, 'POST');
-      expect(request.url.path, '/auth/login');
-      expect(request.headers.containsKey('Authorization'), isFalse);
-      expect(jsonDecode(request.body), {
-        'email': 'cliente@example.com',
-        'senha': 'senha-de-teste',
-      });
+      if (request.method == 'POST') {
+        expect(request.url.path, '/auth/login');
+        expect(request.headers.containsKey('Authorization'), isFalse);
+        expect(jsonDecode(request.body), {
+          'email': 'cliente@example.com',
+          'senha': 'senha-de-teste',
+        });
+        return http.Response(
+          '{"access_token":"jwt-teste","token_type":"bearer"}',
+          200,
+        );
+      }
+      expect(request.method, 'GET');
+      expect(request.url.path, '/auth/contexto');
+      expect(request.headers['Authorization'], 'Bearer jwt-teste');
       return http.Response(
-        '{"access_token":"jwt-teste","token_type":"bearer"}',
+        '{"perfil":"CLIENTE","situacao_cadastro":"ATIVO","ambientes":[]}',
         200,
       );
     });
@@ -58,6 +72,22 @@ void main() {
     expect(await LocalStorageService.getToken(), 'jwt-teste');
     expect(find.text('Área autenticada'), findsOneWidget);
     expect(find.byType(LoginScreen), findsNothing);
+  });
+
+  testWidgets('conta pendente nunca abre painel operacional', (tester) async {
+    final client = MockClient((request) async {
+      if (request.url.path == '/auth/login') {
+        return http.Response(
+          '{"access_token":"jwt-pendente","token_type":"bearer"}', 200);
+      }
+      expect(request.url.path, '/auth/contexto');
+      return http.Response(
+        '{"perfil":"CLIENTE","situacao_cadastro":"PENDENTE","ambientes":[]}', 200);
+    });
+    addTearDown(client.close);
+    await submit(tester, client);
+    expect(find.text('Cadastro pendente'), findsOneWidget);
+    expect(find.text('Área autenticada'), findsNothing);
   });
 
   for (final response in [
