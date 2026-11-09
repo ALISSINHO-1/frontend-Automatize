@@ -11,7 +11,7 @@ class DemandStatusFilter extends StatelessWidget {
   final ValueChanged<String?> onStatusChanged;
 
   static const List<String> estados = [
-    'PLANEJAMENTO',
+    'PLANEAMENTO',
     'EXECUCAO',
     'HOMOLOGACAO',
     'CONCLUIDO',
@@ -25,7 +25,8 @@ class DemandStatusFilter extends StatelessWidget {
         .replaceAll('Ã', 'A')
         .replaceAll('Í', 'I')
         .replaceAll('É', 'E');
-    return normalizado == 'PLANEAMENTO' ? 'PLANEJAMENTO' : normalizado;
+
+    return normalizado == 'PLANEJAMENTO' ? 'PLANEAMENTO' : normalizado;
   }
 
   static List<T> filtrar<T>(
@@ -33,7 +34,7 @@ class DemandStatusFilter extends StatelessWidget {
     String? statusSelecionado,
     String Function(T) obterStatus,
   ) {
-    if (statusSelecionado == null) {
+    if (statusSelecionado == null || statusSelecionado == 'TODOS') {
       return demandas;
     }
 
@@ -46,7 +47,8 @@ class DemandStatusFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      initialValue: statusSelecionado,
+      key: ValueKey(statusSelecionado ?? 'TODOS'),
+      initialValue: statusSelecionado ?? 'TODOS',
       isExpanded: true,
       decoration: const InputDecoration(
         labelText: 'Filtrar por estado',
@@ -54,14 +56,13 @@ class DemandStatusFilter extends StatelessWidget {
         prefixIcon: Icon(Icons.filter_list),
         border: OutlineInputBorder(),
       ),
-      hint: const Text('Todos os estados'),
       items: const [
         DropdownMenuItem<String>(
           value: 'TODOS',
           child: Text('Todos os estados'),
         ),
         DropdownMenuItem<String>(
-          value: 'PLANEJAMENTO',
+          value: 'PLANEAMENTO',
           child: Text('Planejamento'),
         ),
         DropdownMenuItem<String>(value: 'EXECUCAO', child: Text('Execução')),

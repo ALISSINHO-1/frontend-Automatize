@@ -19,6 +19,71 @@ class DemandServiceException implements Exception {
   String toString() => mensagem;
 }
 
+class DemandFilters {
+  const DemandFilters({
+    this.busca,
+    this.status,
+    this.clienteId,
+    this.responsavelId,
+    this.criadoDe,
+    this.criadoAte,
+  });
+
+  final String? busca;
+  final String? status;
+  final String? clienteId;
+  final String? responsavelId;
+  final DateTime? criadoDe;
+  final DateTime? criadoAte;
+
+  Map<String, String> toQueryParameters() {
+    final params = <String, String>{};
+
+    void adicionar(String chave, String? valor) {
+      if (valor != null && valor.trim().isNotEmpty) {
+        params[chave] = valor.trim();
+      }
+    }
+
+    adicionar('busca', busca);
+    adicionar('status', status);
+    adicionar('cliente_id', clienteId);
+    adicionar('responsavel_id', responsavelId);
+    adicionar('criado_de', criadoDe?.toIso8601String());
+    adicionar('criado_ate', criadoAte?.toIso8601String());
+
+    return params;
+  }
+}
+
+class DemandIndicators {
+  const DemandIndicators({required this.total, required this.porStatus});
+
+  final int total;
+  final Map<String, int> porStatus;
+
+  factory DemandIndicators.fromJson(Map<String, dynamic> json) {
+    final total = json['total'];
+    final status = json['por_status'];
+
+    if (total is! int || total < 0 || status is! Map<String, dynamic>) {
+      throw const FormatException('A API retornou indicadores inválidos.');
+    }
+
+    final contagens = <String, int>{};
+
+    for (final entry in status.entries) {
+      if (entry.value is! int || (entry.value as int) < 0) {
+        throw const FormatException('A API retornou uma contagem inválida.');
+      }
+
+      contagens[entry.key] = entry.value as int;
+    }
+
+    return DemandIndicators(total: total, porStatus: contagens);
+  }
+}
+
 class DemandService {
   DemandService({http.Client? client})
     : _client = client ?? AuthInterceptorClient(navigatorKey: appNavigatorKey),
@@ -76,6 +141,90 @@ class DemandService {
     } on FormatException catch (erro) {
       throw DemandServiceException(
         'Dados inválidos recebidos da API: ${erro.message}',
+      );
+    }
+  }
+
+  // Consulta somente a página solicitada, aplicando filtros no servidor.
+  Future<List<PedidoModel>> buscarPaginaDemandas({
+    int offset = 0,
+    int limit = 10,
+    DemandFilters filtros = const DemandFilters(),
+  }) async {
+    if (offset < 0 || limit < 1 || limit > 100) {
+      throw ArgumentError(
+        'Paginação inválida: offset deve ser >= 0 e limit entre 1 e 100.',
+      );
+    }
+
+    final params = filtros.toQueryParameters()
+      ..['offset'] = '$offset'
+      ..['limit'] = '$limit';
+
+    final resposta = await _executar(
+      () => _client.get(
+        AppConfig.apiUri(ApiPaths.demandas).replace(queryParameters: params),
+        headers: {'Accept': 'application/json'},
+      ),
+    );
+
+    _verificarStatus(resposta, esperado: 200, operacao: 'carregar demandas');
+
+    final dynamic dados;
+
+    try {
+      dados = jsonDecode(utf8.decode(resposta.bodyBytes));
+    } on FormatException {
+      throw const DemandServiceException('A API retornou um JSON inválido.');
+    }
+
+    if (dados is! List) {
+      throw const DemandServiceException(
+        'A API não retornou uma lista de demandas.',
+      );
+    }
+
+    try {
+      return dados.map((item) {
+        if (item is! Map<String, dynamic>) {
+          throw const FormatException('Uma demanda está em formato inválido.');
+        }
+
+        return PedidoModel.fromJson(item);
+      }).toList();
+    } on FormatException catch (erro) {
+      throw DemandServiceException(
+        'Dados inválidos recebidos da API: ${erro.message}',
+      );
+    }
+  }
+
+  // Contadores calculados pelo backend para todo o conjunto filtrado.
+  Future<DemandIndicators> buscarIndicadores({
+    DemandFilters filtros = const DemandFilters(),
+  }) async {
+    final resposta = await _executar(
+      () => _client.get(
+        AppConfig.apiUri(
+          '${ApiPaths.demandas}/indicadores',
+        ).replace(queryParameters: filtros.toQueryParameters()),
+        headers: {'Accept': 'application/json'},
+      ),
+    );
+
+    _verificarStatus(resposta, esperado: 200, operacao: 'carregar indicadores');
+
+    try {
+      final dados = jsonDecode(utf8.decode(resposta.bodyBytes));
+
+      if (dados is! Map<String, dynamic>) {
+        throw const FormatException('Formato de indicadores inválido.');
+      }
+
+      return DemandIndicators.fromJson(dados);
+    } on FormatException catch (erro) {
+      throw DemandServiceException(
+        'Indicadores inválidos recebidos da API: ${erro.message}',
       );
     }
   }
