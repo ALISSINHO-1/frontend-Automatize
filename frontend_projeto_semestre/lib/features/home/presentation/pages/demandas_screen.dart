@@ -5,6 +5,7 @@ import '../../../../core/storage/local_storage_service.dart';
 import '../../../../shared/widgets/main_layout.dart';
 import '../../../admin/data/models/usuario_atual_model.dart';
 import '../../../admin/data/services/usuario_atual_store.dart';
+import '../../../demands/presentation/pages/demand_tasks_page.dart';
 import 'demanda_store.dart';
 import 'nova_demanda_screen.dart';
 import 'painel_screen.dart';
@@ -360,6 +361,25 @@ class _DemandasScreenState extends State<DemandasScreen> {
           ),
           actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
           actions: [
+            TextButton.icon(
+              onPressed: () async {
+                final usuario = await _usuario;
+                if (!dialogContext.mounted) return;
+                await Navigator.of(dialogContext).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => DemandTasksPage(
+                      demandaId: demanda.id,
+                      titulo: demanda.titulo,
+                      status: demanda.estado,
+                      usuario: usuario,
+                    ),
+                  ),
+                );
+                if (mounted) await _carregarDemandas();
+              },
+              icon: const Icon(Icons.checklist),
+              label: const Text('Tarefas'),
+            ),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: AutomatizeColors.primary,
