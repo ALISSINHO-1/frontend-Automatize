@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/config/app_config.dart';
+import '../../widgets/turnstile_challenge.dart';
 
 /// Cadastro de interesse: conta fica pendente, sem acesso a servicos.
 class CadastroScreen extends StatefulWidget {
@@ -33,6 +34,8 @@ class _CadastroScreenState extends State<CadastroScreen> {
   bool _enviando = false;
   bool _concluido = false;
   String? _erro;
+  String? _turnstileToken;
+  int _desafioVersao = 0;
 
   @override
   void dispose() {
@@ -49,6 +52,11 @@ class _CadastroScreenState extends State<CadastroScreen> {
       setState(() => _erro = 'Cadastro indisponível no momento.');
       return;
     }
+    if (AppConfig.turnstileSiteKey.isEmpty ||
+        _turnstileToken == null || _turnstileToken!.isEmpty) {
+      setState(() => _erro = 'Conclua a verificação antirobô para continuar.');
+      return;
+    }
     setState(() {
       _enviando = true;
       _erro = null;
@@ -63,6 +71,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
               'nome': _nome.text.trim(),
               'email': _email.text.trim().toLowerCase(),
               'senha': _senha.text,
+              'turnstile_token': _turnstileToken,
             }),
           )
           .timeout(const Duration(seconds: 15));
@@ -84,7 +93,14 @@ class _CadastroScreenState extends State<CadastroScreen> {
       if (mounted) setState(() => _erro = 'Falha de conexão. Tente novamente.');
     } finally {
       if (widget.client == null) client.close();
-      if (mounted) setState(() => _enviando = false);
+      if (mounted) {
+        setState(() {
+          _enviando = false;
+          // Turnstile valida tokens apenas uma vez. Recriar apos tentativa.
+          _turnstileToken = null;
+          _desafioVersao++;
+        });
+      }
     }
   }
 
@@ -218,6 +234,20 @@ class _CadastroScreenState extends State<CadastroScreen> {
               validator: (v) => v == _senha.text ? null : 'As senhas não coincidem.',
               onFieldSubmitted: (_) => _enviar(),
             ),
+            if (AppConfig.publicSignupEnabled) ...[
+              const SizedBox(height: 18),
+              if (AppConfig.turnstileSiteKey.isNotEmpty)
+                TurnstileChallenge(
+                  key: ValueKey(_desafioVersao),
+                  siteKey: AppConfig.turnstileSiteKey,
+                  onToken: (token) {
+                    if (mounted) setState(() => _turnstileToken = token);
+                  },
+                )
+              else
+                const Text('Verificação antirobô não configurada.',
+                    style: TextStyle(color: Color(0xFFFF7785))),
+            ],
             if (_erro != null) ...[
               const SizedBox(height: 15),
               Text(_erro!, style: const TextStyle(color: Color(0xFFFF7785))),
