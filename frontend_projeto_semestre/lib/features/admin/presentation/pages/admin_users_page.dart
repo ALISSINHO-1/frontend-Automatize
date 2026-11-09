@@ -261,6 +261,16 @@ class _ItemUsuario extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cor = _corPerfil(usuario.perfil);
+    // No celular os selos dividindo a linha espremiam o nome letra por letra:
+    // em tela estreita eles descem para baixo do e-mail.
+    final estreito = MediaQuery.sizeOf(context).width < 640;
+    final selos = [
+      _Selo(UsuarioModel.rotuloPerfil(usuario.perfil), cor),
+      _Selo(
+        usuario.ativo ? 'Ativo' : 'Inativo',
+        usuario.ativo ? const Color(0xFF2FD3A1) : AutomatizeColors.muted,
+      ),
+    ];
     return Opacity(
       opacity: usuario.ativo ? 1 : 0.6,
       child: Container(
@@ -289,18 +299,17 @@ class _ItemUsuario extends StatelessWidget {
                     usuario.email,
                     style: AdminStyle.subtitulo.copyWith(fontSize: 13),
                   ),
+                  if (estreito) ...[
+                    const SizedBox(height: 8),
+                    Wrap(spacing: 8, runSpacing: 6, children: selos),
+                  ],
                 ],
               ),
             ),
-            _Selo(UsuarioModel.rotuloPerfil(usuario.perfil), cor),
-            const SizedBox(width: 8),
-            _Selo(
-              usuario.ativo ? 'Ativo' : 'Inativo',
-              usuario.ativo ? const Color(0xFF2FD3A1) : AutomatizeColors.muted,
-            ),
+            if (!estreito) ...[selos[0], const SizedBox(width: 8), selos[1]],
             // O backend recusa alterar a própria conta (403): nem oferece.
             if (proprio)
-              const SizedBox(width: 48)
+              SizedBox(width: estreito ? 8 : 48)
             else
               PopupMenuButton<String>(
                 tooltip: 'Ações do usuário',
