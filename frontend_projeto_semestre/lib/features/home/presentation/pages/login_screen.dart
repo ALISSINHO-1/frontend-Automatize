@@ -106,15 +106,78 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // JWT apenas em memória, conforme a estratégia de sessão escolhida.
+        // Antes de abrir telas, consulta o perfil e os vinculos REAIS na API.
         await LocalStorageService.saveToken(token);
-        // Login aceito: avisa o navegador para oferecer salvar e-mail e senha.
+        final contextoResposta = await client
+            .get(
+              AppConfig.apiUri('/auth/contexto'),
+              headers: {
+                'Accept': 'application/json',
+                'Authorization': 'Bearer $token',
+              },
+            )
+            .timeout(const Duration(seconds: 15));
+        if (contextoResposta.statusCode != 200) {
+          await LocalStorageService.removeToken();
+          _mostrarErro('Não foi possível identificar seu ambiente. Tente novamente.');
+          return;
+        }
+        final contexto = jsonDecode(utf8.decode(contextoResposta.bodyBytes));
+        if (contexto is! Map<String, dynamic> ||
+            contexto['perfil'] is! String ||
+            contexto['situacao_cadastro'] is! String) {
+          throw const FormatException('Contexto inválido.');
+        }
+        final situacao = contexto['situacao_cadastro'] as String;
+        final perfil = contexto['perfil'] as String;
+        final ambientes = contexto['ambientes'];
+        if (situacao != 'ATIVO' && situacao != 'PENDENTE') {
+          await LocalStorageService.removeToken();
+          _mostrarErro('Situação cadastral desconhecida.');
+          return;
+        }
         TextInput.finishAutofillContext();
         if (!mounted) return;
 
-        // Remove o login e as demais telas do histórico de navegação.
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil(AppRoutes.painel, (route) => false);
+        if (situacao == 'PENDENTE') {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.cadastroPendente, (route) => false,
+          );
+          return;
+        }
+        if (perfil == 'ADMIN') {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.admin, (route) => false,
+          );
+          return;
+        }
+        if (perfil == 'TECNICO') {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.tecnico, (route) => false,
+          );
+          return;
+        }
+        if (perfil != 'CLIENTE') {
+          await LocalStorageService.removeToken();
+          _mostrarErro('Perfil de usuário não reconhecido.');
+          return;
+        }
+        // Um mesmo CLIENTE pode ter projetos DEV e empresas SAAS.
+        // Não libera funcionalidades SAAS enquanto a API não oferecer
+        // autorização por organização em cada rota.
+        final temEmpresa = ambientes is List &&
+            ambientes.any((a) => a is Map && a['tipo'] == 'SAAS');
+        if (temEmpresa) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.ambientes, (route) => false,
+            arguments: contexto,
+          );
+          return;
+        }
+        // Compatibilidade com clientes DEV legados.
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.painel, (route) => false,
+        );
       } else if (response.statusCode == 400 || response.statusCode == 401) {
         _mostrarErro('E-mail ou senha incorretos.');
       } else if (response.statusCode == 403) {
@@ -125,12 +188,16 @@ class _LoginScreenState extends State<LoginScreen> {
         _mostrarErro('Erro no servidor (código ${response.statusCode}).');
       }
     } on TimeoutException {
+      await LocalStorageService.removeToken();
       _mostrarErro('A conexão demorou demais. Tente novamente.');
     } on http.ClientException {
+      await LocalStorageService.removeToken();
       _mostrarErro('Não foi possível conectar a API. Verifique o servidor.');
     } on FormatException {
+      await LocalStorageService.removeToken();
       _mostrarErro('O servidor retornou uma resposta inválida.');
     } catch (_) {
+      await LocalStorageService.removeToken();
       _mostrarErro('Não foi possível concluir o login. Tente novamente.');
     } finally {
       if (widget.client == null) {
@@ -697,6 +764,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
               ),
             ),
+            if (AppConfig.publicSignupEnabled) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.cadastro),
+                icon: const Icon(Icons.person_add_alt_1_outlined),
+                label: const Text('Ainda não tenho conta'),
+              ),
+            ],
             const SizedBox(height: 24),
 
             const Row(
