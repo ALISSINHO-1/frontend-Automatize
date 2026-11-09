@@ -50,7 +50,13 @@ abstract final class AppRoutes {
     home: (_) => const HomePage(),
     login: (_) => const LoginScreen(),
     cadastro: (_) => const CadastroScreen(),
-    cadastroPendente: (_) => const AuthGuard(child: AguardandoVinculoScreen()),
+    // Tela sem informacoes privadas: um cadastro PENDENTE nao passa no AuthGuard.
+    cadastroPendente: (context) {
+      final data = ModalRoute.of(context)?.settings.arguments;
+      return AguardandoVinculoScreen(
+        contexto: data is Map<String, dynamic> ? data : const {},
+      );
+    },
     ambientes: (context) {
       final data = ModalRoute.of(context)?.settings.arguments;
       return AuthGuard(

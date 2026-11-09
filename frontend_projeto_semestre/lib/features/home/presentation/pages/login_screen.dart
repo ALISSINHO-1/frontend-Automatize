@@ -142,6 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (situacao == 'PENDENTE') {
           Navigator.of(context).pushNamedAndRemoveUntil(
             AppRoutes.cadastroPendente, (route) => false,
+            arguments: contexto,
           );
           return;
         }
@@ -167,6 +168,15 @@ class _LoginScreenState extends State<LoginScreen> {
         // autorização por organização em cada rota.
         final temEmpresa = ambientes is List &&
             ambientes.any((a) => a is Map && a['tipo'] == 'SAAS');
+        final acessoDev = contexto['acesso_dev'] == true ||
+            contexto['origem_cadastro'] != 'PUBLICO';
+        if (!acessoDev && !temEmpresa) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.cadastroPendente, (route) => false,
+            arguments: contexto,
+          );
+          return;
+        }
         if (temEmpresa) {
           Navigator.of(context).pushNamedAndRemoveUntil(
             AppRoutes.ambientes, (route) => false,
