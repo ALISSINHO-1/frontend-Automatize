@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import 'routes/app_routes.dart';
+import '../features/onboarding/presentation/pages/verificar_email_screen.dart';
+import '../features/onboarding/presentation/pages/redefinir_senha_screen.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -18,6 +20,23 @@ class FaculdadeApp extends StatelessWidget {
       navigatorKey: appNavigatorKey,
 
       routes: AppRoutes.routes,
+      // Links de e-mail chegam com query string, diferente das rotas exatas.
+      onGenerateRoute: (settings) {
+        final uri = Uri.tryParse(settings.name ?? '');
+        if (uri?.path == AppRoutes.verificarEmail) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => VerificarEmailScreen(token: uri?.queryParameters['token']),
+          );
+        }
+        if (uri?.path == AppRoutes.redefinirSenha) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => RedefinirSenhaScreen(token: uri?.queryParameters['token']),
+          );
+        }
+        return null;
+      },
     );
   }
 }

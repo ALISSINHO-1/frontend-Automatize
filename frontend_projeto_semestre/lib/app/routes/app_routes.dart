@@ -30,6 +30,8 @@ abstract final class AppRoutes {
   static const String login = '/login';
   static const String cadastro = '/cadastro';
   static const String cadastroPendente = '/cadastro/pendente';
+  static const String verificarEmail = '/verificar-email';
+  static const String redefinirSenha = '/redefinir-senha';
   static const String ambientes = '/ambientes';
   static const String home = '/home';
   static const String painel = '/painel';
@@ -59,10 +61,9 @@ abstract final class AppRoutes {
     },
     ambientes: (context) {
       final data = ModalRoute.of(context)?.settings.arguments;
-      return AuthGuard(
-        child: AmbientesScreen(
-          contexto: data is Map<String, dynamic> ? data : const {},
-        ),
+      // A selecao nao concede acesso. Cada portal valida a permissao na API.
+      return AmbientesScreen(
+        contexto: data is Map<String, dynamic> ? data : const {},
       );
     },
 
