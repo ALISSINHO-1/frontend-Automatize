@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:frontend_projeto_semestre/app/routes/app_routes.dart';
 import 'package:frontend_projeto_semestre/core/auth/auth_guard.dart';
 import 'package:frontend_projeto_semestre/core/storage/local_storage_service.dart';
 import 'package:frontend_projeto_semestre/features/home/presentation/pages/login_screen.dart';
@@ -21,7 +22,8 @@ void main() {
       MaterialApp(
         home: LoginScreen(client: client),
         routes: {
-          '/home': (_) => const Scaffold(body: Text('Área autenticada')),
+          AppRoutes.painel: (_) =>
+              const Scaffold(body: Text('Área autenticada')),
         },
       ),
     );

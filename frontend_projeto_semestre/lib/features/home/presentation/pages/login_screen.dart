@@ -111,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Remove o login e as demais telas do histórico de navegação.
         Navigator.of(context)
-            .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+            .pushNamedAndRemoveUntil(AppRoutes.painel, (route) => false);
       } else if (response.statusCode == 400 || response.statusCode == 401) {
         _mostrarErro('E-mail ou senha incorretos.');
       } else if (response.statusCode == 403) {

@@ -4,21 +4,20 @@ import 'package:frontend_projeto_semestre/app/routes/app_routes.dart';
 import 'package:frontend_projeto_semestre/features/home/presentation/pages/home_page.dart';
 
 void main() {
-  testWidgets('atalho de demandas usa uma rota própria', (tester) async {
+  testWidgets('botão principal da landing abre a rota de login', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: const HomePage(),
         routes: {
-          AppRoutes.demandas: (_) =>
-              const Scaffold(body: Text('Rota de demandas')),
+          AppRoutes.login: (_) => const Scaffold(body: Text('Rota de login')),
         },
       ),
     );
 
-    await tester.tap(find.text('Ver lista de demandas'));
+    await tester.tap(find.text('Entrar na plataforma'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Rota de demandas'), findsOneWidget);
+    expect(find.text('Rota de login'), findsOneWidget);
   });
 
   test('painel e demandas estão registrados nas rotas da aplicação', () {
