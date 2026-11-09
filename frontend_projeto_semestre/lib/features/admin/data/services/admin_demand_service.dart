@@ -109,15 +109,42 @@ class AdminDemandService {
 
   // --- Usuários e perfis (SCRUM-99/100): rotas exclusivas do ADMIN ---
 
-  /// O backend pagina em no máximo 100 por chamada; para a escala do projeto
-  /// uma página basta (seletores e tela de usuários).
+  /// Tamanho máximo de página aceito por `GET /usuarios` (`limit <= 100`).
+  static const tamanhoPaginaUsuarios = 100;
+
+  /// Trava contra laço infinito caso a API ignore o `offset` (100 páginas =
+  /// 10 mil usuários, muito acima da escala do projeto).
+  static const _maxPaginasUsuarios = 100;
+
+  /// Busca todas as páginas de usuários. O backend devolve só uma lista (sem
+  /// total), então seguimos pedindo até vir uma página incompleta. A ordem é
+  /// estável no backend (`nome, id`), o que evita repetir ou pular registros.
   Future<List<UsuarioModel>> listarUsuarios({
+    String? perfil,
+    bool? ativo,
+  }) async {
+    final todos = <UsuarioModel>[];
+    for (var pagina = 0; pagina < _maxPaginasUsuarios; pagina++) {
+      final lote = await _paginaUsuarios(
+        offset: pagina * tamanhoPaginaUsuarios,
+        perfil: perfil,
+        ativo: ativo,
+      );
+      todos.addAll(lote);
+      if (lote.length < tamanhoPaginaUsuarios) return todos;
+    }
+    return todos;
+  }
+
+  Future<List<UsuarioModel>> _paginaUsuarios({
+    required int offset,
     String? perfil,
     bool? ativo,
   }) async {
     final query = Uri(
       queryParameters: {
-        'limit': '100',
+        'offset': '$offset',
+        'limit': '$tamanhoPaginaUsuarios',
         'perfil': ?perfil,
         if (ativo != null) 'ativo': '$ativo',
       },
