@@ -12,6 +12,9 @@ import '/features/admin/presentation/pages/clientes_page.dart';
 import '/features/admin/presentation/widgets/admin_guard.dart';
 import '/features/chat/chat_page.dart';
 import '/features/home/presentation/pages/login_screen.dart';
+import '/features/onboarding/presentation/pages/cadastro_screen.dart';
+import '/features/onboarding/presentation/pages/aguardando_vinculo_screen.dart';
+import '/features/onboarding/presentation/pages/ambientes_screen.dart';
 import '/features/home/presentation/pages/home_page.dart';
 import '/features/home/presentation/pages/demandas_screen.dart';
 import '/features/home/presentation/pages/painel_screen.dart';
@@ -25,6 +28,9 @@ import '/features/demands/data/models/pedido_model.dart';
 abstract final class AppRoutes {
   static const String landing = '/';
   static const String login = '/login';
+  static const String cadastro = '/cadastro';
+  static const String cadastroPendente = '/cadastro/pendente';
+  static const String ambientes = '/ambientes';
   static const String home = '/home';
   static const String painel = '/painel';
   static const String demandas = '/demandas';
@@ -43,6 +49,16 @@ abstract final class AppRoutes {
     landing: (_) => const HomePage(),
     home: (_) => const HomePage(),
     login: (_) => const LoginScreen(),
+    cadastro: (_) => const CadastroScreen(),
+    cadastroPendente: (_) => const AuthGuard(child: AguardandoVinculoScreen()),
+    ambientes: (context) {
+      final data = ModalRoute.of(context)?.settings.arguments;
+      return AuthGuard(
+        child: AmbientesScreen(
+          contexto: data is Map<String, dynamic> ? data : const {},
+        ),
+      );
+    },
 
     // Rotas próprias evitam que a navegação lateral volte à apresentação.
     painel: (_) => const AuthGuard(child: PainelScreen()),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
+import '../../../../core/config/app_config.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -210,6 +211,17 @@ class HomePage extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
               ),
             ),
+            if (AppConfig.publicSignupEnabled)
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.cadastro),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: texto,
+                  side: const BorderSide(color: borda),
+                  padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 18),
+                ),
+                icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                label: const Text('Criar conta'),
+              ),
             OutlinedButton.icon(
               onPressed: () => _mostrarInformacoes(context),
               style: OutlinedButton.styleFrom(
