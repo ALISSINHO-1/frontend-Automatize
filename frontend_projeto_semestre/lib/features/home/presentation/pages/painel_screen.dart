@@ -177,8 +177,21 @@ class _PainelScreenState extends State<PainelScreen> {
           const SizedBox(height: 16),
           _indicadores(demandas),
           const SizedBox(height: 32),
-          _tituloSecao('Demandas recentes'),
-          const SizedBox(height: 16),
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              _tituloSecao('Demandas recentes'),
+              TextButton.icon(
+                onPressed: _navegarParaDemandas,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                label: const Text('Ver todas'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           _listaRecentes(demandas),
           const SizedBox(height: 16),
           const Text(
@@ -206,46 +219,62 @@ class _PainelScreenState extends State<PainelScreen> {
       return demandas.where((d) => _rotuloEstado(d.estado) == estado).length;
     }
 
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: [
-        _IndicadorCard(
-          titulo: 'Total de demandas',
-          valor: '${demandas.length}',
-          descricao: 'Demandas cadastradas',
-          icone: Icons.assignment_outlined,
-          cor: AutomatizeColors.primary,
-        ),
-        _IndicadorCard(
-          titulo: 'Planejamento',
-          valor: '${contar('Planejamento')}',
-          descricao: 'Em planejamento',
-          icone: Icons.calendar_month_outlined,
-          cor: AutomatizeColors.purple,
-        ),
-        _IndicadorCard(
-          titulo: 'Execução',
-          valor: '${contar('Execução')}',
-          descricao: 'Em execução',
-          icone: Icons.build_circle_outlined,
-          cor: AutomatizeColors.primary,
-        ),
-        _IndicadorCard(
-          titulo: 'Homologação',
-          valor: '${contar('Homologação')}',
-          descricao: 'Em homologação',
-          icone: Icons.fact_check_outlined,
-          cor: AutomatizeColors.cyan,
-        ),
-        _IndicadorCard(
-          titulo: 'Concluídas',
-          valor: '${contar('Concluído')}',
-          descricao: 'Finalizadas',
-          icone: Icons.check_circle_outline,
-          cor: AutomatizeColors.success,
-        ),
-      ],
+    final cards = <Widget>[
+      _IndicadorCard(
+        titulo: 'Total de demandas',
+        valor: '${demandas.length}',
+        descricao: 'Demandas cadastradas',
+        icone: Icons.assignment_outlined,
+        cor: AutomatizeColors.primary,
+      ),
+      _IndicadorCard(
+        titulo: 'Planejamento',
+        valor: '${contar('Planejamento')}',
+        descricao: 'Em planejamento',
+        icone: Icons.calendar_month_outlined,
+        cor: AutomatizeColors.purple,
+      ),
+      _IndicadorCard(
+        titulo: 'Execução',
+        valor: '${contar('Execução')}',
+        descricao: 'Em execução',
+        icone: Icons.build_circle_outlined,
+        cor: AutomatizeColors.primary,
+      ),
+      _IndicadorCard(
+        titulo: 'Homologação',
+        valor: '${contar('Homologação')}',
+        descricao: 'Em homologação',
+        icone: Icons.fact_check_outlined,
+        cor: AutomatizeColors.cyan,
+      ),
+      _IndicadorCard(
+        titulo: 'Concluídas',
+        valor: '${contar('Concluído')}',
+        descricao: 'Finalizadas',
+        icone: Icons.check_circle_outline,
+        cor: AutomatizeColors.success,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 16.0;
+        const larguraMinima = 205.0;
+        final colunas = ((constraints.maxWidth + gap) / (larguraMinima + gap))
+            .floor()
+            .clamp(1, 5)
+            .toInt();
+        final largura = (constraints.maxWidth - (colunas - 1) * gap) / colunas;
+
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final card in cards) SizedBox(width: largura, child: card),
+          ],
+        );
+      },
     );
   }
 
@@ -318,6 +347,8 @@ class _PainelScreenState extends State<PainelScreen> {
               children: [
                 Text(
                   demanda.titulo,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: _corTexto,
@@ -326,6 +357,8 @@ class _PainelScreenState extends State<PainelScreen> {
                 const SizedBox(height: 5),
                 Text(
                   demanda.codigo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 12, color: _corSecundaria),
                 ),
                 const SizedBox(height: 10),
@@ -388,12 +421,13 @@ class _IndicadorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 225,
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 138),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AutomatizeColors.panel,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AutomatizeColors.border),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cor.withValues(alpha: 0.32)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

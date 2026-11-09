@@ -462,140 +462,120 @@ class _DemandasScreenState extends State<DemandasScreen> {
       child: Scaffold(
         backgroundColor: AutomatizeColors.background,
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(28, 26, 28, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _pageHeader(perfil),
-                const SizedBox(height: 23),
-                Wrap(
-                  spacing: 14,
-                  runSpacing: 12,
+          child: LayoutBuilder(
+            builder: (context, area) {
+              final compacto = area.maxWidth < 560;
+              return Padding(
+                padding: compacto
+                    ? const EdgeInsets.fromLTRB(14, 14, 14, 10)
+                    : const EdgeInsets.fromLTRB(28, 26, 28, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _summaryCard(
-                      title: 'Total de demandas',
-                      value: _demandas.length.toString(),
-                      subtitle: perfil == 'TECNICO'
-                          ? 'Atribuídas a você'
-                          : 'Visíveis para sua conta',
-                      icon: Icons.view_list_rounded,
-                      color: AutomatizeColors.cyan,
-                    ),
-                    _summaryCard(
-                      title: 'Em planejamento',
-                      value: _contarEstado('Planejamento').toString(),
-                      subtitle: 'Em fase de organização',
-                      icon: Icons.event_note_rounded,
-                      color: const Color(0xFF8C9DFF),
-                    ),
-                    _summaryCard(
-                      title: 'Em execução',
-                      value: _contarEstado('Execução').toString(),
-                      subtitle: 'Em andamento',
-                      icon: Icons.autorenew_rounded,
-                      color: const Color(0xFF63A8FF),
-                    ),
-                    _summaryCard(
-                      title: 'Em homologação',
-                      value: _contarEstado('Homologação').toString(),
-                      subtitle: 'Aguardando validação',
-                      icon: Icons.fact_check_outlined,
-                      color: AutomatizeColors.purple,
-                    ),
-                    _summaryCard(
-                      title: 'Concluídas',
-                      value: _contarEstado('Concluído').toString(),
-                      subtitle: 'Etapas finalizadas',
-                      icon: Icons.task_alt_rounded,
-                      color: AutomatizeColors.success,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 22),
-                _buildFilters(perfil),
-                const SizedBox(height: 17),
-                Expanded(
-                  child: _carregando
-                      ? const Center(child: CircularProgressIndicator())
-                      : _erro != null
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _erro!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AutomatizeColors.danger,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              FilledButton.icon(
-                                onPressed: _carregarDemandas,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Tentar novamente'),
-                              ),
-                            ],
-                          ),
-                        )
-                      : switch (_visualizacao) {
-                          _Visualizacao.lista => _buildDemandasTable(
-                            demandasVisiveis,
-                          ),
-                          _Visualizacao.quadro => QuadroDemandas(
-                            demandas: demandasVisiveis,
-                            estados: _estados,
-                            rotuloEstado: _rotuloEstado,
-                            corEstado: _corStatus,
-                            abrir: _visualizarDemanda,
-                            tecnicoId: perfil == 'TECNICO' ? usuario?.id : null,
-                            mover: _movendoDemanda ? null : _moverNoQuadro,
-                          ),
-                          _Visualizacao.calendario => CalendarioDemandas(
-                            demandas: demandasVisiveis,
-                            abrir: _visualizarDemanda,
-                          ),
-                        },
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.shield_outlined,
-                      size: 15,
-                      color: AutomatizeColors.muted,
-                    ),
-                    const SizedBox(width: 7),
-                    const Expanded(
-                      child: Text(
-                        'As informações são exibidas conforme a atualização das demandas.',
-                        style: TextStyle(
-                          color: AutomatizeColors.muted,
-                          fontSize: 10,
+                    _pageHeader(perfil, compacto: compacto),
+                    SizedBox(height: compacto ? 12 : 23),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: area.maxHeight * .48,
+                      ),
+                      child: SingleChildScrollView(
+                        primary: false,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _indicadores(perfil, compacto: compacto),
+                            SizedBox(height: compacto ? 12 : 22),
+                            _buildFilters(perfil),
+                          ],
                         ),
                       ),
                     ),
-                    Text(
-                      '${demandasVisiveis.length} '
-                      '${demandasVisiveis.length == 1 ? 'resultado' : 'resultados'}',
-                      style: const TextStyle(
-                        color: AutomatizeColors.muted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    SizedBox(height: compacto ? 10 : 17),
+                    Expanded(
+                      child: _carregando
+                          ? const Center(child: CircularProgressIndicator())
+                          : _erro != null
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _erro!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: AutomatizeColors.danger,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  FilledButton.icon(
+                                    onPressed: _carregarDemandas,
+                                    icon: const Icon(Icons.refresh),
+                                    label: const Text('Tentar novamente'),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : switch (_visualizacao) {
+                              _Visualizacao.lista => _buildDemandasTable(
+                                demandasVisiveis,
+                              ),
+                              _Visualizacao.quadro => QuadroDemandas(
+                                demandas: demandasVisiveis,
+                                estados: _estados,
+                                rotuloEstado: _rotuloEstado,
+                                corEstado: _corStatus,
+                                abrir: _visualizarDemanda,
+                                tecnicoId: perfil == 'TECNICO'
+                                    ? usuario?.id
+                                    : null,
+                                mover: _movendoDemanda ? null : _moverNoQuadro,
+                              ),
+                              _Visualizacao.calendario => CalendarioDemandas(
+                                demandas: demandasVisiveis,
+                                abrir: _visualizarDemanda,
+                              ),
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.shield_outlined,
+                          size: 15,
+                          color: AutomatizeColors.muted,
+                        ),
+                        const SizedBox(width: 7),
+                        const Expanded(
+                          child: Text(
+                            'As informações são exibidas conforme a atualização das demandas.',
+                            style: TextStyle(
+                              color: AutomatizeColors.muted,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${demandasVisiveis.length} '
+                          '${demandasVisiveis.length == 1 ? 'resultado' : 'resultados'}',
+                          style: const TextStyle(
+                            color: AutomatizeColors.muted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _pageHeader(String? perfil) {
+  Widget _pageHeader(String? perfil, {required bool compacto}) {
     final (titulo, subtitulo, area) = switch (perfil) {
       'TECNICO' => (
         'Demandas atribuídas',
@@ -660,35 +640,85 @@ class _DemandasScreenState extends State<DemandasScreen> {
             ],
           ),
         ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: AutomatizeColors.panel,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AutomatizeColors.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.verified_user_outlined,
-                size: 15,
-                color: AutomatizeColors.success,
-              ),
-              const SizedBox(width: 7),
-              Text(
-                area,
-                style: const TextStyle(
-                  color: AutomatizeColors.muted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+        if (!compacto) ...[
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: AutomatizeColors.panel,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AutomatizeColors.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.verified_user_outlined,
+                  size: 15,
+                  color: AutomatizeColors.success,
                 ),
-              ),
-            ],
+                const SizedBox(width: 7),
+                Text(
+                  area,
+                  style: const TextStyle(
+                    color: AutomatizeColors.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
+    );
+  }
+
+  Widget _indicadores(String? perfil, {required bool compacto}) {
+    final cards = <Widget>[
+      _summaryCard(
+        title: 'Total de demandas',
+        value: _demandas.length.toString(),
+        subtitle: perfil == 'TECNICO'
+            ? 'Atribuídas a você'
+            : 'Visíveis para sua conta',
+        icon: Icons.view_list_rounded,
+        color: AutomatizeColors.cyan,
+      ),
+      _summaryCard(
+        title: 'Em planejamento',
+        value: _contarEstado('Planejamento').toString(),
+        subtitle: 'Em fase de organização',
+        icon: Icons.event_note_rounded,
+        color: const Color(0xFF8C9DFF),
+      ),
+      _summaryCard(
+        title: 'Em execução',
+        value: _contarEstado('Execução').toString(),
+        subtitle: 'Em andamento',
+        icon: Icons.autorenew_rounded,
+        color: const Color(0xFF63A8FF),
+      ),
+      _summaryCard(
+        title: 'Em homologação',
+        value: _contarEstado('Homologação').toString(),
+        subtitle: 'Aguardando validação',
+        icon: Icons.fact_check_outlined,
+        color: AutomatizeColors.purple,
+      ),
+      _summaryCard(
+        title: 'Concluídas',
+        value: _contarEstado('Concluído').toString(),
+        subtitle: 'Etapas finalizadas',
+        icon: Icons.task_alt_rounded,
+        color: AutomatizeColors.success,
+      ),
+    ];
+    if (!compacto) return Wrap(spacing: 14, runSpacing: 12, children: cards);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(spacing: 10, children: cards),
     );
   }
 
@@ -831,6 +861,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
         SizedBox(
           width: 218,
           child: DropdownButtonFormField<String>(
+            key: ValueKey(_filtroStatus),
             initialValue: _filtroStatus,
             isExpanded: true,
             dropdownColor: AutomatizeColors.panelLight,
@@ -1222,8 +1253,8 @@ class _DemandasScreenState extends State<DemandasScreen> {
         _buscaController.text.trim().isNotEmpty ||
         _filtroStatus != 'Todos os estados';
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(35),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1245,6 +1276,7 @@ class _DemandasScreenState extends State<DemandasScreen> {
               temFiltro
                   ? 'Nenhuma demanda encontrada'
                   : 'Ainda não há demandas',
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AutomatizeColors.text,
                 fontSize: 15,

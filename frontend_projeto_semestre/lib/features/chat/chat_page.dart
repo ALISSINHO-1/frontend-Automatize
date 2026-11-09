@@ -95,7 +95,9 @@ class _ChatPageState extends State<ChatPage> {
       backgroundColor: AutomatizeColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 26, 28, 20),
+          padding: MediaQuery.sizeOf(context).width < 600
+              ? const EdgeInsets.fromLTRB(14, 14, 14, 10)
+              : const EdgeInsets.fromLTRB(28, 26, 28, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -313,6 +315,7 @@ class _ChatPageState extends State<ChatPage> {
         borderRadius: BorderRadius.circular(13),
         child: ListTile(
           enabled: temTecnico,
+          selected: selecionada,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(13),
             side: BorderSide(
@@ -663,7 +666,12 @@ class _ConversaPageState extends State<_ConversaPage> {
                     IconButton.filled(
                       onPressed: _enviando || _carregando ? null : _enviar,
                       tooltip: 'Enviar mensagem',
-                      icon: const Icon(Icons.send),
+                      icon: _enviando
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send_rounded),
                     ),
                   ],
                 ),
@@ -688,7 +696,23 @@ class _ConversaPageState extends State<_ConversaPage> {
           : const SizedBox.shrink();
     }
     if (mensagens.isEmpty) {
-      return const Center(child: Text('Ainda não há mensagens.'));
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 30,
+              color: AutomatizeColors.cyan,
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Ainda não há mensagens.',
+              style: TextStyle(color: AutomatizeColors.muted),
+            ),
+          ],
+        ),
+      );
     }
     return ListView.builder(
       reverse: true,
@@ -739,10 +763,15 @@ class _ConversaPageState extends State<_ConversaPage> {
                   children: [
                     Text(
                       '${minha ? 'Você' : mensagem.autorNome} · $data $hora',
-                      style: Theme.of(context).textTheme.labelMedium,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: AutomatizeColors.muted,
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    SelectableText(mensagem.texto),
+                    SelectableText(
+                      mensagem.texto,
+                      style: const TextStyle(height: 1.4),
+                    ),
                   ],
                 ),
               ),
