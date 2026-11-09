@@ -23,6 +23,7 @@ void main() {
   test('painel e demandas estão registrados nas rotas da aplicação', () {
     expect(AppRoutes.routes, contains(AppRoutes.painel));
     expect(AppRoutes.routes, contains(AppRoutes.demandas));
+    expect(AppRoutes.routes, contains(AppRoutes.comercial));
     expect(AppRoutes.demandas, isNot(AppRoutes.home));
   });
 }

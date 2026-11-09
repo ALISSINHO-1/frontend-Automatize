@@ -8,6 +8,7 @@ import '/features/home/presentation/widgets/admin_layout.dart';
 import '/features/home/presentation/widgets/technical_navigation.dart';
 import '/core/auth/cliente_guard.dart';
 import '/features/admin/presentation/pages/admin_panel_page.dart';
+import '/features/admin/presentation/pages/admin_comercial_screen.dart';
 import '/features/admin/presentation/pages/clientes_page.dart';
 import '/features/admin/presentation/widgets/admin_guard.dart';
 import '/features/chat/chat_page.dart';
@@ -39,6 +40,7 @@ abstract final class AppRoutes {
   static const String demandDetails = '/demand-details';
   static const String demandList = '/demand-list';
   static const String admin = '/admin';
+  static const String comercial = '/admin/comercial';
   static const String clientes = '/clientes';
   static const String chat = '/chat';
   static const String tecnico = TechnicalRoutes.home;
@@ -73,6 +75,7 @@ abstract final class AppRoutes {
 
     // Rota protegida: exige sessão e perfil ADMIN (GET /auth/me).
     admin: (_) => const AuthGuard(child: AdminGuard(child: AdminPanelPage())),
+    comercial: (_) => const AuthGuard(child: AdminGuard(child: AdminComercialScreen())),
 
     clientes: (_) => const AuthGuard(child: ClientesPage()),
 

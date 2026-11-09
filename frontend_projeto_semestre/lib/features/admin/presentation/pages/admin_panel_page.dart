@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/main_layout.dart';
+import '../../../../app/routes/app_routes.dart';
 import '../../../demands/data/models/pedido_model.dart';
 import '../../../demands/data/services/demand_service.dart';
 import '../../../home/presentation/pages/demandas_screen.dart';
@@ -273,6 +274,12 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
             onPressed: _ocupado ? null : _abrirUsuarios,
             icon: const Icon(Icons.group_rounded),
             label: const Text('Usuários'),
+          ),
+          OutlinedButton.icon(
+            onPressed: _ocupado ? null
+                : () => Navigator.of(context).pushNamed(AppRoutes.comercial),
+            icon: const Icon(Icons.business_center_outlined),
+            label: const Text('Clientes e contratos'),
           ),
           FilledButton.icon(
             style: FilledButton.styleFrom(
