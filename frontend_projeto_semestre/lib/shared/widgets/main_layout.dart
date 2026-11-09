@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/storage/local_storage_service.dart';
-import '../../features/admin/presentation/widgets/admin_guard.dart';
+import '../../features/admin/data/models/usuario_atual_model.dart';
+import '../../features/admin/data/services/usuario_atual_store.dart';
 
 /// Paleta visual compartilhada pelas telas do Automatize.
 
@@ -22,7 +23,7 @@ class AutomatizeColors {
   static const danger = Color(0xFFFF5364);
 }
 
-class MainLayout extends StatelessWidget {
+class MainLayout extends StatefulWidget {
   final Widget child;
   final int selectedIndex;
   final ValueChanged<int>? onDestinationSelected;
@@ -39,10 +40,19 @@ class MainLayout extends StatelessWidget {
   /// Item administrativo disponível somente para ADMIN.
   static const int indiceAdmin = 3;
   static const int _indiceChat = 4;
+  static const int indiceClientes = 5;
 
   // Aliases mantidos para não quebrar as telas existentes.
   static const Color sidebarColor = AutomatizeColors.sidebar;
   static const Color activeColor = AutomatizeColors.primary;
+
+  @override
+  State<MainLayout> createState() => _MainLayoutState();
+}
+
+class _MainLayoutState extends State<MainLayout> {
+  late final Future<UsuarioAtualModel?> _usuario = UsuarioAtualStore.instance
+      .carregar();
 
   Future<void> _confirmarSaida(BuildContext context) async {
     final confirmou = await showDialog<bool>(
@@ -102,8 +112,8 @@ class MainLayout extends StatelessWidget {
     // Encerra a sessão antes de iniciar a navegação.
     await LocalStorageService.removeToken();
     if (!context.mounted) return;
-    if (onLogout != null) {
-      onLogout!();
+    if (widget.onLogout != null) {
+      widget.onLogout!();
       return;
     }
 
@@ -115,17 +125,21 @@ class MainLayout extends StatelessWidget {
   }
 
   void _selecionarDestino(BuildContext context, int index, String label) {
-    if (selectedIndex == index) return;
-    if (index == _indiceChat) {
+    if (widget.selectedIndex == index) return;
+    if (index == MainLayout._indiceChat) {
       Navigator.of(context).pushNamed(AppRoutes.chat);
       return;
     }
-    if (index == indiceAdmin) {
+    if (index == MainLayout.indiceClientes) {
+      Navigator.of(context).pushNamed(AppRoutes.clientes);
+      return;
+    }
+    if (index == MainLayout.indiceAdmin) {
       Navigator.of(context).pushNamed(AppRoutes.admin);
       return;
     }
-    if (onDestinationSelected != null) {
-      onDestinationSelected!(index);
+    if (widget.onDestinationSelected != null) {
+      widget.onDestinationSelected!(index);
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
@@ -157,154 +171,181 @@ class MainLayout extends StatelessWidget {
                     ),
                   ),
                 ),
-                child: SafeArea(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: compact ? 15 : 21,
-                          vertical: 25,
-                        ),
-                        child: compact
-                            ? const _BrandIcon()
-                            : const Row(
-                                children: [
-                                  _BrandIcon(),
-                                  SizedBox(width: 11),
-                                  Expanded(child: _BrandName()),
-                                ],
-                              ),
-                      ),
-                      if (!compact)
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(22, 4, 18, 12),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'ÁREA DO CLIENTE',
-                              style: TextStyle(
-                                color: Color(0xFF66819D),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.4,
-                              ),
+                child: FutureBuilder<UsuarioAtualModel?>(
+                  future: _usuario,
+                  builder: (context, snapshot) {
+                    final usuario = snapshot.data;
+                    final (perfil, area) = switch (usuario?.perfil) {
+                      'ADMIN' => ('Administrador', 'ÁREA ADMINISTRATIVA'),
+                      'TECNICO' => ('Técnico', 'ÁREA TÉCNICA'),
+                      'CLIENTE' => ('Cliente', 'ÁREA DO CLIENTE'),
+                      _ => ('Conta', 'ÁREA DA CONTA'),
+                    };
+                    final nome = usuario?.nome ?? 'Minha conta';
+                    final avatar = Tooltip(
+                      message: '$nome · $perfil',
+                      child: _UserAvatar(iniciais: usuario?.iniciais),
+                    );
+                    return SafeArea(
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: compact ? 15 : 21,
+                              vertical: 25,
                             ),
+                            child: compact
+                                ? const _BrandIcon()
+                                : const Row(
+                                    children: [
+                                      _BrandIcon(),
+                                      SizedBox(width: 11),
+                                      Expanded(child: _BrandName()),
+                                    ],
+                                  ),
                           ),
-                        ),
-                      _navigationItem(
-                        context,
-                        compact: compact,
-                        index: 0,
-                        icon: Icons.grid_view_rounded,
-                        label: 'Painel',
-                      ),
-                      _navigationItem(
-                        context,
-                        compact: compact,
-                        index: 1,
-                        icon: Icons.assignment_rounded,
-                        label: 'Minhas demandas',
-                      ),
-                      _navigationItem(
-                        context,
-                        compact: compact,
-                        index: _indiceChat,
-                        icon: Icons.forum_outlined,
-                        label: 'Chat',
-                      ),
-                      AdminMenuGate(
-                        child: _navigationItem(
-                          context,
-                          compact: compact,
-                          index: indiceAdmin,
-                          icon: Icons.admin_panel_settings_rounded,
-                          label: 'Painel administrativo',
-                        ),
-                      ),
-                      const Spacer(),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: compact ? 10 : 15,
-                        ),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: compact ? 0 : 12,
-                            vertical: compact ? 12 : 13,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AutomatizeColors.panel,
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: AutomatizeColors.border),
-                          ),
-                          child: compact
-                              ? const Center(child: _UserAvatar())
-                              : const Row(
-                                  children: [
-                                    _UserAvatar(),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Minha conta',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              color: AutomatizeColors.text,
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            'Cliente',
-                                            style: TextStyle(
-                                              color: AutomatizeColors.muted,
-                                              fontSize: 11,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.more_horiz,
-                                      color: AutomatizeColors.muted,
-                                      size: 19,
-                                    ),
-                                  ],
+                          if (!compact)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(22, 4, 18, 12),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  area,
+                                  style: const TextStyle(
+                                    color: Color(0xFF66819D),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.4,
+                                  ),
                                 ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _navigationItem(
-                        context,
-                        compact: compact,
-                        index: 2,
-                        icon: Icons.logout_rounded,
-                        label: 'Sair da conta',
-                        isLogout: true,
-                      ),
-                      const SizedBox(height: 16),
-                      if (!compact)
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 14),
-                          child: Text(
-                            'AUTOMATIZE  •  CLIENTE',
-                            style: TextStyle(
-                              color: Color(0xFF58728E),
-                              fontSize: 9,
-                              letterSpacing: 1.1,
-                              fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          _navigationItem(
+                            context,
+                            compact: compact,
+                            index: 0,
+                            icon: Icons.grid_view_rounded,
+                            label: 'Painel',
+                          ),
+                          _navigationItem(
+                            context,
+                            compact: compact,
+                            index: 1,
+                            icon: Icons.assignment_rounded,
+                            label: 'Minhas demandas',
+                          ),
+                          _navigationItem(
+                            context,
+                            compact: compact,
+                            index: MainLayout._indiceChat,
+                            icon: Icons.forum_outlined,
+                            label: 'Chat',
+                          ),
+                          if (usuario?.isAdmin == true ||
+                              usuario?.perfil == 'TECNICO')
+                            _navigationItem(
+                              context,
+                              compact: compact,
+                              index: MainLayout.indiceClientes,
+                              icon: Icons.people_outline,
+                              label: 'Clientes',
+                            ),
+                          if (usuario?.isAdmin == true)
+                            _navigationItem(
+                              context,
+                              compact: compact,
+                              index: MainLayout.indiceAdmin,
+                              icon: Icons.admin_panel_settings_rounded,
+                              label: 'Painel administrativo',
+                            ),
+                          const Spacer(),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: compact ? 10 : 15,
+                            ),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 0 : 12,
+                                vertical: compact ? 12 : 13,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AutomatizeColors.panel,
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                  color: AutomatizeColors.border,
+                                ),
+                              ),
+                              child: compact
+                                  ? Center(child: avatar)
+                                  : Row(
+                                      children: [
+                                        avatar,
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                nome,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: AutomatizeColors.text,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                perfil,
+                                                style: const TextStyle(
+                                                  color: AutomatizeColors.muted,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.more_horiz,
+                                          color: AutomatizeColors.muted,
+                                          size: 19,
+                                        ),
+                                      ],
+                                    ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
+                          const SizedBox(height: 10),
+                          _navigationItem(
+                            context,
+                            compact: compact,
+                            index: 2,
+                            icon: Icons.logout_rounded,
+                            label: 'Sair da conta',
+                            isLogout: true,
+                          ),
+                          const SizedBox(height: 16),
+                          if (!compact)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: Text(
+                                'AUTOMATIZE  •  ${perfil.toUpperCase()}',
+                                style: const TextStyle(
+                                  color: Color(0xFF58728E),
+                                  fontSize: 9,
+                                  letterSpacing: 1.1,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
-              Expanded(child: child),
+              Expanded(child: widget.child),
             ],
           );
         },
@@ -320,7 +361,7 @@ class MainLayout extends StatelessWidget {
     required String label,
     bool isLogout = false,
   }) {
-    final selected = selectedIndex == index && !isLogout;
+    final selected = widget.selectedIndex == index && !isLogout;
     final foreground = isLogout
         ? const Color(0xFFFF8994)
         : AutomatizeColors.muted;
@@ -463,7 +504,9 @@ class _BrandName extends StatelessWidget {
 }
 
 class _UserAvatar extends StatelessWidget {
-  const _UserAvatar();
+  const _UserAvatar({this.iniciais});
+
+  final String? iniciais;
 
   @override
   Widget build(BuildContext context) {
@@ -479,14 +522,16 @@ class _UserAvatar extends StatelessWidget {
             ),
           ),
           alignment: Alignment.center,
-          child: const Text(
-            'CL',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
+          child: iniciais == null
+              ? const Icon(Icons.person_outline, color: Colors.white, size: 18)
+              : Text(
+                  iniciais!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
         ),
         Positioned(
           right: 0,

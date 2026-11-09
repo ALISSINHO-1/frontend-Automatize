@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../demands/data/services/demand_service.dart';
 
 class NovaDemandaScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
   final DemandService _demandService = DemandService();
 
   bool _isLoading = false;
+  DateTime? _previsao;
 
   @override
   void dispose() {
@@ -41,7 +43,11 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await _demandService.criarDemanda(titulo, descricao);
+      await _demandService.criarDemanda(
+        titulo,
+        descricao,
+        dataPrevisao: _previsao,
+      );
 
       if (!mounted) return;
 
@@ -73,9 +79,7 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nova Demanda'),
-      ),
+      appBar: AppBar(title: const Text('Nova Demanda')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -118,7 +122,35 @@ class _NovaDemandaScreenState extends State<NovaDemandaScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            final data = await showDatePicker(
+                              context: context,
+                              initialDate: _previsao ?? DateTime.now(),
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime(2200, 12, 31),
+                            );
+                            if (mounted && data != null)
+                              setState(() => _previsao = data);
+                          },
+                    icon: const Icon(Icons.event_outlined),
+                    label: Text(
+                      _previsao == null
+                          ? 'Definir previsão de entrega (opcional)'
+                          : 'Previsão: ${MaterialLocalizations.of(context).formatCompactDate(_previsao!)}',
+                    ),
+                  ),
+                  if (_previsao != null)
+                    TextButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => setState(() => _previsao = null),
+                      child: const Text('Remover previsão'),
+                    ),
+                  const SizedBox(height: 16),
                   SizedBox(
                     height: 50,
                     child: FilledButton.icon(

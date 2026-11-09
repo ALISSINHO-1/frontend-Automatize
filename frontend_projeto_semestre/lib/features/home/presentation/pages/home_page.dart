@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes/app_routes.dart';
-import 'demandas_screen.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -17,9 +16,7 @@ class HomePage extends StatelessWidget {
   static const roxo = Color(0xFFB784FF);
 
   void _abrirDemandas(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const DemandasScreen()));
+    Navigator.of(context).pushNamed(AppRoutes.demandas);
   }
 
   @override
@@ -116,7 +113,7 @@ class HomePage extends StatelessWidget {
           const Icon(Icons.verified_user_outlined, color: verde, size: 18),
           const SizedBox(width: 8),
           const Text(
-            'Portal do cliente',
+            'Portal de demandas',
             style: TextStyle(color: secundario, fontSize: 12),
           ),
           const SizedBox(width: 20),
@@ -358,6 +355,8 @@ class HomePage extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          scrollable: true,
+          constraints: const BoxConstraints(maxWidth: 560),
           backgroundColor: painel,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -371,12 +370,45 @@ class HomePage extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          content: const Text(
-            'O Automatize é um portal para consultar as demandas '
-            'do projeto, visualizar seus estados e acompanhar o '
-            'progresso das atividades. As informações exibidas '
-            'dependem dos dados disponibilizados pelo sistema.',
-            style: TextStyle(color: secundario, fontSize: 13, height: 1.7),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Acompanhe solicitações, entregas e conversas do projeto em um só lugar.',
+                style: TextStyle(color: secundario, fontSize: 14, height: 1.5),
+              ),
+              SizedBox(height: 20),
+              _Etapa(
+                numero: '01',
+                cor: ciano,
+                icone: Icons.assignment_outlined,
+                titulo: 'Registro e triagem',
+                descricao: 'Da solicitação à fila de atendimento.',
+                detalhes:
+                    'O cliente abre a demanda em Minhas demandas. No Chat, um técnico pode assumir a solicitação que estiver sem responsável.',
+              ),
+              SizedBox(height: 12),
+              _Etapa(
+                numero: '02',
+                cor: azul,
+                icone: Icons.forum_outlined,
+                titulo: 'Atendimento e acompanhamento',
+                descricao: 'Converse com quem acompanha a demanda.',
+                detalhes:
+                    'Depois da atribuição, cliente e técnico podem trocar mensagens na demanda. O técnico também pode falar com a administração em um canal interno separado.',
+              ),
+              SizedBox(height: 12),
+              _Etapa(
+                numero: '03',
+                cor: verde,
+                icone: Icons.fact_check_outlined,
+                titulo: 'Validação da entrega',
+                descricao: 'Revise e confirme a entrega na homologação.',
+                detalhes:
+                    'Quando a demanda chega à homologação, o cliente pode aprovar a entrega ou solicitar correções. O histórico registra o andamento.',
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -554,6 +586,7 @@ class _Etapa extends StatelessWidget {
     required this.descricao,
     required this.cor,
     required this.icone,
+    this.detalhes,
   });
 
   final String numero;
@@ -561,47 +594,71 @@ class _Etapa extends StatelessWidget {
   final String descricao;
   final Color cor;
   final IconData icone;
+  final String? detalhes;
 
   @override
   Widget build(BuildContext context) {
+    final marcador = Container(
+      width: 43,
+      height: 43,
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cor.withValues(alpha: 0.3)),
+      ),
+      child: Icon(icone, color: cor, size: 21),
+    );
+    final tituloEtapa = Text(
+      '$numero · $titulo',
+      style: const TextStyle(
+        color: HomePage.texto,
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+    final resumo = Text(
+      descricao,
+      style: const TextStyle(
+        color: HomePage.secundario,
+        fontSize: 10,
+        height: 1.4,
+      ),
+    );
+    final conteudo = detalhes;
+    if (conteudo != null) {
+      return ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(left: 56, bottom: 12),
+        expandedAlignment: Alignment.centerLeft,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        iconColor: cor,
+        collapsedIconColor: cor,
+        leading: marcador,
+        title: tituloEtapa,
+        subtitle: resumo,
+        children: [
+          Text(
+            conteudo,
+            style: const TextStyle(
+              color: HomePage.secundario,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+        ],
+      );
+    }
     return Row(
       children: [
-        Container(
-          width: 43,
-          height: 43,
-          decoration: BoxDecoration(
-            color: cor.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cor.withValues(alpha: 0.3)),
-          ),
-          child: Icon(icone, color: cor, size: 21),
-        ),
+        marcador,
         const SizedBox(width: 13),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$numero · $titulo',
-                style: const TextStyle(
-                  color: HomePage.texto,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                descricao,
-                style: const TextStyle(
-                  color: HomePage.secundario,
-                  fontSize: 10,
-                  height: 1.4,
-                ),
-              ),
-            ],
+            children: [tituloEtapa, const SizedBox(height: 5), resumo],
           ),
         ),
-        Icon(Icons.arrow_forward_ios_rounded, color: cor, size: 13),
       ],
     );
   }
