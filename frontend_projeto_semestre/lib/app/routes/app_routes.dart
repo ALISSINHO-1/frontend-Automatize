@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '/core/auth/auth_guard.dart';
+import '/core/auth/technical_role_guard.dart';
+import '/features/demands/presentation/pages/technical_demand_list_page.dart';
+import '/features/home/presentation/pages/technical_dashboard_page.dart';
+import '/features/home/presentation/widgets/admin_layout.dart';
+import '/features/home/presentation/widgets/technical_navigation.dart';
 import '/core/auth/cliente_guard.dart';
 import '/features/admin/presentation/pages/admin_panel_page.dart';
 import '/features/admin/presentation/pages/clientes_page.dart';
@@ -28,6 +33,7 @@ abstract final class AppRoutes {
   static const String admin = '/admin';
   static const String clientes = '/clientes';
   static const String chat = '/chat';
+  static const String tecnico = TechnicalRoutes.home;
   static const String clienteDetalhes = '/cliente/demandas/detalhes';
   static const String clienteHomologacao = '/cliente/demandas/homologacao';
   static const String clienteOcorrencias = '/cliente/demandas/ocorrencias';
@@ -48,6 +54,18 @@ abstract final class AppRoutes {
     clientes: (_) => const AuthGuard(child: ClientesPage()),
 
     chat: (_) => const AuthGuard(child: ChatPage()),
+    TechnicalRoutes.home: (_) => const TechnicalRoleGuard(
+      child: AdminLayout(child: TechnicalDashboardPage()),
+    ),
+    TechnicalRoutes.demandList: (_) => const TechnicalRoleGuard(
+      child: AdminLayout(child: TechnicalDemandListPage()),
+    ),
+    TechnicalRoutes.demandHistory: (_) => const TechnicalRoleGuard(
+      child: Scaffold(body: Center(child: Text('Histórico técnico em implantação.'))),
+    ),
+    TechnicalRoutes.demandAttachments: (_) => const TechnicalRoleGuard(
+      child: Scaffold(body: Center(child: Text('Central de anexos técnicos em implantação.'))),
+    ),
 
     // Portal do cliente. O backend ainda valida o escopo dos registros.
     clienteDetalhes: (context) {
