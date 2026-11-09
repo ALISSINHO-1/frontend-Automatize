@@ -17,21 +17,60 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   final _demandas = DemandService();
+  final _chat = ChatService();
+  bool _assumindo = false;
   late var _dados = _carregar();
 
-  Future<({UsuarioAtualModel? usuario, List<PedidoModel> demandas})>
+  Future<
+    ({
+      UsuarioAtualModel? usuario,
+      List<PedidoModel> demandas,
+      List<DemandaNaFila>? fila,
+    })
+  >
   _carregar() async {
     final usuario = await UsuarioAtualStore.instance.carregar();
     final demandas = usuario == null
         ? <PedidoModel>[]
         : await _demandas.buscarDemandas();
-    return (usuario: usuario, demandas: demandas.reversed.toList());
+    List<DemandaNaFila>? fila = const [];
+    if (usuario?.perfil == 'TECNICO') {
+      try {
+        fila = await _chat.buscarFila();
+      } catch (_) {
+        fila = null;
+      }
+    }
+    return (usuario: usuario, demandas: demandas.reversed.toList(), fila: fila);
   }
 
   void _atualizar() => setState(() => _dados = _carregar());
 
+  Future<void> _assumir(DemandaNaFila demanda) async {
+    if (_assumindo) return;
+    setState(() => _assumindo = true);
+    String mensagem;
+    try {
+      final assumiu = await _chat.assumir(demanda.id);
+      mensagem = assumiu
+          ? 'Demanda assumida. O chat está disponível em Minhas conversas.'
+          : 'A demanda não está mais disponível na fila.';
+    } catch (_) {
+      mensagem =
+          'Não foi possível confirmar a atribuição. A lista será atualizada.';
+    }
+    if (!mounted) return;
+    setState(() {
+      _assumindo = false;
+      _dados = _carregar();
+    });
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensagem)));
+  }
+
   @override
   void dispose() {
+    _chat.dispose();
     _demandas.dispose();
     super.dispose();
   }
@@ -42,7 +81,7 @@ class _ChatPageState extends State<ChatPage> {
       title: const Text('Chat'),
       actions: [
         IconButton(
-          onPressed: _atualizar,
+          onPressed: _assumindo ? null : _atualizar,
           tooltip: 'Atualizar demandas',
           icon: const Icon(Icons.refresh),
         ),
@@ -67,47 +106,93 @@ class _ChatPageState extends State<ChatPage> {
         final canais = usuario == null
             ? <ChatCanal>[]
             : ChatCanal.paraUsuario(usuario);
-        if (usuario == null || canais.isEmpty || dados.demandas.isEmpty) {
+        if (usuario == null || canais.isEmpty) {
           return const Center(child: Text('Nenhuma conversa disponível.'));
         }
-        return ListView.builder(
-          itemCount: dados.demandas.length,
-          itemBuilder: (context, index) {
-            final demanda = dados.demandas[index];
-            final temTecnico = demanda.responsavelId != null;
-            return ExpansionTile(
-              title: Text(demanda.titulo),
-              subtitle: Text(
-                temTecnico
-                    ? demanda.codigoIdentificador ?? 'Escolha um canal'
-                    : 'Aguardando técnico responsável',
+        final tecnico = usuario.perfil == 'TECNICO';
+        final fila = dados.fila;
+        if (!tecnico && dados.demandas.isEmpty) {
+          return const Center(child: Text('Nenhuma conversa disponível.'));
+        }
+        return ListView(
+          children: [
+            if (tecnico) ...[
+              const ListTile(
+                title: Text('Fila de atendimento'),
+                subtitle: Text(
+                  'Assuma uma demanda para liberar o chat com o cliente.',
+                ),
               ),
-              leading: const Icon(Icons.forum_outlined),
-              children: [
-                for (final canal in canais)
-                  ListTile(
-                    enabled: temTecnico,
-                    title: Text(canal.titulo),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: !temTecnico
-                        ? null
-                        : () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => _ConversaPage(
-                                demanda: demanda,
-                                canal: canal,
-                                usuario: usuario,
-                              ),
-                            ),
-                          ),
+              if (fila == null)
+                ListTile(
+                  title: const Text('Não foi possível carregar a fila.'),
+                  trailing: TextButton(
+                    onPressed: _atualizar,
+                    child: const Text('Tentar novamente'),
                   ),
-              ],
-            );
-          },
+                )
+              else if (fila.isEmpty)
+                const ListTile(
+                  title: Text('Nenhuma demanda disponível na fila.'),
+                ),
+              for (final demanda in fila ?? const <DemandaNaFila>[])
+                ListTile(
+                  title: Text(demanda.titulo),
+                  subtitle: Text(demanda.codigo),
+                  trailing: FilledButton(
+                    onPressed: _assumindo ? null : () => _assumir(demanda),
+                    child: const Text('Assumir'),
+                  ),
+                ),
+              const Divider(),
+              const ListTile(title: Text('Minhas conversas')),
+              if (dados.demandas.isEmpty)
+                const ListTile(title: Text('Nenhuma conversa disponível.')),
+            ],
+            for (final demanda in dados.demandas)
+              _conversa(context, demanda, usuario, canais),
+          ],
         );
       },
     ),
   );
+
+  Widget _conversa(
+    BuildContext context,
+    PedidoModel demanda,
+    UsuarioAtualModel usuario,
+    List<ChatCanal> canais,
+  ) {
+    final temTecnico = demanda.responsavelId != null;
+    return ExpansionTile(
+      title: Text(demanda.titulo),
+      subtitle: Text(
+        temTecnico
+            ? demanda.codigoIdentificador ?? 'Escolha um canal'
+            : 'Aguardando técnico responsável',
+      ),
+      leading: const Icon(Icons.forum_outlined),
+      children: [
+        for (final canal in canais)
+          ListTile(
+            enabled: temTecnico,
+            title: Text(canal.titulo),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: !temTecnico
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => _ConversaPage(
+                        demanda: demanda,
+                        canal: canal,
+                        usuario: usuario,
+                      ),
+                    ),
+                  ),
+          ),
+      ],
+    );
+  }
 }
 
 class _ConversaPage extends StatefulWidget {
