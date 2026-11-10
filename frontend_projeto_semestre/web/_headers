@@ -1,0 +1,15 @@
+/verificar-email
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+
+/redefinir-senha
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+
+/turnstile-frame.html
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff

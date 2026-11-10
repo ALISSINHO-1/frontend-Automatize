@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.6.0
+  web: ^1.1.1
   pdfx: ^2.11.0
   shared_preferences: ^2.5.6
 
