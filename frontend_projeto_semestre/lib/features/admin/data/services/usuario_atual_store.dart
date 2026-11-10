@@ -53,6 +53,12 @@ class UsuarioAtualStore extends ValueNotifier<UsuarioAtualModel?> {
     value = null;
   }
 
+  /// Atualiza o usuário da sessão somente quando o ID do Bearer corresponde.
+  void atualizarUsuario(UsuarioAtualModel usuario) {
+    if (_tokenDoCache == null || value?.id != usuario.id) return;
+    value = usuario;
+  }
+
   /// Limpa dados da sessão anterior no logout e na troca de usuário.
   void limparSessao() => _limpar();
 
