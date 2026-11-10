@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../../../app/app.dart';
-import '../../../../core/config/app_config.dart';
-import '../../../../core/network/auth_interceptor.dart';
+import '../../../app/app.dart';
+import '../../../core/config/app_config.dart';
+import '../../../core/network/auth_interceptor.dart';
 import '../../admin/data/models/usuario_atual_model.dart';
 
 class PerfilDetalhes {
