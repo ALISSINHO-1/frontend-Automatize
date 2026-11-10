@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/app.dart';
+import '../../../../app/routes/app_routes.dart';
 import '../../../../core/auth/current_user_session.dart';
 import '../../../../core/storage/local_storage_service.dart';
 import '../../../../core/theme/redesign_colors.dart';
@@ -29,7 +30,7 @@ class AdminSidebar extends StatelessWidget {
             ? 1
             : rotaAtual == TechnicalRoutes.home
                 ? 0
-                : -1;
+                : rotaAtual == AppRoutes.perfil ? 2 : -1;
 
         return Container(
           width: 250,
@@ -61,7 +62,7 @@ class AdminSidebar extends StatelessWidget {
               const SizedBox(height: 48),
 
               SizedBox(
-                height: (_itemHeight + _itemSpacing) * 2,
+                height: (_itemHeight + _itemSpacing) * 3,
                 child: Stack(
                   children: [
                     if (selectedIndex >= 0)
@@ -97,6 +98,12 @@ class AdminSidebar extends StatelessWidget {
                           'Demandas',
                           selected: selectedIndex == 1,
                           onTap: () => _navegar(TechnicalRoutes.demandList),
+                        ),
+                        _menuItem(
+                          Icons.person_outline_rounded,
+                          'Perfil',
+                          selected: selectedIndex == 2,
+                          onTap: () => _navegar(AppRoutes.perfil),
                         ),
                       ],
                     ),
@@ -194,7 +201,7 @@ class AdminSidebar extends StatelessWidget {
     if (adminNavigationController.currentRoute == rota) {
       return;
     }
-
+    adminNavigationController.setRoute(rota);
     navigator.pushNamedAndRemoveUntil(rota, (route) => false);
   }
 
