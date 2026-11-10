@@ -1,43 +1,44 @@
 import 'package:flutter/material.dart';
+import 'automatize_palette.dart';
 
 abstract final class AppTheme {
-  // Transição suave entre as telas, sem efeito de zoom.
+  // Navegação direta, sem slide ou zoom.
   static final PageTransitionsTheme _pageTransitionsTheme =
       PageTransitionsTheme(
         builders: {
           for (final platform in TargetPlatform.values)
-            platform: const FadeUpwardsPageTransitionsBuilder(),
+            platform: const _SemTransicaoPageTransitionsBuilder(),
         },
       );
 
   // Tema escuro da aplicação.
   static ThemeData get dark {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF637BFF),
+      seedColor: AutomatizePalette.primary,
       brightness: Brightness.dark,
-      surface: const Color(0xFF171B26),
+      surface: AutomatizePalette.panel,
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFF0F131C),
-      cardColor: const Color(0xFF181C24),
+      scaffoldBackgroundColor: AutomatizePalette.background,
+      cardColor: AutomatizePalette.panel,
 
       // Configuração da navegação.
       pageTransitionsTheme: _pageTransitionsTheme,
 
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF181C24),
-        foregroundColor: Color(0xFFDFE2EE),
+        backgroundColor: AutomatizePalette.panel,
+        foregroundColor: AutomatizePalette.text,
         centerTitle: false,
         elevation: 0,
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF181C24),
+        fillColor: AutomatizePalette.panel,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
@@ -46,7 +47,7 @@ abstract final class AppTheme {
   // Tema claro da aplicação.
   static ThemeData get light {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF3157D5),
+      seedColor: AutomatizePalette.primary,
       brightness: Brightness.light,
     );
 
@@ -79,4 +80,17 @@ abstract final class AppTheme {
       ),
     );
   }
+}
+
+class _SemTransicaoPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _SemTransicaoPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => child;
 }

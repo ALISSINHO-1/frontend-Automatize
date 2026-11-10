@@ -5,35 +5,22 @@ import 'package:frontend_projeto_semestre/features/onboarding/presentation/pages
 import 'package:frontend_projeto_semestre/features/onboarding/presentation/pages/cadastro_screen.dart';
 
 void main() {
-  testWidgets('cadastro abre os termos sem marcar o aceite', (tester) async {
+  testWidgets('cadastro desabilitado nao solicita dados pessoais', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: const CadastroScreen(),
-      routes: {AppRoutes.termosUso: AppRoutes.routes[AppRoutes.termosUso]!},
+      routes: {
+        AppRoutes.login: (_) => const Scaffold(body: Text('Login Automatize')),
+      },
     ));
-    final checkbox = find.byType(CheckboxListTile);
-    expect(tester.widget<CheckboxListTile>(checkbox).value, isFalse);
 
-    final link = find.text('Ler os Termos de Uso');
-    await tester.ensureVisible(link);
-    await tester.tap(link);
-    await tester.pumpAndSettle();
-    expect(find.text('AUTOMATIZE  /  VERSÃO 1.0'), findsOneWidget);
+    expect(find.text('Novos cadastros indisponíveis'), findsOneWidget);
+    expect(find.byType(TextFormField), findsNothing);
+    expect(find.byType(CheckboxListTile), findsNothing);
+    expect(find.text('Solicitar minha conta'), findsNothing);
 
-    await tester.pageBack();
+    await tester.tap(find.text('Ir para o login'));
     await tester.pumpAndSettle();
-    expect(tester.widget<CheckboxListTile>(checkbox).value, isFalse);
-  });
-
-  testWidgets('cadastro nao e habilitado sem configuracao explicita', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: CadastroScreen()));
-    await tester.enterText(find.byType(TextFormField).at(0), 'Pessoa de Teste');
-    await tester.enterText(find.byType(TextFormField).at(1), 'pessoa@example.com');
-    await tester.enterText(find.byType(TextFormField).at(2), 'senhaSegura123');
-    await tester.enterText(find.byType(TextFormField).at(3), 'senhaSegura123');
-    await tester.ensureVisible(find.text('Solicitar minha conta'));
-    await tester.tap(find.text('Solicitar minha conta'));
-    await tester.pumpAndSettle();
-    expect(find.text('Cadastro indisponível no momento.'), findsOneWidget);
+    expect(find.text('Login Automatize'), findsOneWidget);
   });
 
   testWidgets('empresa saas aparece sem abrir painel dev/empresa', (tester) async {

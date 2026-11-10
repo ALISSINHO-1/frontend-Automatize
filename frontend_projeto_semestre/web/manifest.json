@@ -1,11 +1,11 @@
 {
-  "name": "Projeto Semestral",
-  "short_name": "Projeto Semestral",
+  "name": "Automatize",
+  "short_name": "Automatize",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#F6F7FB",
-  "theme_color": "#3157D5",
-  "description": "Frontend web do Projeto Semestral desenvolvido com Flutter.",
+  "background_color": "#07172A",
+  "theme_color": "#07172A",
+  "description": "Gestão de demandas e acompanhamento de projetos.",
   "prefer_related_applications": false,
   "icons": [
     {

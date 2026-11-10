@@ -5,17 +5,17 @@ import '../../../shared/widgets/main_layout.dart';
 /// Tons do preview do Stitch para a área administrativa. Os neutros vêm de
 /// [AutomatizeColors]; aqui ficam só o roxo de destaque e as cores por estado.
 abstract final class AdminStyle {
-  static const fundo = Color(0xFF0A1020);
-  static const card = Color(0xFF111A2E);
-  static const cardBorda = Color(0xFF223250);
-  static const destaque = Color(0xFF7C6CFF);
-  static const destaqueClaro = Color(0xFF9D90FF);
+  static const fundo = AutomatizeColors.background;
+  static const card = AutomatizeColors.panel;
+  static const cardBorda = AutomatizeColors.border;
+  static const destaque = AutomatizeColors.primary;
+  static const destaqueClaro = AutomatizeColors.cyan;
 
   static Color corEstado(String status) => switch (normalizar(status)) {
-    'PLANEAMENTO' => const Color(0xFF7C6CFF),
-    'EXECUCAO' => const Color(0xFF3B8BFF),
-    'HOMOLOGACAO' => const Color(0xFFF5A524),
-    'CONCLUIDO' => const Color(0xFF2FD3A1),
+    'PLANEAMENTO' => AutomatizeColors.purple,
+    'EXECUCAO' => AutomatizeColors.primary,
+    'HOMOLOGACAO' => AutomatizeColors.warning,
+    'CONCLUIDO' => AutomatizeColors.success,
     _ => AutomatizeColors.muted,
   };
 

@@ -107,56 +107,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   ),
                   const SizedBox(height: 24),
                   _cartaoConta(usuario),
-                  const SizedBox(height: 22),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final estreito = constraints.maxWidth < 620;
-                      final cartoes = [
-                        _indicador(
-                          'Demandas atribuídas',
-                          _store.carregando ? '...' : '${demandas.length}',
-                          Icons.assignment_outlined,
-                        ),
-                        _indicador(
-                          'Último acesso',
-                          'Não disponível',
-                          Icons.access_time_rounded,
-                        ),
-                      ];
-                      return estreito
-                          ? Column(
-                              children: [
-                                for (final cartao in cartoes) ...[
-                                  cartao,
-                                  const SizedBox(height: 12),
-                                ],
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                Expanded(child: cartoes[0]),
-                                const SizedBox(width: 16),
-                                Expanded(child: cartoes[1]),
-                              ],
-                            );
-                    },
-                  ),
-                  const SizedBox(height: 22),
-                  _secao(
-                    titulo: 'Atividades recentes',
-                    icone: Icons.history_rounded,
-                    conteudo: const Text(
-                      'O histórico de movimentações ainda não está '
-                      'disponível na API integrada.',
-                      style: TextStyle(color: AutomatizeColors.muted),
+                  if (usuario.perfil == 'TECNICO') ...[
+                    const SizedBox(height: 22),
+                    _indicador(
+                      'Demandas atribuídas',
+                      _store.carregando ? '...' : '${demandas.length}',
+                      Icons.assignment_outlined,
                     ),
-                  ),
-                  const SizedBox(height: 22),
-                  _secao(
-                    titulo: 'Pedidos e demandas',
-                    icone: Icons.folder_outlined,
-                    conteudo: _conteudoDemandas(usuario, demandas),
-                  ),
+                    const SizedBox(height: 22),
+                    _secao(
+                      titulo: 'Pedidos e demandas',
+                      icone: Icons.folder_outlined,
+                      conteudo: _conteudoDemandas(usuario, demandas),
+                    ),
+                  ],
                 ],
               ),
             );

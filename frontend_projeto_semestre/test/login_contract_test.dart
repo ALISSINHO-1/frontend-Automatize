@@ -93,6 +93,7 @@ void main() {
   for (final response in [
     http.Response('{}', 401),
     http.Response('{}', 422),
+    http.Response('{}', 503),
     http.Response('{"token":"campo-nao-contratado"}', 200),
     http.Response('{"access_token":" "}', 200),
   ]) {
@@ -106,9 +107,29 @@ void main() {
         expect(await LocalStorageService.getToken(), isNull);
         expect(find.byType(LoginScreen), findsOneWidget);
         expect(find.text('Área autenticada'), findsNothing);
+        if (response.statusCode == 401) {
+          expect(find.text('E-mail ou senha incorretos.'), findsOneWidget);
+        } else if (response.statusCode == 503) {
+          expect(find.textContaining('temporariamente indisponível'), findsOneWidget);
+        }
       },
     );
   }
+
+  testWidgets('login oferece autofill e só salva credenciais válidas', (tester) async {
+    tester.view.physicalSize = const Size(1280, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+    final grupo = tester.widget<AutofillGroup>(find.byType(AutofillGroup));
+    expect(grupo.onDisposeAction, AutofillContextAction.cancel);
+    final campos = find.byType(TextField);
+    expect(tester.widget<TextField>(campos.at(0)).autofillHints,
+        contains(AutofillHints.username));
+    expect(tester.widget<TextField>(campos.at(1)).autofillHints,
+        contains(AutofillHints.password));
+  });
 
   testWidgets('rota direta sem sessão volta ao login e remove tela protegida', (
     tester,

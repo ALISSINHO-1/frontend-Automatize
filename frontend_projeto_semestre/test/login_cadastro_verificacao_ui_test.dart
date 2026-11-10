@@ -9,29 +9,16 @@ import 'package:frontend_projeto_semestre/features/home/presentation/pages/login
 import 'package:frontend_projeto_semestre/features/onboarding/presentation/pages/verificar_email_screen.dart';
 
 void main() {
-  testWidgets('login apresenta o link criar conta sob o aviso de seguranca', (tester) async {
+  testWidgets('login não oferece cadastro quando a função está desativada', (tester) async {
     tester.view.physicalSize = const Size(1280, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(MaterialApp(
-      home: const LoginScreen(),
-      routes: {
-        AppRoutes.cadastro: (_) => const Scaffold(body: Text('Cadastro publico')),
-      },
-    ));
-
-    final aviso = find.text('Acesso destinado aos usuários da plataforma');
-    final cadastro = find.text('Crie sua conta');
-    expect(aviso, findsOneWidget);
-    expect(cadastro, findsOneWidget);
-    expect(tester.getTopLeft(cadastro).dy, greaterThan(tester.getTopLeft(aviso).dy));
-
-    await tester.ensureVisible(cadastro);
-    await tester.tap(cadastro);
-    await tester.pumpAndSettle();
-    expect(find.text('Cadastro publico'), findsOneWidget);
+    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+    expect(find.text('Acesso destinado aos usuários da plataforma'), findsOneWidget);
+    expect(find.text('Crie sua conta'), findsNothing);
+    expect(find.text('Novas contas são liberadas por convite neste ambiente.'), findsOneWidget);
   });
 
   testWidgets('token de e-mail exige confirmacao explicita do usuario', (tester) async {

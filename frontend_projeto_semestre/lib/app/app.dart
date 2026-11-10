@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
+import '../core/config/app_config.dart';
 import 'routes/app_routes.dart';
 import '../features/onboarding/presentation/pages/verificar_email_screen.dart';
 import '../features/onboarding/presentation/pages/redefinir_senha_screen.dart';
@@ -12,7 +13,7 @@ class FaculdadeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Projeto Semestral',
+      title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
 
       theme: AppTheme.dark,

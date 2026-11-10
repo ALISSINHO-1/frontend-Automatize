@@ -57,6 +57,8 @@ class HomePage extends StatelessWidget {
                         _tituloFuncionalidades(),
                         const SizedBox(height: 20),
                         _listaFuncionalidades(),
+                        const SizedBox(height: 46),
+                        _secaoPublicos(),
                         const SizedBox(height: 40),
                         _rodape(context),
                       ],
@@ -183,9 +185,8 @@ class HomePage extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         const Text(
-          'Acompanhe o andamento das atividades, consulte '
-          'informações e visualize cada etapa do seu projeto '
-          'em um único lugar.',
+          'Acompanhe demandas, converse com a equipe e veja o andamento '
+          'de cada entrega com informações organizadas em um único lugar.',
           style: TextStyle(color: secundario, fontSize: 14, height: 1.8),
         ),
         const SizedBox(height: 28),
@@ -275,49 +276,44 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _cartaoAcessoCelular() {
-    return Container(
+    return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: painel,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borda),
-      ),
-      child: Row(
-        children: [
-          Image.asset(
+      child: LayoutBuilder(
+        builder: (context, limites) {
+          final compacto = limites.maxWidth < 365;
+          final qr = Image.asset(
             'assets/qr-acesso-hml.png',
-            width: 148,
-            height: 148,
+            width: compacto ? 136 : 148,
+            height: compacto ? 136 : 148,
             filterQuality: FilterQuality.none,
             semanticLabel: 'QR Code de acesso ao Automatize',
-          ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Acesse pelo celular',
-                  style: TextStyle(
-                    color: texto,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Aponte a câmera para o QR Code e abra o Automatize.',
-                  style: TextStyle(
-                    color: secundario,
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                ),
-              ],
+          );
+          const descricao = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Acesse pelo celular',
+                  style: TextStyle(color: texto, fontSize: 15, fontWeight: FontWeight.w800)),
+              SizedBox(height: 6),
+              Text('Aponte a câmera para o QR Code e abra o Automatize.',
+                  style: TextStyle(color: secundario, fontSize: 13, height: 1.5)),
+            ],
+          );
+          return Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: painel,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borda),
             ),
-          ),
-        ],
+            child: compacto
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [qr, const SizedBox(height: 12), descricao],
+                  )
+                : Row(children: [qr, const SizedBox(width: 14), const Expanded(child: descricao)]),
+          );
+        },
       ),
     );
   }
@@ -408,6 +404,75 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  Widget _secaoPublicos() {
+    final perfis = [
+      (
+        titulo: 'Clientes',
+        icone: Icons.person_outline_rounded,
+        descricao: 'Acompanhe solicitações, consulte entregas e participe da homologação.',
+      ),
+      (
+        titulo: 'Equipe técnica',
+        icone: Icons.engineering_outlined,
+        descricao: 'Visualize demandas atribuídas e mantenha o andamento organizado.',
+      ),
+      (
+        titulo: 'Administração',
+        icone: Icons.admin_panel_settings_outlined,
+        descricao: 'Tenha visibilidade da operação e coordene os responsáveis.',
+      ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Um espaço para cada perfil',
+            style: TextStyle(color: texto, fontSize: 22, fontWeight: FontWeight.w900)),
+        const SizedBox(height: 8),
+        const Text('Cada pessoa vê as informações de acordo com suas permissões.',
+            style: TextStyle(color: secundario, fontSize: 13, height: 1.5)),
+        const SizedBox(height: 20),
+        LayoutBuilder(builder: (context, limites) {
+          final largura = limites.maxWidth;
+          final larguraCartao = largura >= 1000
+              ? (largura - 32) / 3
+              : largura >= 650
+                  ? (largura - 16) / 2
+                  : largura;
+          return Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              for (final perfil in perfis)
+                SizedBox(
+                  width: larguraCartao,
+                  child: Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: painel.withValues(alpha: 0.8),
+                      border: Border.all(color: borda),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(perfil.icone, color: ciano, size: 26),
+                        const SizedBox(height: 14),
+                        Text(perfil.titulo,
+                            style: const TextStyle(color: texto, fontSize: 17, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 8),
+                        Text(perfil.descricao,
+                            style: const TextStyle(color: secundario, fontSize: 13, height: 1.5)),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }),
+      ],
+    );
+  }
+
   // JANELA DE INFORMAÇÕES
 
   void _mostrarInformacoes(BuildContext context) {
@@ -491,23 +556,33 @@ class HomePage extends StatelessWidget {
   Widget _rodape(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 22),
-      child: Row(
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 8,
         children: [
-          const Icon(Icons.auto_awesome_rounded, color: ciano, size: 17),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text(
-              'AUTOMATIZE · Portal de acompanhamento de demandas',
-              style: TextStyle(
-                color: secundario,
-                fontSize: 10,
-                letterSpacing: 0.4,
-              ),
-            ),
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: ciano, size: 17),
+              SizedBox(width: 8),
+              Text('AUTOMATIZE · Gestão de demandas',
+                  style: TextStyle(color: secundario, fontSize: 11)),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pushNamed(AppRoutes.termosUso),
-            child: const Text('Termos de Uso'),
+          Wrap(
+            spacing: 6,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.termosUso),
+                child: const Text('Termos de Uso'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.politicaPrivacidade),
+                child: const Text('Privacidade'),
+              ),
+            ],
           ),
         ],
       ),

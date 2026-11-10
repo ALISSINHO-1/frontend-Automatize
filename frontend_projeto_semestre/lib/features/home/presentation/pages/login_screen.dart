@@ -33,6 +33,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _carregando = false;
 
+  String? _erroLogin;
+
   static const _fundo = Color(0xFF07172A);
 
   static const _painel = Color(0xFF102743);
@@ -58,16 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _mostrarErro(String mensagem) {
     if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensagem),
-
-        backgroundColor: const Color(0xFFFF5364),
-
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    setState(() => _erroLogin = mensagem);
   }
 
   Future<void> _entrar() async {
@@ -75,7 +68,10 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    setState(() => _carregando = true);
+    setState(() {
+      _carregando = true;
+      _erroLogin = null;
+    });
 
     // /auth/login é uma chamada pública. Não deve receber um Bearer antigo.
     final client = widget.client ?? http.Client();
@@ -136,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _mostrarErro('Situação cadastral desconhecida.');
           return;
         }
-        TextInput.finishAutofillContext();
+        TextInput.finishAutofillContext(shouldSave: true);
         if (!mounted) return;
 
         if (situacao == 'PENDENTE') {
@@ -193,16 +189,20 @@ class _LoginScreenState extends State<LoginScreen> {
       } else if (response.statusCode == 403) {
         _mostrarErro('Seu usuário não tem permissão de acesso.');
       } else if (response.statusCode == 422) {
-        _mostrarErro('Dados de login rejeitados. Verifique e-mail e senha.');
+        _mostrarErro('Revise o e-mail e a senha informados.');
+      } else if (response.statusCode == 429) {
+        _mostrarErro('Muitas tentativas de acesso. Aguarde um pouco antes de tentar novamente.');
+      } else if (response.statusCode >= 500) {
+        _mostrarErro('O serviço está temporariamente indisponível. Tente novamente em instantes.');
       } else {
-        _mostrarErro('Erro no servidor (código ${response.statusCode}).');
+        _mostrarErro('Não foi possível entrar agora. Tente novamente.');
       }
     } on TimeoutException {
       await LocalStorageService.removeToken();
-      _mostrarErro('A conexão demorou demais. Tente novamente.');
+      _mostrarErro('O servidor demorou para responder. Verifique sua conexão e tente novamente.');
     } on http.ClientException {
       await LocalStorageService.removeToken();
-      _mostrarErro('Não foi possível conectar a API. Verifique o servidor.');
+      _mostrarErro('Sem conexão com o serviço. Verifique sua internet e tente novamente.');
     } on FormatException {
       await LocalStorageService.removeToken();
       _mostrarErro('O servidor retornou uma resposta inválida.');
@@ -279,7 +279,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 Expanded(
                                   flex: 9,
-                                  child: AutofillGroup(child: _formulario()),
+                                  child: AutofillGroup(
+                                    onDisposeAction: AutofillContextAction.cancel,
+                                    child: _formulario(),
+                                  ),
                                 ),
                               ],
                             )
@@ -287,7 +290,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               children: [
                                 _painelApresentacao(compacto: true),
 
-                                AutofillGroup(child: _formulario()),
+                                AutofillGroup(
+                                  onDisposeAction: AutofillContextAction.cancel,
+                                  child: _formulario(),
+                                ),
                               ],
                             ),
                     ),
@@ -719,7 +725,31 @@ class _LoginScreenState extends State<LoginScreen> {
               },
             ),
 
-            const SizedBox(height: 28),
+            if (_erroLogin != null) ...[
+              const SizedBox(height: 16),
+              Semantics(
+                liveRegion: true,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF5364).withValues(alpha: 0.10),
+                    border: Border.all(color: const Color(0xFFFF5364).withValues(alpha: 0.45)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline_rounded, color: Color(0xFFFF8994), size: 20),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(_erroLogin!,
+                            style: const TextStyle(color: Color(0xFFFFC7CB), fontSize: 13)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
 
             SizedBox(
               height: 50,
@@ -796,44 +826,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 25),
-            const Divider(height: 1, color: _borda),
-            const SizedBox(height: 12),
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 4,
-              children: [
-                const Text(
-                  'Não tem uma conta?',
-                  style: TextStyle(color: _textoSecundario, fontSize: 13),
-                ),
-                TextButton(
-                  key: const Key('login-criar-conta'),
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.cadastro),
-                  style: TextButton.styleFrom(
-                    foregroundColor: _ciano,
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
-                    minimumSize: const Size(0, 40),
+            if (AppConfig.publicSignupEnabled) ...[
+              const SizedBox(height: 25),
+              const Divider(height: 1, color: _borda),
+              const SizedBox(height: 12),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 4,
+                children: [
+                  const Text('Não tem uma conta?',
+                      style: TextStyle(color: _textoSecundario, fontSize: 13)),
+                  TextButton(
+                    key: const Key('login-criar-conta'),
+                    onPressed: () => Navigator.of(context).pushNamed(AppRoutes.cadastro),
+                    style: TextButton.styleFrom(
+                      foregroundColor: _ciano,
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+                    ),
+                    child: const Text('Crie sua conta',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Crie sua conta',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(width: 5),
-                      Icon(Icons.north_east_rounded, size: 14),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ] else ...[
+              const SizedBox(height: 20),
+              const Text('Novas contas são liberadas por convite neste ambiente.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: _textoSecundario, fontSize: 12)),
+            ],
             if (AppConfig.publicSignupEnabled)
               TextButton(
                 onPressed: () => Navigator.of(context)

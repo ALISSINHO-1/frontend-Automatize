@@ -16,27 +16,26 @@ class AdminLayout extends StatelessWidget {
     final larguraTela = MediaQuery.sizeOf(context).width;
     final isDesktop = larguraTela >= 900;
 
-    return Overlay(
-      initialEntries: [
-        OverlayEntry(
-          builder: (context) => Material(
-            color: RedesignColors.background,
-            child: Row(
-              children: [
-                if (isDesktop) const AdminSidebar(),
-                Expanded(
-                  child: Column(
-                    children: [
-                      const _AdminTopBar(),
-                      Expanded(child: child),
-                    ],
-                  ),
-                ),
-              ],
+    return Scaffold(
+      backgroundColor: RedesignColors.background,
+      drawer: isDesktop
+          ? null
+          : const Drawer(width: 250, child: AdminSidebar()),
+      body: SafeArea(
+        child: Row(
+          children: [
+            if (isDesktop) const AdminSidebar(),
+            Expanded(
+              child: Column(
+                children: [
+                  const _AdminTopBar(),
+                  Expanded(child: child),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -51,10 +50,11 @@ class _AdminTopBar extends StatelessWidget {
       builder: (context, _) {
         final rota = adminNavigationController.currentRoute;
         final mostrarBusca = rota == TechnicalRoutes.demandList;
+        final mobile = MediaQuery.sizeOf(context).width < 900;
 
         return Container(
           height: 68,
-          padding: const EdgeInsets.symmetric(horizontal: 28),
+          padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 28),
           decoration: const BoxDecoration(
             color: RedesignColors.background,
             border: Border(
@@ -63,6 +63,14 @@ class _AdminTopBar extends StatelessWidget {
           ),
           child: Row(
             children: [
+              if (mobile) ...[
+                Builder(builder: (botaoContexto) => IconButton(
+                  tooltip: 'Abrir menu de navegação',
+                  icon: const Icon(Icons.menu_rounded, color: RedesignColors.textPrimary),
+                  onPressed: () => Scaffold.of(botaoContexto).openDrawer(),
+                )),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -71,16 +79,7 @@ class _AdminTopBar extends StatelessWidget {
                       : const SizedBox.shrink(),
                 ),
               ),
-              const SizedBox(width: 16),
-              const Tooltip(
-                message: 'Notificações indisponíveis na demonstração',
-                child: Icon(
-                  Icons.notifications_none_rounded,
-                  color: RedesignColors.textSecondary,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 24),
+              const SizedBox(width: 12),
               ListenableBuilder(
                 listenable: currentUserSession,
                 builder: (context, _) {
@@ -100,7 +99,7 @@ class _AdminTopBar extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      if (MediaQuery.sizeOf(context).width >= 700) ...[
+                      if (MediaQuery.sizeOf(context).width >= 900) ...[
                         Text(
                           currentUserSession.displayName,
                           style: const TextStyle(

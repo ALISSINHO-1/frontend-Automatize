@@ -4,7 +4,6 @@ import '../widgets/technical_navigation.dart';
 import '../../../../core/theme/redesign_colors.dart';
 import '../../../demands/data/services/demand_service.dart';
 import '../../../demands/presentation/widgets/demand_status_dashboard.dart';
-import '../widgets/admin_sidebar.dart';
 
 class TechnicalDashboardPage extends StatefulWidget {
   const TechnicalDashboardPage({super.key});
@@ -54,9 +53,6 @@ class _TechnicalDashboardPageState extends State<TechnicalDashboardPage> {
 
     return Scaffold(
       backgroundColor: RedesignColors.background,
-      drawer: MediaQuery.sizeOf(context).width < 900
-          ? const Drawer(child: AdminSidebar())
-          : null,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -149,7 +145,7 @@ class _TechnicalDashboardPageState extends State<TechnicalDashboardPage> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      '${snapshot.error}',
+                                      'Verifique sua conexão e tente novamente.',
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                         color: RedesignColors.textSecondary,

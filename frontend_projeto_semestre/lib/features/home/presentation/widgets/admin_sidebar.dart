@@ -25,19 +25,11 @@ class AdminSidebar extends StatelessWidget {
             rotaAtual == TechnicalRoutes.demandList ||
             rotaAtual == TechnicalRoutes.demandDetails;
 
-        final emHistorico = rotaAtual == TechnicalRoutes.demandHistory;
-
-        final emAnexos = rotaAtual == TechnicalRoutes.demandAttachments;
-
-        final selectedIndex = emAnexos
-            ? 3
-            : emHistorico
-            ? 2
-            : emDemandas
+        final selectedIndex = emDemandas
             ? 1
             : rotaAtual == TechnicalRoutes.home
-            ? 0
-            : -1;
+                ? 0
+                : -1;
 
         return Container(
           width: 250,
@@ -48,19 +40,19 @@ class AdminSidebar extends StatelessWidget {
             children: [
               const Row(
                 children: [
-                  Icon(
-                    Icons.auto_awesome,
-                    color: RedesignColors.purple,
-                    size: 28,
-                  ),
-                  SizedBox(width: 12),
-                  Text(
-                    'AUTOMATIZE',
-                    style: TextStyle(
-                      color: RedesignColors.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
+                  Icon(Icons.auto_awesome, color: RedesignColors.primary, size: 25),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'AUTOMATIZE',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: RedesignColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                      ),
                     ),
                   ),
                 ],
@@ -69,7 +61,7 @@ class AdminSidebar extends StatelessWidget {
               const SizedBox(height: 48),
 
               SizedBox(
-                height: (_itemHeight + _itemSpacing) * 4,
+                height: (_itemHeight + _itemSpacing) * 2,
                 child: Stack(
                   children: [
                     if (selectedIndex >= 0)
@@ -105,19 +97,6 @@ class AdminSidebar extends StatelessWidget {
                           'Demandas',
                           selected: selectedIndex == 1,
                           onTap: () => _navegar(TechnicalRoutes.demandList),
-                        ),
-                        _menuItem(
-                          Icons.history_rounded,
-                          'Histórico',
-                          selected: selectedIndex == 2,
-                          onTap: () => _navegar(TechnicalRoutes.demandHistory),
-                        ),
-                        _menuItem(
-                          Icons.folder_outlined,
-                          'Anexos',
-                          selected: selectedIndex == 3,
-                          onTap: () =>
-                              _navegar(TechnicalRoutes.demandAttachments),
                         ),
                       ],
                     ),
@@ -230,8 +209,10 @@ class AdminSidebar extends StatelessWidget {
       child: SidebarMenuItem(
         child: SizedBox(
           height: _itemHeight,
-          child: ListTile(
-            onTap: onTap,
+          child: Material(
+            type: MaterialType.transparency,
+            child: ListTile(
+              onTap: onTap,
             dense: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             leading: Icon(
@@ -248,6 +229,7 @@ class AdminSidebar extends StatelessWidget {
                     : RedesignColors.textSecondary,
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
               ),
+            ),
             ),
           ),
         ),

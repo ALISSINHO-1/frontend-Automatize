@@ -62,7 +62,7 @@ class _PainelScreenState extends State<PainelScreen> {
       case 'Execução':
         return AutomatizeColors.primary;
       case 'Homologação':
-        return AutomatizeColors.cyan;
+        return AutomatizeColors.warning;
       case 'Concluído':
         return AutomatizeColors.success;
       default:
