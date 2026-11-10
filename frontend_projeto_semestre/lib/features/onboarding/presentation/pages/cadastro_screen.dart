@@ -255,14 +255,17 @@ class _CadastroScreenState extends State<CadastroScreen> {
                 child: const Text('Ler os Termos de Uso'),
               ),
             ),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: const Text('Li e aceito os Termos de Uso.'),
-              value: _termosAceitos,
-              onChanged: _enviando
-                  ? null
-                  : (value) => setState(() => _termosAceitos = value ?? false),
+            Material(
+              type: MaterialType.transparency,
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text('Li e aceito os Termos de Uso.'),
+                value: _termosAceitos,
+                onChanged: _enviando
+                    ? null
+                    : (value) => setState(() => _termosAceitos = value ?? false),
+              ),
             ),
             if (AppConfig.publicSignupEnabled) ...[
               const SizedBox(height: 18),
