@@ -276,57 +276,70 @@ class _MainLayoutState extends State<MainLayout> {
                             padding: EdgeInsets.symmetric(
                               horizontal: compact ? 10 : 15,
                             ),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: compact ? 0 : 12,
-                                vertical: compact ? 12 : 13,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AutomatizeColors.panel,
-                                borderRadius: BorderRadius.circular(15),
-                                border: Border.all(
-                                  color: AutomatizeColors.border,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(15),
+                              onTap:
+                                  ModalRoute.of(context)?.settings.name ==
+                                      AppRoutes.perfil
+                                  ? null
+                                  : () =>
+                                        Navigator.of(context)
+                                            .pushNamed(AppRoutes.perfil),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: compact ? 0 : 12,
+                                  vertical: compact ? 12 : 13,
                                 ),
-                              ),
-                              child: compact
-                                  ? Center(child: avatar)
-                                  : Row(
-                                      children: [
-                                        avatar,
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                nome,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  color: AutomatizeColors.text,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 12,
+                                decoration: BoxDecoration(
+                                  color: AutomatizeColors.panel,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: AutomatizeColors.border,
+                                  ),
+                                ),
+                                child: compact
+                                    ? Center(child: avatar)
+                                    : Row(
+                                        children: [
+                                          avatar,
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  nome,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    color:
+                                                        AutomatizeColors.text,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 12,
+                                                  ),
                                                 ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                perfil,
-                                                style: const TextStyle(
-                                                  color: AutomatizeColors.muted,
-                                                  fontSize: 11,
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  perfil,
+                                                  style: const TextStyle(
+                                                    color:
+                                                        AutomatizeColors.muted,
+                                                    fontSize: 11,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        const Icon(
-                                          Icons.more_horiz,
-                                          color: AutomatizeColors.muted,
-                                          size: 19,
-                                        ),
-                                      ],
-                                    ),
+                                          const Icon(
+                                            Icons.more_horiz,
+                                            color: AutomatizeColors.muted,
+                                            size: 19,
+                                          ),
+                                        ],
+                                      ),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 10),
