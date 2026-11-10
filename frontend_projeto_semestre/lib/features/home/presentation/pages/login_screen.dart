@@ -781,32 +781,68 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Text('Esqueci minha senha'),
               ),
             ],
-            if (AppConfig.publicSignupEnabled) ...[
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.cadastro),
-                icon: const Icon(Icons.person_add_alt_1_outlined),
-                label: const Text('Ainda não tenho conta'),
-              ),
-            ],
             const SizedBox(height: 24),
-
             const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.shield_outlined, color: _textoSecundario, size: 16),
-
+                Icon(Icons.shield_outlined, color: _textoSecundario, size: 15),
                 SizedBox(width: 7),
                 Flexible(
                   child: Text(
                     'Acesso destinado aos usuários da plataforma',
-
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: _textoSecundario, fontSize: 10),
+                    style: TextStyle(color: _textoSecundario, fontSize: 11),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 25),
+            const Divider(height: 1, color: _borda),
+            const SizedBox(height: 12),
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
+              children: [
+                const Text(
+                  'Não tem uma conta?',
+                  style: TextStyle(color: _textoSecundario, fontSize: 13),
+                ),
+                TextButton(
+                  key: const Key('login-criar-conta'),
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.cadastro),
+                  style: TextButton.styleFrom(
+                    foregroundColor: _ciano,
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+                    minimumSize: const Size(0, 40),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Crie sua conta',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(width: 5),
+                      Icon(Icons.north_east_rounded, size: 14),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (AppConfig.publicSignupEnabled)
+              TextButton(
+                onPressed: () => Navigator.of(context)
+                    .pushNamed(AppRoutes.reenviarConfirmacao),
+                child: const Text(
+                  'Não recebeu o e-mail de confirmação?',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
           ],
         ),
       ),
