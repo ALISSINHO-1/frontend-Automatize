@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -125,10 +124,10 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
     final grupo = tester.widget<AutofillGroup>(find.byType(AutofillGroup));
     expect(grupo.onDisposeAction, AutofillContextAction.cancel);
-    final campos = find.byType(TextFormField);
-    expect(tester.widget<TextFormField>(campos.at(0)).autofillHints,
+    final campos = find.byType(TextField);
+    expect(tester.widget<TextField>(campos.at(0)).autofillHints,
         contains(AutofillHints.username));
-    expect(tester.widget<TextFormField>(campos.at(1)).autofillHints,
+    expect(tester.widget<TextField>(campos.at(1)).autofillHints,
         contains(AutofillHints.password));
   });
 
