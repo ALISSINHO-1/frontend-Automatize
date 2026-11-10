@@ -42,6 +42,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
   String? _erroConfiguracao;
   String? _erro;
   String? _turnstileToken;
+  String? _captchaErro;
   int _desafioVersao = 0;
 
   @override
@@ -147,6 +148,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
           _enviando = false;
           // Turnstile valida tokens apenas uma vez. Recriar apos tentativa.
           _turnstileToken = null;
+          _captchaErro = null;
           _desafioVersao++;
         });
       }
@@ -402,12 +404,50 @@ class _CadastroScreenState extends State<CadastroScreen> {
               ),
             ),
             const SizedBox(height: 18),
+            const Text('Verificação de segurança',
+                style: TextStyle(color: _texto, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            const Text('O Cloudflare validará seu acesso antes de criar a conta.',
+                style: TextStyle(color: _suave, fontSize: 12)),
             TurnstileChallenge(
               key: ValueKey(_desafioVersao),
               siteKey: _siteKey,
               onToken: (token) {
-                if (mounted) setState(() => _turnstileToken = token);
+                if (mounted) setState(() {
+                  _turnstileToken = token;
+                  if (token != null) _captchaErro = null;
+                });
               },
+              onError: (message) {
+                if (mounted) setState(() {
+                  _turnstileToken = null;
+                  _captchaErro = message;
+                });
+              },
+            ),
+            if (_captchaErro != null) ...[
+              const SizedBox(height: 4),
+              Text(_captchaErro!,
+                  style: const TextStyle(color: Color(0xFFFF7785))),
+            ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _enviando ? null : () {
+                  setState(() {
+                    _captchaErro = null;
+                    _turnstileToken = null;
+                    _desafioVersao++;
+                  });
+                },
+                icon: const Icon(Icons.refresh_rounded, size: 17),
+                label: const Text('Recarregar verificação'),
+              ),
+            ),
+            const Text(
+              'Se não aparecer, verifique se o navegador está bloqueando '
+              'o Cloudflare Turnstile (por exemplo, Brave Shields).',
+              style: TextStyle(color: _suave, fontSize: 12, height: 1.4),
             ),
             if (_erro != null) ...[
               const SizedBox(height: 15),

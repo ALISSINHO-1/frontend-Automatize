@@ -36,3 +36,7 @@ jobs:
         run: flutter test
       - name: Web build
         run: flutter build web --release --dart-define=APP_ENV=hml --dart-define=API_BASE_URL=https://automatize-api-hml.onrender.com
+      - name: Verificar arquivo do Turnstile na saída web
+        run: |
+          test -f build/web/turnstile-frame.html
+          grep -q 'challenges.cloudflare.com/turnstile/v0/api.js' build/web/turnstile-frame.html

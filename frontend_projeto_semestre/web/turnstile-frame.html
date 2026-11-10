@@ -1,42 +1,84 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="referrer" content="no-referrer">
-<style>
-  html, body { margin: 0; background: transparent; overflow: hidden; }
-  #turnstile { display: flex; align-items: center; justify-content: center; min-height: 70px; }
-</style>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Verificação do Automatize</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; color: #9DB1C8; font: 12px system-ui, sans-serif; overflow: hidden; }
+    #status { min-height: 19px; margin: 3px 0 7px; }
+    #turnstile { min-height: 70px; display: flex; justify-content: flex-start; align-items: center; }
+    .error { color: #FF8994; }
+  </style>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          async defer onerror="window.turnstileScriptFailed && window.turnstileScriptFailed()"></script>
 </head>
 <body>
-<div id="turnstile"></div>
-<script>
-(function () {
-  'use strict';
-  const p = new URLSearchParams(window.location.search);
-  const instance = p.get('instance') || '';
-  const sitekey = p.get('sitekey') || '';
-  function notify(token) {
-    window.parent.postMessage(JSON.stringify({
-      kind: 'automatize-turnstile', instance: instance, token: token || null
-    }), window.location.origin);
-  }
-  function render() {
-    if (!sitekey) { notify(null); return; }
-    if (!window.turnstile) { setTimeout(render, 150); return; }
-    window.turnstile.render('#turnstile', {
-      sitekey: sitekey,
-      theme: 'dark',
-      size: 'flexible',
-      callback: notify,
-      'expired-callback': function () { notify(null); },
-      'error-callback': function () { notify(null); }
-    });
-  }
-  render();
-})();
-</script>
+  <div id="status" role="status" aria-live="polite">Carregando verificação antirobô...</div>
+  <div id="turnstile"></div>
+  <script>
+    (function () {
+      'use strict';
+      const params = new URLSearchParams(location.search);
+      const instance = params.get('instance') || '';
+      const sitekey = params.get('sitekey') || '';
+      const statusBox = document.getElementById('status');
+      let attempts = 0;
+      let failed = false;
+      function status(message, error) {
+        statusBox.textContent = message;
+        statusBox.className = error ? 'error' : '';
+      }
+      function notify(token, state, errorCode) {
+        window.parent.postMessage(JSON.stringify({
+          kind: 'automatize-turnstile',
+          instance: instance,
+          token: token || null,
+          status: state || 'pending',
+          errorCode: errorCode || ''
+        }), location.origin);
+      }
+      function fail(code) {
+        if (failed) return;
+        failed = true;
+        const reason = String(code || '').replace(/[^0-9a-z-]/gi, '').slice(0, 32);
+        status(reason ? 'Falha na verificação (' + reason + '). Tente recarregar.'
+                      : 'Não foi possível carregar a verificação. Tente recarregar.', true);
+        notify(null, 'error', reason);
+      }
+      window.turnstileScriptFailed = function () { fail('script-blocked'); };
+      function render() {
+        if (failed) return;
+        if (!sitekey) { fail('sitekey-missing'); return; }
+        if (!window.turnstile) {
+          if (++attempts > 80) { fail('script-timeout'); return; }
+          setTimeout(render, 150);
+          return;
+        }
+        try {
+          window.turnstile.render('#turnstile', {
+            sitekey: sitekey,
+            theme: 'dark',
+            size: 'flexible',
+            appearance: 'always',
+            callback: function (token) {
+              status('Verificação concluída.', false);
+              notify(token, 'success');
+            },
+            'expired-callback': function () {
+              status('A verificação expirou. Recarregue para continuar.', true);
+              notify(null, 'expired');
+            },
+            'error-callback': function (code) { fail(code); }
+          });
+          status('Aguardando validação do Cloudflare...', false);
+        } catch (error) {
+          fail('render-error');
+        }
+      }
+      render();
+    })();
+  </script>
 </body>
 </html>

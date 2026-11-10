@@ -10,9 +10,11 @@ class TurnstileChallenge extends StatefulWidget {
     super.key,
     required this.siteKey,
     required this.onToken,
+    this.onError,
   });
   final String siteKey;
   final ValueChanged<String?> onToken;
+  final ValueChanged<String>? onError;
 
   @override
   State<TurnstileChallenge> createState() => _TurnstileChallengeState();
@@ -40,7 +42,7 @@ class _TurnstileChallengeState extends State<TurnstileChallenge> {
         final element = web.HTMLIFrameElement()
           ..src = uri.toString()
           ..width = '100%'
-          ..height = '90';
+          ..height = '145';
         element.style.border = '0';
         element.setAttribute('title', 'Verificação antirobô');
         return element;
@@ -61,8 +63,16 @@ class _TurnstileChallengeState extends State<TurnstileChallenge> {
           decoded['instance'] != _instance || !mounted) {
         return;
       }
+      final status = decoded['status'];
       final token = decoded['token'];
       widget.onToken(token is String && token.isNotEmpty ? token : null);
+      if (status == 'error') {
+        final code = decoded['errorCode'];
+        widget.onError?.call(code is String && code.isNotEmpty
+            ? 'Não foi possível carregar o CAPTCHA (código $code).'
+            : 'Não foi possível carregar o CAPTCHA.');
+      }
+
     }).toJS;
     web.window.addEventListener('message', _handler);
   }
@@ -75,7 +85,7 @@ class _TurnstileChallengeState extends State<TurnstileChallenge> {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 90, width: double.infinity,
+    height: 145, width: double.infinity,
     child: HtmlElementView(viewType: _instance),
   );
 }
