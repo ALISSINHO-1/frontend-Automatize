@@ -29,7 +29,10 @@ class _DemandasScreenState extends State<DemandasScreen> {
   // Compartilha com o painel os dados que vieram da API.
   Future<void> _carregarDemandas() => _store.carregarDemandas();
   void _atualizarDemandas() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      _abrirDemandaRecebida();
+    }
   }
 
   // Apresenta os nomes dos estados, sem mudar os valores vindos do backend.
@@ -99,7 +102,43 @@ class _DemandasScreenState extends State<DemandasScreen> {
     super.initState();
     _store.addListener(_atualizarDemandas);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _carregarDemandas();
+      if (!mounted) return;
+      _abrirDemandaRecebida();
+      _carregarDemandas();
+    });
+  }
+
+  String? _demandaPendente;
+  bool _verificandoAbertura = false;
+
+  void _abrirDemandaRecebida() {
+    if (!mounted || _verificandoAbertura) return;
+
+    final argumento = ModalRoute.of(context)?.settings.arguments;
+    if (argumento is! String || argumento.isEmpty) return;
+
+    _demandaPendente ??= argumento;
+
+    if (_store.carregando || !_store.carregado) return;
+
+    final id = _demandaPendente;
+    if (id == null) return;
+
+    _demandaPendente = null;
+    _verificandoAbertura = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final encontrados = _store.demandas.where((demanda) => demanda.id == id);
+
+      if (encontrados.isNotEmpty) {
+        _visualizarDemanda(encontrados.first);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Demanda não encontrada.')),
+        );
+      }
     });
   }
 

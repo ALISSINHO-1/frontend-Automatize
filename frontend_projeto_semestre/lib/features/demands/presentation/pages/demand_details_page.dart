@@ -1,10 +1,10 @@
+import '../../../admin/data/services/usuario_atual_store.dart';
+import '../../../../app/routes/app_routes.dart';
+import '../../../../shared/widgets/main_layout.dart';
 import 'demand_homologation_page.dart';
 import 'demand_attachments_page.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/pedido_model.dart';
-import '../widgets/demand_history_timeline.dart';
-
-import '../../data/models/historico_estado_model.dart';
 
 class DemandDetailsPage extends StatelessWidget {
   const DemandDetailsPage({super.key, required this.demandId, this.pedido});
@@ -17,6 +17,11 @@ class DemandDetailsPage extends StatelessWidget {
 
     if (responsavelId == null || responsavelId.isEmpty) {
       return 'Não atribuído';
+    }
+
+    final usuario = UsuarioAtualStore.instance.value;
+    if (usuario != null && usuario.id == responsavelId) {
+      return usuario.nome;
     }
 
     return 'ID: $responsavelId';
@@ -35,301 +40,314 @@ class DemandDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F131C),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 32,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Voltar
-                    TextButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Meus Projetos'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFADC6FF),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Identificação
-                    const Text(
-                      'DEMANDA',
-                      style: TextStyle(
-                        color: Color(0xFF4CD7F6),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Título e status
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 12,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          pedido?.titulo ?? 'Detalhes indisponíveis',
-                          style: const TextStyle(
-                            color: Color(0xFFDFE2EE),
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                          ),
+    return MainLayout(
+      selectedIndex: -1,
+      onDestinationSelected: (index) {
+        if (index == 0) {
+          Navigator.of(context).pushReplacementNamed(AppRoutes.painel);
+        } else if (index == 1) {
+          Navigator.of(context).pushReplacementNamed(AppRoutes.demandas);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0F131C),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 32,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Voltar
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('Meus Projetos'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFADC6FF),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF4D8EFF,
-                            ).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            pedido?.status ?? 'SEM DADOS',
-                            style: const TextStyle(
-                              color: Color(0xFFADC6FF),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Card principal
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(28),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF181C24),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF424754)),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                      const SizedBox(height: 24),
+
+                      // Identificação
+                      const Text(
+                        'DEMANDA',
+                        style: TextStyle(
+                          color: Color(0xFF4CD7F6),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Título e status
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 12,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          const Text(
-                            'Descrição',
-                            style: TextStyle(
-                              color: Color(0xFFDFE2EE),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
                           Text(
-                            pedido?.descricao ?? 'Descrição não disponível.',
+                            pedido?.titulo ?? 'Detalhes indisponíveis',
                             style: const TextStyle(
-                              color: Color(0xFFC2C6D6),
-                              fontSize: 15,
-                              height: 1.6,
+                              color: Color(0xFFDFE2EE),
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-
-                          const SizedBox(height: 32),
-
-                          const Divider(color: Color(0xFF424754)),
-
-                          const SizedBox(height: 24),
-
-                          // Responsável e estado
-                          Wrap(
-                            spacing: 80,
-                            runSpacing: 24,
-                            children: [
-                              _InformationItem(
-                                label: 'RESPONSÁVEL',
-                                value: nomeResponsavel,
-                                icon: Icons.person_outline,
-                              ),
-                              _InformationItem(
-                                label: 'ESTADO',
-                                value: pedido?.status ?? 'Não informado',
-                                icon: Icons.sync,
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 36),
-
-                          // Progresso
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Progresso',
-                                style: TextStyle(
-                                  color: Color(0xFFDFE2EE),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                '${(pedido?.percentualProgresso ?? 0).toStringAsFixed(0)}%',
-                                style: const TextStyle(
-                                  color: Color(0xFFADC6FF),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: LinearProgressIndicator(
-                              value: ((pedido?.percentualProgresso ?? 0) / 100)
-                                  .clamp(0.0, 1.0),
-                              minHeight: 10,
-                              backgroundColor: Color(0xFF31353E),
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF4D8EFF),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF4D8EFF,
+                              ).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              pedido?.status ?? 'SEM DADOS',
+                              style: const TextStyle(
+                                color: Color(0xFFADC6FF),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
                               ),
                             ),
-                          ),
-
-                          const SizedBox(height: 36),
-
-                          const Divider(color: Color(0xFF424754)),
-
-                          const SizedBox(height: 24),
-
-                          // Datas
-                          Wrap(
-                            spacing: 80,
-                            runSpacing: 24,
-                            children: [
-                              _InformationItem(
-                                label: 'CRIADA EM',
-                                value: _formatarData(pedido?.createdAt),
-                                icon: Icons.calendar_today_outlined,
-                              ),
-                              _InformationItem(
-                                label: 'ATUALIZADA EM',
-                                value: _formatarData(pedido?.updatedAt),
-                                icon: Icons.update,
-                              ),
-                            ],
                           ),
                         ],
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 32),
 
-                    Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton.icon(
-                      onPressed: pedido == null ? null : () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => DemandAttachmentsPage(
-                              pedido: pedido!,
+                      // Card principal
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(28),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF181C24),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF424754)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Descrição',
+                              style: TextStyle(
+                                color: Color(0xFFDFE2EE),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.attach_file),
-                      label: const Text('Abrir anexos'),
-                    ),
-                  ),
+                            const SizedBox(height: 10),
+                            Text(
+                              pedido?.descricao ?? 'Descrição não disponível.',
+                              style: const TextStyle(
+                                color: Color(0xFFC2C6D6),
+                                fontSize: 15,
+                                height: 1.6,
+                              ),
+                            ),
 
-                  const SizedBox(height: 24),
+                            const SizedBox(height: 32),
 
-                    DemandHistoryTimeline(
-                      historico: [
-                        HistoricoEstadoModel(
-                          estadoAnterior: null,
-                          novoEstado: 'ABERTO',
-                          usuarioResponsavel: 'Lucas Silva',
-                          dataHora: DateTime(2026, 10, 15, 9, 30),
+                            const Divider(color: Color(0xFF424754)),
+
+                            const SizedBox(height: 24),
+
+                            // Responsável e estado
+                            Wrap(
+                              spacing: 80,
+                              runSpacing: 24,
+                              children: [
+                                _InformationItem(
+                                  label: 'RESPONSÁVEL',
+                                  value: nomeResponsavel,
+                                  icon: Icons.person_outline,
+                                ),
+                                _InformationItem(
+                                  label: 'ESTADO',
+                                  value: pedido?.status ?? 'Não informado',
+                                  icon: Icons.sync,
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 36),
+
+                            // Progresso
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Progresso',
+                                  style: TextStyle(
+                                    color: Color(0xFFDFE2EE),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  '${(pedido?.percentualProgresso ?? 0).toStringAsFixed(0)}%',
+                                  style: const TextStyle(
+                                    color: Color(0xFFADC6FF),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: LinearProgressIndicator(
+                                value:
+                                    ((pedido?.percentualProgresso ?? 0) / 100)
+                                        .clamp(0.0, 1.0),
+                                minHeight: 10,
+                                backgroundColor: Color(0xFF31353E),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF4D8EFF),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 36),
+
+                            const Divider(color: Color(0xFF424754)),
+
+                            const SizedBox(height: 24),
+
+                            // Datas
+                            Wrap(
+                              spacing: 80,
+                              runSpacing: 24,
+                              children: [
+                                _InformationItem(
+                                  label: 'CRIADA EM',
+                                  value: _formatarData(pedido?.createdAt),
+                                  icon: Icons.calendar_today_outlined,
+                                ),
+                                _InformationItem(
+                                  label: 'ATUALIZADA EM',
+                                  value: _formatarData(pedido?.updatedAt),
+                                  icon: Icons.update,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        HistoricoEstadoModel(
-                          estadoAnterior: 'ABERTO',
-                          novoEstado: 'EXECUCAO',
-                          usuarioResponsavel: 'Lucas Silva',
-                          dataHora: DateTime(2026, 10, 17, 14, 15),
-                        ),
-                        HistoricoEstadoModel(
-                          estadoAnterior: 'EXECUCAO',
-                          novoEstado: 'HOMOLOGACAO',
-                          usuarioResponsavel: 'Lucas Silva',
-                          dataHora: DateTime(2026, 10, 20, 10, 45),
-                        ),
-                      ],
-                    ),
+                      ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    if (pedido?.status.toUpperCase() == 'HOMOLOGACAO')
                       Align(
                         alignment: Alignment.centerLeft,
                         child: FilledButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    DemandHomologationPage(pedido: pedido!),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.fact_check_outlined),
-                          label: const Text('Abrir homologação'),
+                          onPressed: pedido == null
+                              ? null
+                              : () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => DemandAttachmentsPage(
+                                        pedido: pedido!,
+                                      ),
+                                    ),
+                                  );
+                                },
+                          icon: const Icon(Icons.attach_file),
+                          label: const Text('Abrir anexos'),
                         ),
                       ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    // Aviso temporário
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1C2028),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.info_outline, color: Color(0xFF4CD7F6)),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'As informações exibidas correspondem aos dados disponíveis '
-                              'para esta demanda. Dados adicionais serão apresentados '
-                              'quando disponibilizados pela API.',
-                              style: TextStyle(
-                                color: Color(0xFFC2C6D6),
-                                height: 1.4,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AutomatizeColors.panel,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AutomatizeColors.border),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.history, color: AutomatizeColors.cyan),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'O histórico de alterações desta demanda ainda '
+                                'não está disponível na API integrada.',
+                                style: TextStyle(color: AutomatizeColors.muted),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 24),
+
+                      if (pedido?.status.toUpperCase() == 'HOMOLOGACAO')
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      DemandHomologationPage(pedido: pedido!),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.fact_check_outlined),
+                            label: const Text('Abrir homologação'),
+                          ),
+                        ),
+
+                      const SizedBox(height: 24),
+
+                      // Aviso temporário
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1C2028),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Color(0xFF4CD7F6)),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'As informações exibidas correspondem aos dados disponíveis '
+                                'para esta demanda. Dados adicionais serão apresentados '
+                                'quando disponibilizados pela API.',
+                                style: TextStyle(
+                                  color: Color(0xFFC2C6D6),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

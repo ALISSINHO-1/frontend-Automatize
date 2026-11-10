@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../app/routes/app_routes.dart';
@@ -6,7 +7,6 @@ import '../../features/admin/data/models/usuario_atual_model.dart';
 import '../../features/admin/data/services/usuario_atual_store.dart';
 
 /// Paleta visual compartilhada pelas telas do Automatize.
-
 class AutomatizeColors {
   static const background = Color(0xFF07172A);
   static const sidebar = Color(0xFF0A1B30);
@@ -37,12 +37,10 @@ class MainLayout extends StatefulWidget {
     this.onLogout,
   });
 
-  /// Item administrativo disponível somente para ADMIN.
   static const int indiceAdmin = 3;
   static const int _indiceChat = 4;
   static const int indiceClientes = 5;
 
-  // Aliases mantidos para não quebrar as telas existentes.
   static const Color sidebarColor = AutomatizeColors.sidebar;
   static const Color activeColor = AutomatizeColors.primary;
 
@@ -51,8 +49,8 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  late final Future<UsuarioAtualModel?> _usuario = UsuarioAtualStore.instance
-      .carregar();
+  late final Future<UsuarioAtualModel?> _usuario =
+      UsuarioAtualStore.instance.carregar();
 
   Future<void> _confirmarSaida(BuildContext context) async {
     final confirmou = await showDialog<bool>(
@@ -77,7 +75,10 @@ class _MainLayoutState extends State<MainLayout> {
         ),
         content: const Text(
           'Você precisará entrar novamente para acessar suas demandas.',
-          style: TextStyle(color: AutomatizeColors.muted, height: 1.5),
+          style: TextStyle(
+            color: AutomatizeColors.muted,
+            height: 1.5,
+          ),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
         actions: [
@@ -107,57 +108,78 @@ class _MainLayoutState extends State<MainLayout> {
         ],
       ),
     );
+
     if (confirmou != true || !context.mounted) return;
 
-    // Encerra a sessão antes de iniciar a navegação.
     await LocalStorageService.removeToken();
+
     if (!context.mounted) return;
+
     if (widget.onLogout != null) {
       widget.onLogout!();
       return;
     }
 
-    // Mantém o logout funcional mesmo sem um callback na tela.
-    Navigator.of(
-      context,
-      rootNavigator: true,
-    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    Navigator.of(context, rootNavigator: true)
+        .pushNamedAndRemoveUntil(
+      AppRoutes.login,
+      (route) => false,
+    );
   }
 
-  void _selecionarDestino(BuildContext context, int index, String label) {
+  void _selecionarDestino(
+    BuildContext context,
+    int index,
+    String label,
+  ) {
     if (widget.selectedIndex == index) return;
+
     if (index == MainLayout._indiceChat) {
       Navigator.of(context).pushNamed(AppRoutes.chat);
       return;
     }
+
     if (index == MainLayout.indiceClientes) {
       Navigator.of(context).pushNamed(AppRoutes.clientes);
       return;
     }
+
     if (index == MainLayout.indiceAdmin) {
       Navigator.of(context).pushNamed(AppRoutes.admin);
       return;
     }
+
     if (widget.onDestinationSelected != null) {
       widget.onDestinationSelected!(index);
       return;
     }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('A navegação para "$label" ainda não foi conectada.'),
+        content: Text(
+          'A navegação para "$label" ainda não foi conectada.',
+        ),
       ),
     );
   }
 
+  void _abrirPerfil(BuildContext context) {
+    if (ModalRoute.of(context)?.settings.name == AppRoutes.perfil) {
+      return;
+    }
+
+    Navigator.of(context).pushReplacementNamed(AppRoutes.perfil);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Garante o contexto Material para todos os textos e elementos da sidebar.
     return Material(
       color: AutomatizeColors.background,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 900;
           final sidebarWidth = compact ? 78.0 : 252.0;
+
           return Row(
             children: [
               Container(
@@ -175,17 +197,35 @@ class _MainLayoutState extends State<MainLayout> {
                   future: _usuario,
                   builder: (context, snapshot) {
                     final usuario = snapshot.data;
+
                     final (perfil, area) = switch (usuario?.perfil) {
-                      'ADMIN' => ('Administrador', 'ÁREA ADMINISTRATIVA'),
-                      'TECNICO' => ('Técnico', 'ÁREA TÉCNICA'),
-                      'CLIENTE' => ('Cliente', 'ÁREA DO CLIENTE'),
-                      _ => ('Conta', 'ÁREA DA CONTA'),
+                      'ADMIN' => (
+                          'Administrador',
+                          'ÁREA ADMINISTRATIVA',
+                        ),
+                      'TECNICO' => (
+                          'Técnico',
+                          'ÁREA TÉCNICA',
+                        ),
+                      'CLIENTE' => (
+                          'Cliente',
+                          'ÁREA DO CLIENTE',
+                        ),
+                      _ => (
+                          'Conta',
+                          'ÁREA DA CONTA',
+                        ),
                     };
+
                     final nome = usuario?.nome ?? 'Minha conta';
+
                     final avatar = Tooltip(
                       message: '$nome · $perfil',
-                      child: _UserAvatar(iniciais: usuario?.iniciais),
+                      child: _UserAvatar(
+                        iniciais: usuario?.iniciais,
+                      ),
                     );
+
                     return SafeArea(
                       child: Column(
                         children: [
@@ -200,13 +240,21 @@ class _MainLayoutState extends State<MainLayout> {
                                     children: [
                                       _BrandIcon(),
                                       SizedBox(width: 11),
-                                      Expanded(child: _BrandName()),
+                                      Expanded(
+                                        child: _BrandName(),
+                                      ),
                                     ],
                                   ),
                           ),
+
                           if (!compact)
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(22, 4, 18, 12),
+                              padding: const EdgeInsets.fromLTRB(
+                                22,
+                                4,
+                                18,
+                                12,
+                              ),
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Text(
@@ -220,6 +268,7 @@ class _MainLayoutState extends State<MainLayout> {
                                 ),
                               ),
                             ),
+
                           _navigationItem(
                             context,
                             compact: compact,
@@ -227,6 +276,7 @@ class _MainLayoutState extends State<MainLayout> {
                             icon: Icons.grid_view_rounded,
                             label: 'Painel',
                           ),
+
                           _navigationItem(
                             context,
                             compact: compact,
@@ -234,6 +284,7 @@ class _MainLayoutState extends State<MainLayout> {
                             icon: Icons.assignment_rounded,
                             label: 'Minhas demandas',
                           ),
+
                           _navigationItem(
                             context,
                             compact: compact,
@@ -241,6 +292,7 @@ class _MainLayoutState extends State<MainLayout> {
                             icon: Icons.forum_outlined,
                             label: 'Chat',
                           ),
+
                           if (usuario?.isAdmin == true ||
                               usuario?.perfil == 'TECNICO')
                             _navigationItem(
@@ -250,6 +302,7 @@ class _MainLayoutState extends State<MainLayout> {
                               icon: Icons.people_outline,
                               label: 'Clientes',
                             ),
+
                           if (usuario?.isAdmin == true)
                             _navigationItem(
                               context,
@@ -258,65 +311,81 @@ class _MainLayoutState extends State<MainLayout> {
                               icon: Icons.admin_panel_settings_rounded,
                               label: 'Painel administrativo',
                             ),
+
                           const Spacer(),
+
+                          // Cartão de perfil clicável.
                           Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: compact ? 10 : 15,
                             ),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: compact ? 0 : 12,
-                                vertical: compact ? 12 : 13,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AutomatizeColors.panel,
+                            child: Material(
+                              color: AutomatizeColors.panel,
+                              borderRadius: BorderRadius.circular(15),
+                              child: InkWell(
                                 borderRadius: BorderRadius.circular(15),
-                                border: Border.all(
-                                  color: AutomatizeColors.border,
+                                onTap: () => _abrirPerfil(context),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: compact ? 0 : 12,
+                                    vertical: compact ? 12 : 13,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(
+                                      color: AutomatizeColors.border,
+                                    ),
+                                  ),
+                                  child: compact
+                                      ? Center(child: avatar)
+                                      : Row(
+                                          children: [
+                                            avatar,
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    nome,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      color:
+                                                          AutomatizeColors.text,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    perfil,
+                                                    style: const TextStyle(
+                                                      color:
+                                                          AutomatizeColors.muted,
+                                                      fontSize: 11,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const Icon(
+                                              Icons.more_horiz,
+                                              color: AutomatizeColors.muted,
+                                              size: 19,
+                                            ),
+                                          ],
+                                        ),
                                 ),
                               ),
-                              child: compact
-                                  ? Center(child: avatar)
-                                  : Row(
-                                      children: [
-                                        avatar,
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                nome,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  color: AutomatizeColors.text,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                perfil,
-                                                style: const TextStyle(
-                                                  color: AutomatizeColors.muted,
-                                                  fontSize: 11,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const Icon(
-                                          Icons.more_horiz,
-                                          color: AutomatizeColors.muted,
-                                          size: 19,
-                                        ),
-                                      ],
-                                    ),
                             ),
                           ),
+
                           const SizedBox(height: 10),
+
                           _navigationItem(
                             context,
                             compact: compact,
@@ -325,7 +394,9 @@ class _MainLayoutState extends State<MainLayout> {
                             label: 'Sair da conta',
                             isLogout: true,
                           ),
+
                           const SizedBox(height: 16),
+
                           if (!compact)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 14),
@@ -345,6 +416,7 @@ class _MainLayoutState extends State<MainLayout> {
                   },
                 ),
               ),
+
               Expanded(child: widget.child),
             ],
           );
@@ -361,12 +433,18 @@ class _MainLayoutState extends State<MainLayout> {
     required String label,
     bool isLogout = false,
   }) {
-    final selected = widget.selectedIndex == index && !isLogout;
+    final selected =
+        widget.selectedIndex == index && !isLogout;
+
     final foreground = isLogout
         ? const Color(0xFFFF8994)
         : AutomatizeColors.muted;
+
     final item = Padding(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 13, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 9 : 13,
+        vertical: 4,
+      ),
       child: Material(
         color: selected
             ? AutomatizeColors.primary.withValues(alpha: 0.18)
@@ -401,7 +479,9 @@ class _MainLayoutState extends State<MainLayout> {
               children: [
                 Icon(
                   icon,
-                  color: selected ? AutomatizeColors.cyan : foreground,
+                  color: selected
+                      ? AutomatizeColors.cyan
+                      : foreground,
                   size: 20,
                 ),
                 if (!compact) ...[
@@ -412,7 +492,9 @@ class _MainLayoutState extends State<MainLayout> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: selected ? AutomatizeColors.text : foreground,
+                        color: selected
+                            ? AutomatizeColors.text
+                            : foreground,
                         fontSize: 12,
                         fontWeight: selected
                             ? FontWeight.w800
@@ -436,7 +518,11 @@ class _MainLayoutState extends State<MainLayout> {
         ),
       ),
     );
-    return Tooltip(message: compact ? label : '', child: item);
+
+    return Tooltip(
+      message: compact ? label : '',
+      child: item,
+    );
   }
 }
 
@@ -450,7 +536,10 @@ class _BrandIcon extends StatelessWidget {
       height: 38,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AutomatizeColors.cyan, AutomatizeColors.primary],
+          colors: [
+            AutomatizeColors.cyan,
+            AutomatizeColors.primary,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -518,12 +607,19 @@ class _UserAvatar extends StatelessWidget {
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [Color(0xFF249BFF), Color(0xFF655DFF)],
+              colors: [
+                Color(0xFF249BFF),
+                Color(0xFF655DFF),
+              ],
             ),
           ),
           alignment: Alignment.center,
           child: iniciais == null
-              ? const Icon(Icons.person_outline, color: Colors.white, size: 18)
+              ? const Icon(
+                  Icons.person_outline,
+                  color: Colors.white,
+                  size: 18,
+                )
               : Text(
                   iniciais!,
                   style: const TextStyle(
@@ -542,7 +638,10 @@ class _UserAvatar extends StatelessWidget {
             decoration: BoxDecoration(
               color: AutomatizeColors.success,
               shape: BoxShape.circle,
-              border: Border.all(color: AutomatizeColors.panel, width: 2),
+              border: Border.all(
+                color: AutomatizeColors.panel,
+                width: 2,
+              ),
             ),
           ),
         ),
