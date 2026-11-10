@@ -154,13 +154,54 @@ class _CadastroScreenState extends State<CadastroScreen> {
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: _borda),
               ),
-              child: _concluido ? _sucesso() : _formulario(),
+              child: _concluido
+                  ? _sucesso()
+                  : AppConfig.publicSignupEnabled
+                      ? _formulario()
+                      : _cadastroIndisponivel(),
             ),
           ),
         ),
       ),
     );
   }
+
+  /// Não apresentar um formulário que o build já sabe estar desativado.
+  Widget _cadastroIndisponivel() => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Icon(
+            Icons.person_off_outlined,
+            size: 48,
+            color: _suave,
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'Novos cadastros indisponíveis',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _texto,
+              fontSize: 23,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'A criação de contas está temporariamente desativada neste ambiente. '
+            'Se você já possui acesso, entre com sua conta.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: _suave, height: 1.6),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+              AppRoutes.login, (route) => false,
+            ),
+            child: const Text('Ir para o login'),
+          ),
+        ],
+      );
 
   Widget _sucesso() => Column(
         mainAxisSize: MainAxisSize.min,
