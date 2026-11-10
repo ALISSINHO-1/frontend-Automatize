@@ -8,7 +8,7 @@ void main() {
   testWidgets('cadastro abre os termos sem marcar o aceite', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: const CadastroScreen(),
-      routes: AppRoutes.routes,
+      routes: {AppRoutes.termosUso: AppRoutes.routes[AppRoutes.termosUso]!},
     ));
     final checkbox = find.byType(CheckboxListTile);
     expect(tester.widget<CheckboxListTile>(checkbox).value, isFalse);
