@@ -590,7 +590,7 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// CARTÃO COM AS ETAPAS// CARTÃO COM AS ETAPAS
+// CARTÃO COM AS ETAPAS
 
 class _CartaoEtapas extends StatelessWidget {
   const _CartaoEtapas();
