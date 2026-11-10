@@ -18,10 +18,12 @@ class AnexosHomologacaoCard extends StatefulWidget {
     super.key,
     required this.demandaId,
     required this.habilitado,
+    this.exibirEnvio = true,
     this.onEnviando,
   });
   final String demandaId;
   final bool habilitado;
+  final bool exibirEnvio;
   final ValueChanged<bool>? onEnviando;
   @override
   State<AnexosHomologacaoCard> createState() => _AnexosHomologacaoCardState();
@@ -583,15 +585,20 @@ class _AnexosHomologacaoCardState extends State<AnexosHomologacaoCard> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'PNG, JPG, JPEG ou PDF (até 10 MB). '
-              'Imagens são exibidas diretamente; PDFs '
-              'mostram a primeira página.',
+            Text(
+              widget.exibirEnvio
+                  ? 'PNG, JPG, JPEG ou PDF (até 10 MB). '
+                    'Imagens são exibidas diretamente; PDFs '
+                    'mostram a primeira página.'
+                  : 'Visualize os arquivos registrados na demanda. '
+                    'Imagens e a primeira página dos PDFs '
+                    'podem ser ampliadas.',
             ),
             const SizedBox(height: 14),
-            OutlinedButton.icon(
-              onPressed:
-                  widget.habilitado &&
+            if (widget.exibirEnvio)
+              OutlinedButton.icon(
+                onPressed:
+                    widget.habilitado &&
                       !_selecionando &&
                       !_consultando &&
                       !_enviando &&
