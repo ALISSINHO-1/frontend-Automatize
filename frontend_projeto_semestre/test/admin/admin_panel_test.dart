@@ -118,6 +118,17 @@ void main() {
     }
   });
 
+  testWidgets('menu de três pontos oferece ações de perfil e saída', (tester) async {
+    _perfil('ADMIN', nome: 'Admin Demo');
+    await abrir(tester, const MainLayout(child: SizedBox.shrink()));
+    final botao = find.byTooltip('Opções da conta');
+    expect(botao, findsOneWidget);
+    await tester.tap(botao);
+    await tester.pumpAndSettle();
+    expect(find.text('Meu perfil'), findsOneWidget);
+    expect(find.text('Sair da conta'), findsWidgets);
+  });
+
   testWidgets('conta por estado, filtra pelo card e cadastra escolhendo o cliente', (tester) async {
     _perfil('ADMIN');
     final demandas = [
