@@ -15,6 +15,7 @@ import '/features/chat/chat_page.dart';
 import '/features/home/presentation/pages/login_screen.dart';
 import '/features/onboarding/presentation/pages/cadastro_screen.dart';
 import '/features/onboarding/presentation/pages/termos_uso_screen.dart';
+import '/features/onboarding/presentation/pages/politica_privacidade_screen.dart';
 import '/features/onboarding/presentation/pages/esqueci_senha_screen.dart';
 import '/features/onboarding/presentation/pages/aguardando_vinculo_screen.dart';
 import '/features/onboarding/presentation/pages/ambientes_screen.dart';
@@ -35,6 +36,7 @@ abstract final class AppRoutes {
   static const String login = '/login';
   static const String cadastro = '/cadastro';
   static const String termosUso = '/termos-de-uso';
+  static const String politicaPrivacidade = '/politica-de-privacidade';
   static const String cadastroPendente = '/cadastro/pendente';
   static const String verificarEmail = '/verificar-email';
   static const String redefinirSenha = '/redefinir-senha';
@@ -63,6 +65,7 @@ abstract final class AppRoutes {
     login: (_) => const LoginScreen(),
     cadastro: (_) => const CadastroScreen(),
     termosUso: (_) => const TermosUsoScreen(),
+    politicaPrivacidade: (_) => const PoliticaPrivacidadeScreen(),
     esqueciSenha: (_) => const EsqueciSenhaScreen(),
     reenviarConfirmacao: (_) => const EsqueciSenhaScreen(reenviarConfirmacao: true),
     // Tela sem informacoes privadas: um cadastro PENDENTE nao passa no AuthGuard.

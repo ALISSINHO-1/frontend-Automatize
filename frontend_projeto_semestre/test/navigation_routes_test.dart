@@ -24,6 +24,7 @@ void main() {
     expect(AppRoutes.routes, contains(AppRoutes.painel));
     expect(AppRoutes.routes, contains(AppRoutes.demandas));
     expect(AppRoutes.routes, contains(AppRoutes.comercial));
+    expect(AppRoutes.routes, contains(AppRoutes.politicaPrivacidade));
     expect(AppRoutes.demandas, isNot(AppRoutes.home));
   });
 }

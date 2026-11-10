@@ -282,6 +282,13 @@ class _CadastroScreenState extends State<CadastroScreen> {
                 child: const Text('Ler os Termos de Uso'),
               ),
             ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.politicaPrivacidade),
+                child: const Text('Ler a Política de Privacidade'),
+              ),
+            ),
             Material(
               type: MaterialType.transparency,
               child: CheckboxListTile(

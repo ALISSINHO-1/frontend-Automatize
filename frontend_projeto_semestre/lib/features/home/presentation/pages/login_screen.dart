@@ -796,44 +796,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 25),
-            const Divider(height: 1, color: _borda),
-            const SizedBox(height: 12),
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 4,
-              children: [
-                const Text(
-                  'Não tem uma conta?',
-                  style: TextStyle(color: _textoSecundario, fontSize: 13),
-                ),
-                TextButton(
-                  key: const Key('login-criar-conta'),
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.cadastro),
-                  style: TextButton.styleFrom(
-                    foregroundColor: _ciano,
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
-                    minimumSize: const Size(0, 40),
+            if (AppConfig.publicSignupEnabled) ...[
+              const SizedBox(height: 25),
+              const Divider(height: 1, color: _borda),
+              const SizedBox(height: 12),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 4,
+                children: [
+                  const Text('Não tem uma conta?',
+                      style: TextStyle(color: _textoSecundario, fontSize: 13)),
+                  TextButton(
+                    key: const Key('login-criar-conta'),
+                    onPressed: () => Navigator.of(context).pushNamed(AppRoutes.cadastro),
+                    style: TextButton.styleFrom(
+                      foregroundColor: _ciano,
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+                    ),
+                    child: const Text('Crie sua conta',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Crie sua conta',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(width: 5),
-                      Icon(Icons.north_east_rounded, size: 14),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ] else ...[
+              const SizedBox(height: 20),
+              const Text('Novas contas são liberadas por convite neste ambiente.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: _textoSecundario, fontSize: 12)),
+            ],
             if (AppConfig.publicSignupEnabled)
               TextButton(
                 onPressed: () => Navigator.of(context)

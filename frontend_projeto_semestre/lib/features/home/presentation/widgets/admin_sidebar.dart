@@ -25,19 +25,11 @@ class AdminSidebar extends StatelessWidget {
             rotaAtual == TechnicalRoutes.demandList ||
             rotaAtual == TechnicalRoutes.demandDetails;
 
-        final emHistorico = rotaAtual == TechnicalRoutes.demandHistory;
-
-        final emAnexos = rotaAtual == TechnicalRoutes.demandAttachments;
-
-        final selectedIndex = emAnexos
-            ? 3
-            : emHistorico
-            ? 2
-            : emDemandas
+        final selectedIndex = emDemandas
             ? 1
             : rotaAtual == TechnicalRoutes.home
-            ? 0
-            : -1;
+                ? 0
+                : -1;
 
         return Container(
           width: 250,
@@ -69,7 +61,7 @@ class AdminSidebar extends StatelessWidget {
               const SizedBox(height: 48),
 
               SizedBox(
-                height: (_itemHeight + _itemSpacing) * 4,
+                height: (_itemHeight + _itemSpacing) * 2,
                 child: Stack(
                   children: [
                     if (selectedIndex >= 0)
@@ -105,19 +97,6 @@ class AdminSidebar extends StatelessWidget {
                           'Demandas',
                           selected: selectedIndex == 1,
                           onTap: () => _navegar(TechnicalRoutes.demandList),
-                        ),
-                        _menuItem(
-                          Icons.history_rounded,
-                          'Histórico',
-                          selected: selectedIndex == 2,
-                          onTap: () => _navegar(TechnicalRoutes.demandHistory),
-                        ),
-                        _menuItem(
-                          Icons.folder_outlined,
-                          'Anexos',
-                          selected: selectedIndex == 3,
-                          onTap: () =>
-                              _navegar(TechnicalRoutes.demandAttachments),
                         ),
                       ],
                     ),

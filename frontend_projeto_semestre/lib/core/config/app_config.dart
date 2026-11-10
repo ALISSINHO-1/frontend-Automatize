@@ -1,5 +1,5 @@
 abstract final class AppConfig {
-  static const String appName = 'Projeto Semestral';
+  static const String appName = 'Automatize';
 
   static const String environment = String.fromEnvironment(
     'APP_ENV',
