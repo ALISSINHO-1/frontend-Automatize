@@ -98,6 +98,14 @@ class _VerificarEmailScreenState extends State<VerificarEmailScreen> {
                       : (_carregando ? null : _verificar),
                   child: Text(_sucesso ? 'Ir para o login' : 'Confirmar e-mail'),
                 ),
+                if (_erro != null && AppConfig.publicSignupEnabled) ...[
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => Navigator.of(context)
+                        .pushNamed(AppRoutes.reenviarConfirmacao),
+                    child: const Text('Solicitar novo link de confirmação'),
+                  ),
+                ],
               ]),
             ),
           ),
