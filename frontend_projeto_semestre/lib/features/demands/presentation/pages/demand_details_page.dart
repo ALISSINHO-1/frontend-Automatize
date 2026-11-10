@@ -1,8 +1,11 @@
 import 'demand_homologation_page.dart';
 import 'demand_attachments_page.dart';
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/auth/auth_guard.dart';
 import '../../../../core/auth/cliente_guard.dart';
+import '../../../admin/data/services/usuario_atual_store.dart';
 import '../../data/models/pedido_model.dart';
 import '../widgets/demand_history_timeline.dart';
 
@@ -21,7 +24,8 @@ class DemandDetailsPage extends StatelessWidget {
       return 'Não atribuído';
     }
 
-    return 'ID: $responsavelId';
+    final usuario = UsuarioAtualStore.instance.value;
+    return usuario?.id == responsavelId ? usuario!.nome : 'ID: $responsavelId';
   }
 
   static String _formatarData(DateTime? data) {
@@ -99,9 +103,8 @@ class DemandDetailsPage extends StatelessWidget {
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF4D8EFF,
-                            ).withValues(alpha: 0.15),
+                            color: const Color(0xFF4D8EFF)
+                                .withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(

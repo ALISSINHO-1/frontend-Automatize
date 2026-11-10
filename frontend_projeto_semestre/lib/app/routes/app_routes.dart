@@ -22,6 +22,8 @@ import '/features/demands/presentation/pages/demand_details_page.dart';
 import '/features/demands/presentation/pages/demand_list_page.dart';
 import '/features/demands/data/models/pedido_model.dart';
 
+import '/features/profile/presentation/pages/user_profile_page.dart';
+
 abstract final class AppRoutes {
   static const String landing = '/';
   static const String login = '/login';
@@ -33,6 +35,7 @@ abstract final class AppRoutes {
   static const String admin = '/admin';
   static const String clientes = '/clientes';
   static const String chat = '/chat';
+  static const String perfil = '/perfil';
   static const String tecnico = TechnicalRoutes.home;
   static const String clienteDetalhes = '/cliente/demandas/detalhes';
   static const String clienteHomologacao = '/cliente/demandas/homologacao';
@@ -54,6 +57,7 @@ abstract final class AppRoutes {
     clientes: (_) => const AuthGuard(child: ClientesPage()),
 
     chat: (_) => const AuthGuard(child: ChatPage()),
+    perfil: (_) => const AuthGuard(child: UserProfilePage()),
     TechnicalRoutes.home: (_) => const TechnicalRoleGuard(
       child: AdminLayout(child: TechnicalDashboardPage()),
     ),
