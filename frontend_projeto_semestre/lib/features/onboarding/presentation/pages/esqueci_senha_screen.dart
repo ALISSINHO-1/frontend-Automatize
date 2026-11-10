@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/config/app_config.dart';
+import '../../data/conta_configuracao.dart';
 import '../../widgets/turnstile_challenge.dart';
 
 /// Solicita link de reset sem revelar a existencia da conta.
@@ -22,7 +23,45 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
   String? _erro;
   bool _enviando = false;
   bool _concluido = false;
+  bool _configCarregando = true;
+  bool _habilitado = false;
+  String _siteKey = '';
+  String? _erroConfig;
   int _desafio = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _consultarConfiguracao();
+  }
+
+  Future<void> _consultarConfiguracao() async {
+    setState(() {
+      _configCarregando = true;
+      _erroConfig = null;
+    });
+    final client = widget.client ?? http.Client();
+    try {
+      final config = await ContaConfiguracao.consultar(client);
+      if (!mounted) return;
+      setState(() {
+        _habilitado = widget.reenviarConfirmacao
+            ? config.cadastroHabilitado
+            : config.recuperacaoHabilitada;
+        _siteKey = config.turnstileSiteKey;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _habilitado = false;
+        _siteKey = '';
+        _erroConfig = 'Não foi possível consultar o serviço de e-mail.';
+      });
+    } finally {
+      if (widget.client == null) client.close();
+      if (mounted) setState(() => _configCarregando = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -32,10 +71,8 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
 
   Future<void> _solicitar() async {
     if (_enviando) return;
-    if (!(widget.reenviarConfirmacao
-        ? AppConfig.publicSignupEnabled : AppConfig.passwordRecoveryEnabled)
-        || AppConfig.turnstileSiteKey.isEmpty) {
-      setState(() => _erro = 'A recuperação está temporariamente indisponível.');
+    if (!_habilitado || _siteKey.isEmpty) {
+      setState(() => _erro = 'Serviço temporariamente indisponível. Tente novamente.');
       return;
     }
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(_email.text.trim())) {
@@ -108,7 +145,25 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
                        : 'Informe seu e-mail e conclua a verificação para solicitar um link de redefinição.'),
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Color(0xFF9DB1C8), height: 1.5)),
-                if (!_concluido) ...[
+                if (!_concluido && _configCarregando) ...[
+                  const SizedBox(height: 18),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 10),
+                  const Text('Verificando disponibilidade do serviço...',
+                      textAlign: TextAlign.center),
+                ],
+                if (!_concluido && !_configCarregando && !_habilitado) ...[
+                  const SizedBox(height: 18),
+                  Text(_erroConfig ?? 'Este serviço está temporariamente indisponível.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.redAccent)),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: _consultarConfiguracao,
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
+                if (!_concluido && !_configCarregando && _habilitado) ...[
                   const SizedBox(height: 18),
                   TextField(
                     controller: _email,
@@ -117,10 +172,9 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
                     decoration: const InputDecoration(labelText: 'E-mail'),
                     style: const TextStyle(color: Colors.white),
                   ),
-                  if (AppConfig.turnstileSiteKey.isNotEmpty)
-                    TurnstileChallenge(
+                  TurnstileChallenge(
                       key: ValueKey(_desafio),
-                      siteKey: AppConfig.turnstileSiteKey,
+                      siteKey: _siteKey,
                       onToken: (token) {
                         if (mounted) setState(() => _token = token);
                       },
@@ -134,7 +188,8 @@ class _EsqueciSenhaScreenState extends State<EsqueciSenhaScreen> {
                   onPressed: _concluido
                     ? () => Navigator.of(context).pushNamedAndRemoveUntil(
                         AppRoutes.login, (_) => false)
-                    : (_enviando ? null : _solicitar),
+                    : (_enviando || !_habilitado || _configCarregando
+                        ? null : _solicitar),
                   child: Text(_concluido ? 'Voltar ao login' : 'Solicitar link'),
                 ),
               ]),

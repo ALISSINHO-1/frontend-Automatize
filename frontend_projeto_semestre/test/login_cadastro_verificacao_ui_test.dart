@@ -9,7 +9,7 @@ import 'package:frontend_projeto_semestre/features/home/presentation/pages/login
 import 'package:frontend_projeto_semestre/features/onboarding/presentation/pages/verificar_email_screen.dart';
 
 void main() {
-  testWidgets('login não oferece cadastro quando a função está desativada', (tester) async {
+  testWidgets('login sempre oferece criação de conta autônoma', (tester) async {
     tester.view.physicalSize = const Size(1280, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -17,8 +17,8 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
     expect(find.text('Acesso destinado aos usuários da plataforma'), findsOneWidget);
-    expect(find.text('Crie sua conta'), findsNothing);
-    expect(find.text('Novas contas são liberadas por convite neste ambiente.'), findsOneWidget);
+    expect(find.text('Crie sua conta'), findsOneWidget);
+    expect(find.text('Novas contas são liberadas por convite neste ambiente.'), findsNothing);
   });
 
   testWidgets('token de e-mail exige confirmacao explicita do usuario', (tester) async {
