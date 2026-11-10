@@ -2,25 +2,26 @@ import 'package:flutter/material.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/storage/local_storage_service.dart';
+import '../../core/theme/automatize_palette.dart';
 import '../../features/admin/data/models/usuario_atual_model.dart';
 import '../../features/admin/data/services/usuario_atual_store.dart';
 
 /// Paleta visual compartilhada pelas telas do Automatize.
 
 class AutomatizeColors {
-  static const background = Color(0xFF07172A);
-  static const sidebar = Color(0xFF0A1B30);
-  static const panel = Color(0xFF102743);
-  static const panelLight = Color(0xFF173452);
-  static const primary = Color(0xFF168BFF);
-  static const cyan = Color(0xFF21B7FF);
-  static const text = Color(0xFFF4F7FB);
-  static const muted = Color(0xFF9DB1C8);
-  static const border = Color(0xFF294866);
-  static const success = Color(0xFF2FD3A1);
-  static const warning = Color(0xFFFFC857);
-  static const purple = Color(0xFFB784FF);
-  static const danger = Color(0xFFFF5364);
+  static const background = AutomatizePalette.background;
+  static const sidebar = AutomatizePalette.sidebar;
+  static const panel = AutomatizePalette.panel;
+  static const panelLight = AutomatizePalette.panelLight;
+  static const primary = AutomatizePalette.primary;
+  static const cyan = AutomatizePalette.cyan;
+  static const text = AutomatizePalette.text;
+  static const muted = AutomatizePalette.muted;
+  static const border = AutomatizePalette.border;
+  static const success = AutomatizePalette.success;
+  static const warning = AutomatizePalette.warning;
+  static const purple = AutomatizePalette.purple;
+  static const danger = AutomatizePalette.danger;
 }
 
 class MainLayout extends StatefulWidget {
@@ -332,10 +333,43 @@ class _MainLayoutState extends State<MainLayout> {
                                               ],
                                             ),
                                           ),
-                                          const Icon(
-                                            Icons.more_horiz,
-                                            color: AutomatizeColors.muted,
-                                            size: 19,
+                                          PopupMenuButton<String>(
+                                            tooltip: 'Opções da conta',
+                                            icon: const Icon(
+                                              Icons.more_horiz,
+                                              color: AutomatizeColors.muted,
+                                              size: 19,
+                                            ),
+                                            onSelected: (acao) {
+                                              if (acao == 'perfil') {
+                                                if (ModalRoute.of(context)?.settings.name != AppRoutes.perfil) {
+                                                  Navigator.of(context).pushNamed(AppRoutes.perfil);
+                                                }
+                                              } else if (acao == 'sair') {
+                                                _confirmarSaida(context);
+                                              }
+                                            },
+                                            itemBuilder: (_) => [
+                                              PopupMenuItem<String>(
+                                                value: 'perfil',
+                                                enabled: ModalRoute.of(context)?.settings.name != AppRoutes.perfil,
+                                                child: const ListTile(
+                                                  dense: true,
+                                                  leading: Icon(Icons.person_outline),
+                                                  title: Text('Meu perfil'),
+                                                  contentPadding: EdgeInsets.zero,
+                                                ),
+                                              ),
+                                              const PopupMenuItem<String>(
+                                                value: 'sair',
+                                                child: ListTile(
+                                                  dense: true,
+                                                  leading: Icon(Icons.logout_rounded),
+                                                  title: Text('Sair da conta'),
+                                                  contentPadding: EdgeInsets.zero,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),

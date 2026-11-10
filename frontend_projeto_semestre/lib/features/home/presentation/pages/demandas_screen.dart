@@ -150,11 +150,11 @@ class _DemandasScreenState extends State<DemandasScreen> {
   Color _corStatus(String estado) {
     switch (_rotuloEstado(estado)) {
       case 'Planejamento':
-        return const Color(0xFF8C9DFF);
-      case 'Execução':
-        return const Color(0xFF63A8FF);
-      case 'Homologação':
         return AutomatizeColors.purple;
+      case 'Execução':
+        return AutomatizeColors.primary;
+      case 'Homologação':
+        return AutomatizeColors.warning;
       case 'Concluído':
         return AutomatizeColors.success;
       default:
@@ -713,21 +713,21 @@ class _DemandasScreenState extends State<DemandasScreen> {
         value: _contarEstado('Planejamento').toString(),
         subtitle: 'Em fase de organização',
         icon: Icons.event_note_rounded,
-        color: const Color(0xFF8C9DFF),
+        color: AutomatizeColors.purple,
       ),
       _summaryCard(
         title: 'Em execução',
         value: _contarEstado('Execução').toString(),
         subtitle: 'Em andamento',
         icon: Icons.autorenew_rounded,
-        color: const Color(0xFF63A8FF),
+        color: AutomatizeColors.primary,
       ),
       _summaryCard(
         title: 'Em homologação',
         value: _contarEstado('Homologação').toString(),
         subtitle: 'Aguardando validação',
         icon: Icons.fact_check_outlined,
-        color: AutomatizeColors.purple,
+        color: AutomatizeColors.warning,
       ),
       _summaryCard(
         title: 'Concluídas',

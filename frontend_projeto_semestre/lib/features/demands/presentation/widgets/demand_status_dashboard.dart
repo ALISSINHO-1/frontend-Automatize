@@ -24,7 +24,7 @@ class DemandStatusDashboard extends StatelessWidget {
         'Execução',
         'EXECUCAO',
         Icons.build_outlined,
-        RedesignColors.cyan,
+        RedesignColors.primary,
       ),
       (
         'Homologação',
