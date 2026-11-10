@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-
 import '../../data/models/pedido_model.dart';
 import '../../data/services/homologacao_cliente_service.dart';
 import '../widgets/demand_homologation_card.dart';
+import '../widgets/anexos_homologacao_card.dart';
 
 class DemandHomologationPage extends StatefulWidget {
   const DemandHomologationPage({super.key, required this.pedido});
-
   final PedidoModel pedido;
-
   @override
   State<DemandHomologationPage> createState() => _DemandHomologationPageState();
 }
@@ -17,82 +15,67 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
   final _versaoController = TextEditingController();
   final _declaracaoController = TextEditingController();
   final _motivoController = TextEditingController();
-
   final HomologacaoClienteService _service = HomologacaoClienteService();
-
   bool concordou = false;
   bool processando = false;
+  bool enviandoAnexo = false;
   bool consultando = true;
   bool decisaoRegistrada = false;
   bool resultadoIncerto = false;
-
   String? statusAtual;
   String? erroConsulta;
   String? erroOperacao;
-
   bool get _podeDecidir =>
       statusAtual == 'HOMOLOGACAO' &&
       !processando &&
+      !enviandoAnexo &&
       !consultando &&
       !decisaoRegistrada &&
       !resultadoIncerto;
-
   bool get _podeAprovar =>
       _podeDecidir &&
       concordou &&
       _versaoController.text.trim().isNotEmpty &&
       _versaoController.text.trim().length <= 50 &&
       _declaracaoController.text.trim().length >= 10;
-
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _atualizarStatus();
       }
     });
   }
-
   @override
   void dispose() {
     _versaoController.dispose();
     _declaracaoController.dispose();
     _motivoController.dispose();
     _service.dispose();
-
     super.dispose();
   }
-
   // Consulta o status real, sem confiar apenas no pedido
   // recebido pela navegação.
   Future<void> _atualizarStatus() async {
     if (!mounted) return;
-
     setState(() {
       consultando = true;
       erroConsulta = null;
       statusAtual = null;
     });
-
     try {
       final dados = await _service.consultar(widget.pedido.id);
-
       if (!mounted) return;
-
       final status = dados['status']?.toString().trim().toUpperCase();
-
       if (status == null || status.isEmpty) {
         throw const FormatException('A API não informou o estado da demanda.');
       }
-
       setState(() {
         statusAtual = status;
       });
     } catch (erro) {
       if (!mounted) return;
-
       setState(() {
         erroConsulta = erro.toString();
       });
@@ -104,7 +87,6 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
       }
     }
   }
-
   Future<bool> _confirmar({
     required String titulo,
     required String mensagem,
@@ -129,37 +111,28 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
         );
       },
     );
-
     return confirmado == true;
   }
-
   Future<void> _registrarDecisao(Future<void> Function() enviar) async {
     if (!_podeDecidir) return;
-
     setState(() {
       processando = true;
       erroOperacao = null;
     });
-
     try {
       await enviar();
-
       if (!mounted) return;
-
       setState(() {
         decisaoRegistrada = true;
       });
-
       // Após o POST, consulta o estado persistido.
       await _atualizarStatus();
     } on HomologacaoClienteException catch (erro) {
       if (!mounted) return;
-
       setState(() {
         erroOperacao = erro.mensagem;
         resultadoIncerto = erro.resultadoIncerto;
       });
-
       // Uma demanda pode ter mudado de estado
       // enquanto o cliente confirmava.
       if (erro.statusCode == 409) {
@@ -167,13 +140,11 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
       }
     } catch (_) {
       if (!mounted) return;
-
       setState(() {
         erroOperacao =
             'Não foi possível confirmar o resultado. '
             'Consulte o estado da demanda antes '
             'de tentar novamente.';
-
         // Evita novo envio após uma falha inesperada
         // cujo resultado pode ser desconhecido.
         resultadoIncerto = true;
@@ -186,14 +157,11 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
       }
     }
   }
-
   // POST /demandas/{id}/aceite
   Future<void> _aprovar() async {
     if (!_podeAprovar) return;
-
     final versao = _versaoController.text.trim();
     final declaracao = _declaracaoController.text.trim();
-
     final confirmado = await _confirmar(
       titulo: 'Confirmar aprovação',
       mensagem:
@@ -202,11 +170,9 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
           'Esta decisão será registrada na API.',
       acao: 'Aprovar entrega',
     );
-
     if (!mounted || !confirmado || !_podeAprovar) {
       return;
     }
-
     await _registrarDecisao(
       () => _service.aprovar(
         id: widget.pedido.id,
@@ -215,20 +181,16 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
       ),
     );
   }
-
   // POST /demandas/{id}/rejeicao
   Future<void> _solicitarAjustes() async {
     if (!_podeDecidir) return;
-
     _motivoController.clear();
-
     final motivo = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, atualizarDialogo) {
             final valido = _motivoController.text.trim().length >= 10;
-
             return AlertDialog(
               title: const Text('Solicitar ajustes'),
               content: SizedBox(
@@ -267,11 +229,9 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
         );
       },
     );
-
     if (!mounted || motivo == null || !_podeDecidir) {
       return;
     }
-
     final confirmado = await _confirmar(
       titulo: 'Confirmar solicitação de ajustes',
       mensagem:
@@ -280,24 +240,20 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
           'A decisão será enviada à API.',
       acao: 'Solicitar ajustes',
     );
-
     if (!mounted || !confirmado || !_podeDecidir) {
       return;
     }
-
     await _registrarDecisao(
       () => _service.rejeitar(id: widget.pedido.id, motivo: motivo),
     );
   }
-
   void _voltar() {
+    if (processando || enviandoAnexo) return;
     Navigator.of(context).pop(decisaoRegistrada);
   }
-
   @override
   Widget build(BuildContext context) {
     final pedido = widget.pedido;
-
     return Scaffold(
       backgroundColor: const Color(0xFF0F131C),
       appBar: AppBar(
@@ -313,7 +269,8 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
           IconButton(
             tooltip: 'Atualizar estado',
             icon: const Icon(Icons.refresh),
-            onPressed: processando || consultando ? null : _atualizarStatus,
+            onPressed: processando || consultando || enviandoAnexo
+                ? null : _atualizarStatus,
           ),
         ],
       ),
@@ -332,17 +289,13 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 12),
-
               const Text(
                 'Confira a entrega antes de registrar '
                 'sua avaliação.',
                 style: TextStyle(color: Color(0xFFC2C6D6)),
               ),
-
               const SizedBox(height: 24),
-
               // Estado consultado diretamente na API.
               Card(
                 color: const Color(0xFF181C24),
@@ -359,9 +312,7 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-
                       if (consultando) const LinearProgressIndicator(),
-
                       if (!consultando && statusAtual != null)
                         Text(
                           statusAtual!,
@@ -371,13 +322,11 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
                       if (erroConsulta != null)
                         Text(
                           erroConsulta!,
                           style: const TextStyle(color: Colors.orangeAccent),
                         ),
-
                       if (!consultando &&
                           !decisaoRegistrada &&
                           statusAtual != null &&
@@ -393,11 +342,12 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // Dados necessários para o aceite formal.
-              if (_podeDecidir) ...[
+              // Mantém o formulário visível durante o upload.
+              // As decisões ficam bloqueadas enquanto houver envio.
+              if (statusAtual == 'HOMOLOGACAO' &&
+                  !decisaoRegistrada &&
+                  !resultadoIncerto) ...[
                 Card(
                   color: const Color(0xFF181C24),
                   child: Padding(
@@ -412,18 +362,15 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
                         Text(
                           pedido.descricao,
                           style: const TextStyle(color: Color(0xFFC2C6D6)),
                         ),
-
                         const SizedBox(height: 16),
-
                         TextField(
                           controller: _versaoController,
+                          enabled: !processando && !enviandoAnexo,
                           maxLength: 50,
                           onChanged: (_) => setState(() {}),
                           decoration: const InputDecoration(
@@ -433,11 +380,10 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                             border: OutlineInputBorder(),
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
                         TextField(
                           controller: _declaracaoController,
+                          enabled: !processando && !enviandoAnexo,
                           minLines: 2,
                           maxLines: 4,
                           onChanged: (_) => setState(() {}),
@@ -450,17 +396,17 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                             border: OutlineInputBorder(),
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
                         CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
                           value: concordou,
-                          onChanged: (valor) {
-                            setState(() {
-                              concordou = valor ?? false;
-                            });
-                          },
+                          onChanged: processando || enviandoAnexo
+                              ? null
+                              : (valor) {
+                                  setState(() {
+                                    concordou = valor ?? false;
+                                  });
+                                },
                           title: const Text(
                             'Li, conferi e concordo com '
                             'a entrega informada.',
@@ -471,7 +417,21 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                     ),
                   ),
                 ),
-
+                const SizedBox(height: 16),
+              ],
+              // Anexos da demanda: PNG, JPG, JPEG ou PDF.
+              // O upload é feito separadamente da decisão de homologação.
+              if (statusAtual == 'HOMOLOGACAO' &&
+                  !decisaoRegistrada &&
+                  !resultadoIncerto) ...[
+                AnexosHomologacaoCard(
+                  demandaId: pedido.id,
+                  habilitado: _podeDecidir,
+                  onEnviando: (valor) {
+                    if (!mounted || enviandoAnexo == valor) return;
+                    setState(() => enviandoAnexo = valor);
+                  },
+                ),
                 const SizedBox(height: 16),
               ],
 
@@ -483,14 +443,12 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                   onAprovar: _podeAprovar ? _aprovar : null,
                   onReprovar: _podeDecidir ? _solicitarAjustes : null,
                 ),
-
               if (processando) ...[
                 const SizedBox(height: 16),
                 const Center(child: CircularProgressIndicator()),
                 const SizedBox(height: 8),
                 const Center(child: Text('Registrando decisão na API...')),
               ],
-
               if (erroOperacao != null) ...[
                 const SizedBox(height: 16),
                 Card(
@@ -503,12 +461,10 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                   ),
                 ),
               ],
-
               // Esta mensagem só aparece se o POST
               // recebeu a confirmação de sucesso da API.
               if (decisaoRegistrada) ...[
                 const SizedBox(height: 16),
-
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
@@ -530,9 +486,7 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 12),
-
                         Text(
                           statusAtual == null
                               ? 'A decisão foi registrada, '
@@ -541,9 +495,7 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                               : 'Estado retornado após a decisão: '
                                     '$statusAtual',
                         ),
-
                         const SizedBox(height: 16),
-
                         FilledButton.icon(
                           onPressed: _voltar,
                           icon: const Icon(Icons.arrow_back),
@@ -554,7 +506,6 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                   ),
                 ),
               ],
-
               if (resultadoIncerto) ...[
                 const SizedBox(height: 16),
                 const Text(
