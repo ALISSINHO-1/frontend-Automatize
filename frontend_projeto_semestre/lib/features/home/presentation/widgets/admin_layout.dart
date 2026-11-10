@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../app/routes/app_routes.dart';
 
 import '../../../../core/auth/current_user_session.dart';
 import '../../../../core/theme/redesign_colors.dart';
@@ -83,39 +84,58 @@ class _AdminTopBar extends StatelessWidget {
               ListenableBuilder(
                 listenable: currentUserSession,
                 builder: (context, _) {
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(
-                        radius: 17,
-                        backgroundColor: RedesignColors.purple,
-                        child: Text(
-                          currentUserSession.initials,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  return PopupMenuButton<String>(
+                    tooltip: 'Opções da conta',
+                    onSelected: (item) {
+                      if (item == 'perfil' &&
+                          adminNavigationController.currentRoute != AppRoutes.perfil) {
+                        Navigator.of(context).pushNamed(AppRoutes.perfil);
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem<String>(
+                        value: 'perfil',
+                        child: ListTile(
+                          leading: Icon(Icons.person_outline_rounded),
+                          title: Text('Meu perfil'),
+                          contentPadding: EdgeInsets.zero,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      if (MediaQuery.sizeOf(context).width >= 900) ...[
-                        Text(
-                          currentUserSession.displayName,
-                          style: const TextStyle(
-                            color: RedesignColors.textPrimary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                    ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 17,
+                          backgroundColor: RedesignColors.purple,
+                          child: Text(
+                            currentUserSession.initials,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: RedesignColors.textSecondary,
-                          size: 18,
-                        ),
+                        const SizedBox(width: 10),
+                        if (!mobile) ...[
+                          Text(
+                            currentUserSession.displayName,
+                            style: const TextStyle(
+                              color: RedesignColors.textPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: RedesignColors.textSecondary,
+                            size: 18,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   );
                 },
               ),

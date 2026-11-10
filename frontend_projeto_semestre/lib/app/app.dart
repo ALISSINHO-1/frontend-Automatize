@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/config/app_config.dart';
+import '../features/home/presentation/widgets/technical_navigation.dart';
 import 'routes/app_routes.dart';
 import '../features/onboarding/presentation/pages/verificar_email_screen.dart';
 import '../features/onboarding/presentation/pages/redefinir_senha_screen.dart';
@@ -19,6 +20,7 @@ class FaculdadeApp extends StatelessWidget {
       theme: AppTheme.dark,
 
       navigatorKey: appNavigatorKey,
+      navigatorObservers: [adminRouteObserver],
 
       routes: AppRoutes.routes,
       // Links de e-mail chegam com query string, diferente das rotas exatas.
