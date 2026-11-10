@@ -58,7 +58,7 @@ class HomePage extends StatelessWidget {
                         const SizedBox(height: 20),
                         _listaFuncionalidades(),
                         const SizedBox(height: 40),
-                        _rodape(),
+                        _rodape(context),
                       ],
                     ),
                   ),
@@ -488,14 +488,14 @@ class HomePage extends StatelessWidget {
 
   // RODAPÉ
 
-  Widget _rodape() {
-    return const Padding(
-      padding: EdgeInsets.only(top: 22),
+  Widget _rodape(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 22),
       child: Row(
         children: [
-          Icon(Icons.auto_awesome_rounded, color: ciano, size: 17),
-          SizedBox(width: 8),
-          Expanded(
+          const Icon(Icons.auto_awesome_rounded, color: ciano, size: 17),
+          const SizedBox(width: 8),
+          const Expanded(
             child: Text(
               'AUTOMATIZE · Portal de acompanhamento de demandas',
               style: TextStyle(
@@ -504,6 +504,10 @@ class HomePage extends StatelessWidget {
                 letterSpacing: 0.4,
               ),
             ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pushNamed(AppRoutes.termosUso),
+            child: const Text('Termos de Uso'),
           ),
         ],
       ),

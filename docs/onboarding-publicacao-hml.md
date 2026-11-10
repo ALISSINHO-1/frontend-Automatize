@@ -10,6 +10,13 @@
 - Recuperacao de senha so aparece se `ENABLE_PASSWORD_RECOVERY=true` e a API tiver SMTP + antiabuso habilitados.
 - Links de reset abrem `/redefinir-senha?token=...`; ao redefinir, o backend incrementa a versao do JWT e invalida sessoes antigas.
 
+## Publicação dos Termos de Uso
+
+- A rota pública `/termos-de-uso` fica acessível pelo rodapé e pelo cadastro. O formulário começa com o aceite desmarcado.
+- O backend exige `termos_aceitos: true` e a versão vigente em `termos_versao`. O registro grava a versão e a data em UTC junto com a conta.
+- A versão deve coincidir no aplicativo e na API. Mantenha as edições anteriores no histórico de Git. Aplique a migration `fe53b5e9c102` na HML antes de publicar a API. Publique o frontend correspondente na mesma janela, com o cadastro desabilitado até concluir a validação.
+- Antes da abertura comercial, revise o texto com a identificação do operador, o canal público de suporte e a Política de Privacidade.
+
 ## Configuracao necessaria (nenhuma chave neste repositorio)
 Backend Render HML (segredos apenas em Environment):
 ```text

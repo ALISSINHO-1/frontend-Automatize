@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/config/app_config.dart';
 import '../../widgets/turnstile_challenge.dart';
+import 'termos_uso_screen.dart';
 
 /// Cadastro de interesse: conta fica pendente, sem acesso a servicos.
 class CadastroScreen extends StatefulWidget {
@@ -31,6 +32,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
   final _email = TextEditingController();
   final _senha = TextEditingController();
   final _confirmacao = TextEditingController();
+  bool _termosAceitos = false;
   bool _enviando = false;
   bool _concluido = false;
   String? _erro;
@@ -50,6 +52,10 @@ class _CadastroScreenState extends State<CadastroScreen> {
     if (_enviando || !(_form.currentState?.validate() ?? false)) return;
     if (!AppConfig.publicSignupEnabled) {
       setState(() => _erro = 'Cadastro indisponível no momento.');
+      return;
+    }
+    if (!_termosAceitos) {
+      setState(() => _erro = 'Aceite os Termos de Uso para continuar.');
       return;
     }
     if (AppConfig.turnstileSiteKey.isEmpty ||
@@ -72,6 +78,8 @@ class _CadastroScreenState extends State<CadastroScreen> {
               'email': _email.text.trim().toLowerCase(),
               'senha': _senha.text,
               'turnstile_token': _turnstileToken,
+              'termos_aceitos': _termosAceitos,
+              'termos_versao': termosUsoVersao,
             }),
           )
           .timeout(const Duration(seconds: 15));
@@ -82,6 +90,11 @@ class _CadastroScreenState extends State<CadastroScreen> {
         setState(() => _concluido = true);
       } else if (resposta.statusCode == 503) {
         setState(() => _erro = 'Novos cadastros estão temporariamente indisponíveis.');
+      } else if (resposta.statusCode == 409) {
+        setState(() {
+          _termosAceitos = false;
+          _erro = 'Atualize a página para ler a versão vigente dos Termos de Uso.';
+        });
       } else if (resposta.statusCode == 422) {
         setState(() => _erro = 'Revise seus dados e a senha informada.');
       } else {
@@ -233,6 +246,23 @@ class _CadastroScreenState extends State<CadastroScreen> {
               decoration: _campo('Confirmar senha', Icons.verified_user_outlined),
               validator: (v) => v == _senha.text ? null : 'As senhas não coincidem.',
               onFieldSubmitted: (_) => _enviar(),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pushNamed(AppRoutes.termosUso),
+                child: const Text('Ler os Termos de Uso'),
+              ),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text('Li e aceito os Termos de Uso.'),
+              value: _termosAceitos,
+              onChanged: _enviando
+                  ? null
+                  : (value) => setState(() => _termosAceitos = value ?? false),
             ),
             if (AppConfig.publicSignupEnabled) ...[
               const SizedBox(height: 18),

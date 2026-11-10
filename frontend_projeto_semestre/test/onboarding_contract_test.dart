@@ -5,6 +5,25 @@ import 'package:frontend_projeto_semestre/features/onboarding/presentation/pages
 import 'package:frontend_projeto_semestre/features/onboarding/presentation/pages/cadastro_screen.dart';
 
 void main() {
+  testWidgets('cadastro abre os termos sem marcar o aceite', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: const CadastroScreen(),
+      routes: AppRoutes.routes,
+    ));
+    final checkbox = find.byType(CheckboxListTile);
+    expect(tester.widget<CheckboxListTile>(checkbox).value, isFalse);
+
+    final link = find.text('Ler os Termos de Uso');
+    await tester.ensureVisible(link);
+    await tester.tap(link);
+    await tester.pumpAndSettle();
+    expect(find.text('AUTOMATIZE  /  VERSÃO 1.0'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(tester.widget<CheckboxListTile>(checkbox).value, isFalse);
+  });
+
   testWidgets('cadastro nao e habilitado sem configuracao explicita', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: CadastroScreen()));
     await tester.enterText(find.byType(TextFormField).at(0), 'Pessoa de Teste');
