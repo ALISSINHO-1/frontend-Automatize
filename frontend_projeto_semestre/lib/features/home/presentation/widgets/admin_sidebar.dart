@@ -40,19 +40,19 @@ class AdminSidebar extends StatelessWidget {
             children: [
               const Row(
                 children: [
-                  Icon(
-                    Icons.auto_awesome,
-                    color: RedesignColors.purple,
-                    size: 28,
-                  ),
-                  SizedBox(width: 12),
-                  Text(
-                    'AUTOMATIZE',
-                    style: TextStyle(
-                      color: RedesignColors.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
+                  Icon(Icons.auto_awesome, color: RedesignColors.primary, size: 25),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'AUTOMATIZE',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: RedesignColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                      ),
                     ),
                   ),
                 ],
@@ -209,8 +209,10 @@ class AdminSidebar extends StatelessWidget {
       child: SidebarMenuItem(
         child: SizedBox(
           height: _itemHeight,
-          child: ListTile(
-            onTap: onTap,
+          child: Material(
+            type: MaterialType.transparency,
+            child: ListTile(
+              onTap: onTap,
             dense: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             leading: Icon(
@@ -227,6 +229,7 @@ class AdminSidebar extends StatelessWidget {
                     : RedesignColors.textSecondary,
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
               ),
+            ),
             ),
           ),
         ),
