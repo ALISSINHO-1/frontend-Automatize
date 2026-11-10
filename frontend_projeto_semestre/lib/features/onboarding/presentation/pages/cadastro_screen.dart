@@ -165,23 +165,50 @@ class _CadastroScreenState extends State<CadastroScreen> {
   Widget _sucesso() => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.mark_email_read_outlined, size: 58, color: Color(0xFF2FD3A1)),
+          const Icon(
+            Icons.mark_email_unread_outlined,
+            size: 58,
+            color: Color(0xFF21B7FF),
+          ),
           const SizedBox(height: 18),
-          const Text('Solicitação recebida',
-              style: TextStyle(color: _texto, fontSize: 24, fontWeight: FontWeight.bold)),
+          const Text(
+            'Confira sua caixa de entrada',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _texto,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 12),
           const Text(
-            'Se o e-mail ainda não estiver cadastrado, sua conta ficará pendente de validação e contratação. '
-            'Você não receberá acesso às demandas de outras pessoas ou empresas.',
+            'Se sua solicitação puder ser processada, enviaremos um link '
+            'de confirmação para o e-mail informado. O link expira em 30 minutos. '
+            'Confira também a pasta de spam.',
             textAlign: TextAlign.center,
             style: TextStyle(color: _suave, height: 1.6),
           ),
-          const SizedBox(height: 25),
+          const SizedBox(height: 12),
+          const Text(
+            'A confirmação do e-mail não libera projetos automaticamente: '
+            'é necessário ter um vínculo aprovado pela equipe.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: _suave, height: 1.6),
+          ),
+          const SizedBox(height: 24),
+          if (AppConfig.publicSignupEnabled)
+            TextButton.icon(
+              onPressed: () => Navigator.of(context)
+                  .pushNamed(AppRoutes.reenviarConfirmacao),
+              icon: const Icon(Icons.mark_email_unread_outlined),
+              label: const Text('Reenviar e-mail de confirmação'),
+            ),
+          const SizedBox(height: 10),
           FilledButton(
             onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
               AppRoutes.login, (route) => false,
             ),
-            child: const Text('Ir para o login'),
+            child: const Text('Voltar ao login'),
           ),
         ],
       );

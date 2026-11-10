@@ -1,14 +1,14 @@
 # Homologacao de cadastro publico e recuperacao de senha
 
 ## Fluxo entregue, sem habilitacao publica
-- A landing e o login so exibem **Criar conta** com `ENABLE_PUBLIC_SIGNUP=true`.
+- O login exibe **Crie sua conta**; o cadastro e o reenvio só processam solicitações com `ENABLE_PUBLIC_SIGNUP=true`, SMTP e Turnstile configurados.
 - O formulario inclui um desafio Cloudflare Turnstile com `TURNSTILE_SITE_KEY`.
 - O backend valida `turnstile_token` com a chave secreta no Render e envia um link de uso unico por SMTP TLS.
-- Clicar no link abre `/verificar-email?token=...`; a pagina exige POST explicito.
+- Os links enviados por e-mail usam `/#/verificar-email?token=...` (navegação Flutter Web). A página exige clique para confirmar, sem consumir token em scanners de e-mail.
 - Confirmar e-mail **nao** concede acesso. O ADMIN aprova contrato DEV na aba Clientes e contratos.
 - A API recusa contas pendentes, sem contrato, e contratos SAAS que ainda nao tem rotas isoladas.
 - Recuperacao de senha so aparece se `ENABLE_PASSWORD_RECOVERY=true` e a API tiver SMTP + antiabuso habilitados.
-- Links de reset abrem `/redefinir-senha?token=...`; ao redefinir, o backend incrementa a versao do JWT e invalida sessoes antigas.
+- Links de reset abrem `/#/redefinir-senha?token=...`; ao redefinir, o backend incrementa a versao do JWT e invalida sessoes antigas.
 
 ## Publicação dos Termos de Uso
 
