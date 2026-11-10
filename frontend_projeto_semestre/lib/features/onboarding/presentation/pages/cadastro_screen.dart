@@ -257,7 +257,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
             ),
             Material(
               type: MaterialType.transparency,
-              CheckboxListTile(
+              child: CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 title: const Text('Li e aceito os Termos de Uso.'),
