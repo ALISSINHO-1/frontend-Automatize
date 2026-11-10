@@ -6,9 +6,11 @@ class TurnstileChallenge extends StatelessWidget {
     super.key,
     required this.siteKey,
     required this.onToken,
+    this.onError,
   });
   final String siteKey;
   final ValueChanged<String?> onToken;
+  final ValueChanged<String>? onError;
   @override
   Widget build(BuildContext context) => const Padding(
     padding: EdgeInsets.symmetric(vertical: 8),
