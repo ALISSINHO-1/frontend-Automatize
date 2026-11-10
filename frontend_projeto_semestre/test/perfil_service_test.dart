@@ -15,7 +15,7 @@ void main() {
         'nome': 'Técnico real', 'email': 'tecnico@example.com',
         'ativo': true, 'criado_em': '2026-01-01T10:00:00Z',
         'email_verificado': true, 'origem_cadastro': 'LEGADO',
-      }), 200);
+      }), 200, headers: {'content-type': 'application/json; charset=utf-8'});
     }));
     final details = await service.detalhes();
     expect(details.ativo, isTrue);
