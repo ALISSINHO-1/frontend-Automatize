@@ -826,7 +826,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-            if (AppConfig.publicSignupEnabled) ...[
+            ...[
               const SizedBox(height: 25),
               const Divider(height: 1, color: _borda),
               const SizedBox(height: 12),
@@ -849,14 +849,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-            ] else ...[
-              const SizedBox(height: 20),
-              const Text('Novas contas são liberadas por convite neste ambiente.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: _textoSecundario, fontSize: 12)),
             ],
-            if (AppConfig.publicSignupEnabled)
-              TextButton(
+            TextButton(
                 onPressed: () => Navigator.of(context)
                     .pushNamed(AppRoutes.reenviarConfirmacao),
                 child: const Text(

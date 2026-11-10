@@ -6,10 +6,11 @@ import 'package:http/http.dart' as http;
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/config/app_config.dart';
+import '../../data/conta_configuracao.dart';
 import '../../widgets/turnstile_challenge.dart';
 import 'termos_uso_screen.dart';
 
-/// Cadastro de interesse: conta fica pendente, sem acesso a servicos.
+/// Cadastro autônomo: identidade própria, com projetos liberados por vínculo.
 class CadastroScreen extends StatefulWidget {
   const CadastroScreen({super.key, this.client});
 
@@ -35,9 +36,45 @@ class _CadastroScreenState extends State<CadastroScreen> {
   bool _termosAceitos = false;
   bool _enviando = false;
   bool _concluido = false;
+  bool _configCarregando = true;
+  bool _cadastroHabilitado = false;
+  String _siteKey = '';
+  String? _erroConfiguracao;
   String? _erro;
   String? _turnstileToken;
   int _desafioVersao = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _consultarConfiguracao();
+  }
+
+  Future<void> _consultarConfiguracao() async {
+    setState(() {
+      _configCarregando = true;
+      _erroConfiguracao = null;
+    });
+    final client = widget.client ?? http.Client();
+    try {
+      final config = await ContaConfiguracao.consultar(client);
+      if (!mounted) return;
+      setState(() {
+        _cadastroHabilitado = config.cadastroHabilitado;
+        _siteKey = config.turnstileSiteKey;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _cadastroHabilitado = false;
+        _siteKey = '';
+        _erroConfiguracao = 'Não foi possível consultar a disponibilidade do cadastro.';
+      });
+    } finally {
+      if (widget.client == null) client.close();
+      if (mounted) setState(() => _configCarregando = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -50,16 +87,15 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
   Future<void> _enviar() async {
     if (_enviando || !(_form.currentState?.validate() ?? false)) return;
-    if (!AppConfig.publicSignupEnabled) {
-      setState(() => _erro = 'Cadastro indisponível no momento.');
+    if (!_cadastroHabilitado || _siteKey.isEmpty) {
+      setState(() => _erro = 'Não foi possível iniciar o cadastro. Tente novamente.');
       return;
     }
     if (!_termosAceitos) {
       setState(() => _erro = 'Aceite os Termos de Uso para continuar.');
       return;
     }
-    if (AppConfig.turnstileSiteKey.isEmpty ||
-        _turnstileToken == null || _turnstileToken!.isEmpty) {
+    if (_turnstileToken == null || _turnstileToken!.isEmpty) {
       setState(() => _erro = 'Conclua a verificação antirobô para continuar.');
       return;
     }
@@ -156,9 +192,22 @@ class _CadastroScreenState extends State<CadastroScreen> {
               ),
               child: _concluido
                   ? _sucesso()
-                  : AppConfig.publicSignupEnabled
-                      ? _formulario()
-                      : _cadastroIndisponivel(),
+                  : _configCarregando
+                      ? const Padding(
+                          padding: EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Preparando criação de conta',
+                                  style: TextStyle(color: _texto)),
+                            ],
+                          ),
+                        )
+                      : _cadastroHabilitado
+                          ? _formulario()
+                          : _cadastroIndisponivel(),
             ),
           ),
         ),
@@ -178,7 +227,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
           ),
           const SizedBox(height: 18),
           const Text(
-            'Novos cadastros indisponíveis',
+            'Não foi possível abrir o cadastro',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: _texto,
@@ -188,13 +237,24 @@ class _CadastroScreenState extends State<CadastroScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'A criação de contas está temporariamente desativada neste ambiente. '
-            'Se você já possui acesso, entre com sua conta.',
+            'O cadastro está temporariamente indisponível. '
+            'Você pode tentar novamente sem precisar solicitar autorização a ninguém.',
             textAlign: TextAlign.center,
             style: TextStyle(color: _suave, height: 1.6),
           ),
+          if (_erroConfiguracao != null) ...[
+            const SizedBox(height: 14),
+            Text(_erroConfiguracao!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFFFF7785))),
+          ],
           const SizedBox(height: 24),
           FilledButton(
+            onPressed: _consultarConfiguracao,
+            child: const Text('Tentar novamente'),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
             onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
               AppRoutes.login, (route) => false,
             ),
@@ -223,22 +283,21 @@ class _CadastroScreenState extends State<CadastroScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Se sua solicitação puder ser processada, enviaremos um link '
-            'de confirmação para o e-mail informado. O link expira em 30 minutos. '
+            'Se este e-mail ainda não está cadastrado, enviamos um link '
+            'para confirmar sua conta. O link expira em 30 minutos. '
             'Confira também a pasta de spam.',
             textAlign: TextAlign.center,
             style: TextStyle(color: _suave, height: 1.6),
           ),
           const SizedBox(height: 12),
           const Text(
-            'A confirmação do e-mail não libera projetos automaticamente: '
-            'é necessário ter um vínculo aprovado pela equipe.',
+            'Sua conta é pessoal e não precisa de autorização para ser criada. '
+            'Para acessar demandas de uma empresa, é necessário ter um vínculo com ela.',
             textAlign: TextAlign.center,
             style: TextStyle(color: _suave, height: 1.6),
           ),
           const SizedBox(height: 24),
-          if (AppConfig.publicSignupEnabled)
-            TextButton.icon(
+          TextButton.icon(
               onPressed: () => Navigator.of(context)
                   .pushNamed(AppRoutes.reenviarConfirmacao),
               icon: const Icon(Icons.mark_email_unread_outlined),
@@ -264,8 +323,8 @@ class _CadastroScreenState extends State<CadastroScreen> {
                 style: TextStyle(color: _texto, fontSize: 26, fontWeight: FontWeight.w800)),
             const SizedBox(height: 9),
             const Text(
-              'Crie sua identidade. O acesso a projetos DEV ou à plataforma de uma empresa '
-              'só será liberado após a confirmação do vínculo.',
+              'Crie sua conta e confirme o e-mail. Você pode se cadastrar livremente; '
+              'o acesso a projetos de empresas depende das permissões concedidas.',
               style: TextStyle(color: _suave, height: 1.5),
             ),
             const SizedBox(height: 26),
@@ -342,20 +401,14 @@ class _CadastroScreenState extends State<CadastroScreen> {
                     : (value) => setState(() => _termosAceitos = value ?? false),
               ),
             ),
-            if (AppConfig.publicSignupEnabled) ...[
-              const SizedBox(height: 18),
-              if (AppConfig.turnstileSiteKey.isNotEmpty)
-                TurnstileChallenge(
-                  key: ValueKey(_desafioVersao),
-                  siteKey: AppConfig.turnstileSiteKey,
-                  onToken: (token) {
-                    if (mounted) setState(() => _turnstileToken = token);
-                  },
-                )
-              else
-                const Text('Verificação antirobô não configurada.',
-                    style: TextStyle(color: Color(0xFFFF7785))),
-            ],
+            const SizedBox(height: 18),
+            TurnstileChallenge(
+              key: ValueKey(_desafioVersao),
+              siteKey: _siteKey,
+              onToken: (token) {
+                if (mounted) setState(() => _turnstileToken = token);
+              },
+            ),
             if (_erro != null) ...[
               const SizedBox(height: 15),
               Text(_erro!, style: const TextStyle(color: Color(0xFFFF7785))),
@@ -370,7 +423,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
               child: _enviando
                   ? const SizedBox(width: 18, height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Solicitar minha conta'),
+                  : const Text('Criar minha conta'),
             ),
             const SizedBox(height: 12),
             TextButton(

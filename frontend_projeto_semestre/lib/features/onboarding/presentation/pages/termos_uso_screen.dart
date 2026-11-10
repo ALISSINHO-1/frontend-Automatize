@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 // Ao alterar o texto, mantenha a versão anterior no histórico do repositório
 // e atualize esta versão em conjunto com a API de cadastro.
-const termosUsoVersao = '1.0';
+const termosUsoVersao = '1.1';
 
 class TermosUsoScreen extends StatelessWidget {
   const TermosUsoScreen({super.key});
@@ -17,9 +17,10 @@ class TermosUsoScreen extends StatelessWidget {
     (
       '2. Conta e acesso',
       'Informe dados corretos no cadastro, confirme seu e-mail e mantenha sua '
-          'senha em sigilo. Sua conta é pessoal. A criação da conta inicia a '
-          'solicitação de acesso. As áreas de trabalho ficam disponíveis conforme '
-          'o vínculo e as permissões autorizadas para você.',
+          'senha em sigilo. Sua conta é pessoal e pode ser criada livremente, '
+          'sem convite ou aprovação administrativa. A confirmação do e-mail '
+          'valida sua identidade. Acesso a empresas, demandas e serviços '
+          'depende separadamente dos vínculos e permissões contratados.',
     ),
     (
       '3. Uso da plataforma',
