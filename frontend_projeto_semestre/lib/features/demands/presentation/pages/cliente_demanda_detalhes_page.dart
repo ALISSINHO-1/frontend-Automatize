@@ -118,15 +118,7 @@ class _ClienteDemandaDetalhesPageState
     late final PedidoModel pedido;
 
     try {
-      final dados = Map<String, dynamic>.from(dadosDemanda);
-
-      final progresso = dados['percentual_progresso'];
-
-      if (progresso is String) {
-        dados['percentual_progresso'] = double.tryParse(progresso);
-      }
-
-      pedido = PedidoModel.fromJson(dados);
+      pedido = PedidoModel.fromJson(dadosDemanda);
     } catch (_) {
       if (!mounted) return;
 
@@ -146,6 +138,7 @@ class _ClienteDemandaDetalhesPageState
 
     final resultado = await Navigator.of(
       context,
+      rootNavigator: true,
     ).pushNamed<bool>(AppRoutes.clienteHomologacao, arguments: pedido);
 
     if (!mounted) return;

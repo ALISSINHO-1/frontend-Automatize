@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/pedido_model.dart';
 import '../../data/services/homologacao_cliente_service.dart';
+import '../widgets/anexos_homologacao_card.dart';
 import '../widgets/demand_homologation_card.dart';
 
 class DemandHomologationPage extends StatefulWidget {
@@ -22,6 +23,7 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
 
   bool concordou = false;
   bool processando = false;
+  bool enviandoAnexo = false;
   bool consultando = true;
   bool decisaoRegistrada = false;
   bool resultadoIncerto = false;
@@ -30,12 +32,11 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
   String? erroConsulta;
   String? erroOperacao;
 
+  bool get _homologacaoAberta =>
+      statusAtual == 'HOMOLOGACAO' && !decisaoRegistrada && !resultadoIncerto;
+
   bool get _podeDecidir =>
-      statusAtual == 'HOMOLOGACAO' &&
-      !processando &&
-      !consultando &&
-      !decisaoRegistrada &&
-      !resultadoIncerto;
+      _homologacaoAberta && !processando && !consultando && !enviandoAnexo;
 
   bool get _podeAprovar =>
       _podeDecidir &&
@@ -68,7 +69,7 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
   // Consulta o status real, sem confiar apenas no pedido
   // recebido pela navegação.
   Future<void> _atualizarStatus() async {
-    if (!mounted) return;
+    if (!mounted || enviandoAnexo) return;
 
     setState(() {
       consultando = true;
@@ -255,9 +256,9 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                 ),
                 FilledButton(
                   onPressed: valido
-                      ? () => Navigator.of(
-                          dialogContext,
-                        ).pop(_motivoController.text.trim())
+                      ? () =>
+                            Navigator.of(dialogContext)
+                                .pop(_motivoController.text.trim())
                       : null,
                   child: const Text('Continuar'),
                 ),
@@ -313,7 +314,9 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
           IconButton(
             tooltip: 'Atualizar estado',
             icon: const Icon(Icons.refresh),
-            onPressed: processando || consultando ? null : _atualizarStatus,
+            onPressed: processando || consultando || enviandoAnexo
+                ? null
+                : _atualizarStatus,
           ),
         ],
       ),
@@ -397,7 +400,7 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
               const SizedBox(height: 16),
 
               // Dados necessários para o aceite formal.
-              if (_podeDecidir) ...[
+              if (_homologacaoAberta) ...[
                 Card(
                   color: const Color(0xFF181C24),
                   child: Padding(
@@ -424,6 +427,7 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
 
                         TextField(
                           controller: _versaoController,
+                          enabled: _podeDecidir,
                           maxLength: 50,
                           onChanged: (_) => setState(() {}),
                           decoration: const InputDecoration(
@@ -438,6 +442,7 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
 
                         TextField(
                           controller: _declaracaoController,
+                          enabled: _podeDecidir,
                           minLines: 2,
                           maxLines: 4,
                           onChanged: (_) => setState(() {}),
@@ -456,11 +461,10 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                         CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
                           value: concordou,
-                          onChanged: (valor) {
-                            setState(() {
-                              concordou = valor ?? false;
-                            });
-                          },
+                          onChanged: _podeDecidir
+                              ? (valor) =>
+                                    setState(() => concordou = valor ?? false)
+                              : null,
                           title: const Text(
                             'Li, conferi e concordo com '
                             'a entrega informada.',
@@ -475,14 +479,20 @@ class _DemandHomologationPageState extends State<DemandHomologationPage> {
                 const SizedBox(height: 16),
               ],
 
-              if (statusAtual == 'HOMOLOGACAO' &&
-                  !decisaoRegistrada &&
-                  !resultadoIncerto)
+              if (_homologacaoAberta) ...[
+                AnexosHomologacaoCard(
+                  key: ValueKey(pedido.id),
+                  demandaId: pedido.id,
+                  habilitado: _podeDecidir,
+                  onEnviando: (valor) => setState(() => enviandoAnexo = valor),
+                ),
+                const SizedBox(height: 16),
                 DemandHomologationCard(
                   status: statusAtual!,
                   onAprovar: _podeAprovar ? _aprovar : null,
                   onReprovar: _podeDecidir ? _solicitarAjustes : null,
                 ),
+              ],
 
               if (processando) ...[
                 const SizedBox(height: 16),

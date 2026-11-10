@@ -24,12 +24,32 @@ class _DemandasScreenState extends State<DemandasScreen> {
   late final Future<UsuarioAtualModel?> _usuario = UsuarioAtualStore.instance
       .carregar();
   List<DemandaItem> get _demandas => _store.demandas;
+  bool _abriuDemandaDaRota = false;
   bool get _carregando => _store.carregando;
   String? get _erro => _store.erro;
   // Compartilha com o painel os dados que vieram da API.
   Future<void> _carregarDemandas() => _store.carregarDemandas();
   void _atualizarDemandas() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    if (_abriuDemandaDaRota || _carregando || !_store.carregado) return;
+    final rota = ModalRoute.of(context);
+    final id = rota?.settings.arguments;
+    if (id is! String || id.isEmpty || rota?.isCurrent != true) return;
+
+    _abriuDemandaDaRota = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || rota?.isCurrent != true) return;
+      for (final demanda in _demandas) {
+        if (demanda.id == id) {
+          _visualizarDemanda(demanda);
+          return;
+        }
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Demanda não encontrada.')));
+    });
   }
 
   // Apresenta os nomes dos estados, sem mudar os valores vindos do backend.
@@ -153,9 +173,8 @@ class _DemandasScreenState extends State<DemandasScreen> {
       await _store.moverNoQuadro(demanda.id, origem, destino);
     } catch (erro) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('$erro')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$erro')));
       await _carregarDemandas();
     } finally {
       if (mounted) setState(() => _movendoDemanda = false);
@@ -184,9 +203,8 @@ class _DemandasScreenState extends State<DemandasScreen> {
       await _store.atualizarPrevisao(demanda.id, data);
     } catch (erro) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('$erro')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$erro')));
     }
   }
 
@@ -194,10 +212,8 @@ class _DemandasScreenState extends State<DemandasScreen> {
     final perfil = (await _usuario)?.perfil;
     if (!mounted) return;
     if (perfil == 'CLIENTE') {
-      await Navigator.of(context).pushNamed(
-        AppRoutes.clienteDetalhes,
-        arguments: demanda.id,
-      );
+      await Navigator.of(context)
+          .pushNamed(AppRoutes.clienteDetalhes, arguments: demanda.id);
       if (mounted) await _carregarDemandas();
       return;
     }
@@ -297,9 +313,8 @@ class _DemandasScreenState extends State<DemandasScreen> {
                           evento.rotulo,
                           evento.data == null
                               ? 'Sem data'
-                              : MaterialLocalizations.of(
-                                  context,
-                                ).formatCompactDate(evento.data!),
+                              : MaterialLocalizations.of(context)
+                                    .formatCompactDate(evento.data!),
                         ),
                     ],
                   ),

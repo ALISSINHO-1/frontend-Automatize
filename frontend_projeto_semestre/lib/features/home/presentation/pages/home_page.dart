@@ -15,6 +15,7 @@ class HomePage extends StatelessWidget {
   static const borda = Color(0xFF294866);
   static const verde = Color(0xFF2FD3A1);
   static const roxo = Color(0xFFB784FF);
+  static const _hostHml = 'automatize-dev-hml.pages.dev';
 
   void _abrirLogin(BuildContext context) {
     Navigator.of(context).pushNamed(AppRoutes.login);
@@ -243,6 +244,10 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
+        if (AppConfig.environment == 'hml' || Uri.base.host == _hostHml) ...[
+          const SizedBox(height: 24),
+          _cartaoAcessoCelular(),
+        ],
       ],
     );
 
@@ -266,6 +271,54 @@ class HomePage extends StatelessWidget {
         const SizedBox(width: 15),
         const Expanded(flex: 9, child: _CartaoEtapas()),
       ],
+    );
+  }
+
+  Widget _cartaoAcessoCelular() {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 420),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: painel,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borda),
+      ),
+      child: Row(
+        children: [
+          Image.asset(
+            'assets/qr-acesso-hml.png',
+            width: 148,
+            height: 148,
+            filterQuality: FilterQuality.none,
+            semanticLabel: 'QR Code de acesso ao Automatize',
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Acesse pelo celular',
+                  style: TextStyle(
+                    color: texto,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'Aponte a câmera para o QR Code e abra o Automatize.',
+                  style: TextStyle(
+                    color: secundario,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -392,8 +445,7 @@ class HomePage extends StatelessWidget {
                 icone: Icons.assignment_outlined,
                 titulo: 'Registro e triagem',
                 descricao: 'Da solicitação à fila de atendimento.',
-                detalhes:
-                    'O cliente abre a demanda em Minhas demandas. No Chat, um técnico pode assumir a solicitação que estiver sem responsável.',
+                detalhes: 'O cliente abre a demanda em Minhas demandas. No Chat, um técnico pode assumir a solicitação que estiver sem responsável.',
               ),
               SizedBox(height: 12),
               _Etapa(
@@ -402,8 +454,7 @@ class HomePage extends StatelessWidget {
                 icone: Icons.forum_outlined,
                 titulo: 'Atendimento e acompanhamento',
                 descricao: 'Converse com quem acompanha a demanda.',
-                detalhes:
-                    'Depois da atribuição, cliente e técnico podem trocar mensagens na demanda. O técnico também pode falar com a administração em um canal interno separado.',
+                detalhes: 'Depois da atribuição, cliente e técnico podem trocar mensagens na demanda. O técnico também pode falar com a administração em um canal interno separado.',
               ),
               SizedBox(height: 12),
               _Etapa(
@@ -412,8 +463,7 @@ class HomePage extends StatelessWidget {
                 icone: Icons.fact_check_outlined,
                 titulo: 'Validação da entrega',
                 descricao: 'Revise e confirme a entrega na homologação.',
-                detalhes:
-                    'Quando a demanda chega à homologação, o cliente pode aprovar a entrega ou solicitar correções. O histórico registra o andamento.',
+                detalhes: 'Quando a demanda chega à homologação, o cliente pode aprovar a entrega ou solicitar correções. O histórico registra o andamento.',
               ),
             ],
           ),
