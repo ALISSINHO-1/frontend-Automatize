@@ -27,7 +27,7 @@ void main() {
       )),
     ));
     await tester.tap(find.text('Abrir'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('Segunda página'), findsOneWidget);
   });
 }
